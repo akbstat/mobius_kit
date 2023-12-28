@@ -23,6 +23,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 inspector = { path = "../../inspector" }
 rtf_divider = { path = "../../rtf_divider" }
+anyhow = "1.0.77"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

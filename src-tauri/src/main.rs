@@ -16,6 +16,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             greet,
             inspector::inspect,
+            inspector::fetch_project,
             combiner::get_target_file_path,
             combiner::open_file,
             divider::divide_rtf,

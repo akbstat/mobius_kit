@@ -82,16 +82,16 @@ async function fetch() {
     <el-container style="padding: 0px 15px 0px;">
         <el-table :data="fileList" max-height="470" v-loading="loading">
             <el-table-column label="Directory" width="450" sortable :filters="directoryFilters"
-                :filter-method="filterByDirectory">
+                :filter-method="filterByDirectory" show-overflow-tooltip>
                 <template #default="scope">
                     {{ scope.row.directory }}
                 </template>
             </el-table-column>
-            <el-table-column label="Filename" width="250" sortable>
+            <el-table-column label="Filename" width="250" sortable show-overflow-tooltip>
                 <template #default="scope">
                     {{ scope.row.name }}
                 </template></el-table-column>
-            <el-table-column label="Modified At" width="220" sortable>
+            <el-table-column label="Modified At" width="220" sortable show-overflow-tooltip>
                 <template #default="scope">
                     {{ scope.row.modifiedAt.display }}
                 </template></el-table-column>

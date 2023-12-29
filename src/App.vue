@@ -8,34 +8,33 @@ import { RouterView } from 'vue-router';
 <template>
   <el-container class="layout-container">
     <el-header style="text-align: right; font-size: 12px">
-      <div class="toolbar">
-        <span>User</span>
-      </div>
     </el-header>
     <el-container>
       <el-aside width="15%" height="100%">
         <el-scrollbar>
           <el-menu router>
-            <el-menu-item index="/">HomePage</el-menu-item>
-            <el-menu-item index="/project">Inspector</el-menu-item>
-            <el-menu-item index="/combiner">Combiner</el-menu-item>
+            <el-menu-item index="/">Home</el-menu-item>
+            <!-- <el-menu-item index="/project">Inspector</el-menu-item>
+            <el-menu-item index="/combiner">Combiner</el-menu-item> -->
             <el-menu-item index="/divider">Divider</el-menu-item>
             <!-- <el-menu-item index="/project">Project</el-menu-item> -->
           </el-menu>
         </el-scrollbar>
       </el-aside>
-      <el-container style="height: 600px">
-        <el-main>
-          <el-scrollbar>
-            <RouterView />
-          </el-scrollbar>
-        </el-main>
-      </el-container>
+      <el-main>
+        <el-scrollbar>
+          <RouterView />
+        </el-scrollbar>
+      </el-main>
     </el-container>
   </el-container>
 </template>
 
 <style scoped>
+.layout-container {
+  height: 100vh;
+}
+
 .layout-container .el-header {
   position: relative;
   background-color: var(--el-color-primary-light-7);

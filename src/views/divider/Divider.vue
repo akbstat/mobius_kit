@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { open } from '@tauri-apps/api/dialog';
-import { ElMessageBox, ElTable } from "element-plus";
+import { ElMessageBox, ElTable, ElNotification } from "element-plus";
 import { debounce } from "lodash";
-import { BaseDirectory, readDir } from "@tauri-apps/api/fs";
-import { Rtf, rtfExtention, Kind } from "./rtf";
+// import { BaseDirectory, readDir } from "@tauri-apps/api/fs";
+import { Rtf, rtfExtention } from "./rtf";
 import { invoke } from "@tauri-apps/api/tauri";
 
 
@@ -70,23 +70,24 @@ async function divide() {
 }
 
 async function updateRtfList(path: string) {
-    if (path.length === 0) {
-        return
+    if (path === undefined || path.length === 0) {
+        all_rtfs.value = [];
+        return;
     }
     let rtfs: Rtf[] = [];
-    let entries = await readDir(path, { dir: BaseDirectory.AppData, recursive: false });
-    entries.forEach((entry) => {
-        const f = entry.name;
-        if (f !== undefined && f.endsWith(rtfExtention)) {
-            const rtf = new Rtf(f, path)
-            if (rtf.kind !== Kind.Unknown) {
-                rtfs.push(rtf);
-            }
-        }
-    });
-    rtfs = rtfs.sort((x: Rtf, y: Rtf) => {
-        return x.kind - y.kind
-    })
+    try {
+        let data: string = await invoke("list_rtfs", { "dir": directory.value });
+        JSON.parse(data).forEach((item: any) => {
+            rtfs.push(new Rtf(item.name, path, item.kind, item.size));
+        });
+    } catch (e) {
+        ElNotification({
+            title: "Error",
+            message: `${e}`,
+            type: "error",
+        })
+        return;
+    }
     all_rtfs.value = rtfs;
 }
 
@@ -97,6 +98,7 @@ async function openResultDirectory() {
             path: selected_rtfs.value[0].path + "/" + divided_rtf_dir,
         },
     );
+    resultPageVisible.value = false;
     return;
 }
 
@@ -110,18 +112,25 @@ watch(directory, debounce(updateRtfList, 100));
         <el-input v-model="directory" style="padding-left: 10px;" placeholder="Please input or select one directory"
             clearable />
     </el-container>
-    <el-container style="padding: 0px 15px 0px;">
-        <el-table v-loading="loading" ref="multipleTableRef" :data="all_rtfs" style="width: 100%" max-height="420px"
-            @selection-change="handleSelectionChange">
-            <el-table-column type="selection" width="55px" />
-            <el-table-column label="File" width="720px">
+    <el-container style="padding: 0px 15px 0px; height: 100%;">
+        <el-table v-loading="loading" ref="multipleTableRef" :data="all_rtfs" style="width: 100%"
+            @selection-change="handleSelectionChange" height="616px">
+            <el-table-column type="selection" min-width="5%" />
+            <el-table-column label="File" min-width="70%" sortable sort-by="name">
                 <template #default="scope">{{ scope.row.name }}</template>
             </el-table-column>
-            <el-table-column label="Type" width="200px">
+            <el-table-column label="Type" min-width="15%">
                 <template #default="scope">
                     <el-tag :style="{ backgroundColor: scope.row.color, color: 'white', width: 70 + 'px' }">{{
-                        scope.row.kindValue() }}</el-tag>
+                        scope.row.kind }}</el-tag>
                 </template>
+            </el-table-column>
+            <el-table-column label="File Size" min-width="15%" sortable align="right" sort-by="size">
+                <template #default="scope">
+                    {{ scope.row.size }} MB
+                </template>
+            </el-table-column>
+            <el-table-column min-width="5%">
             </el-table-column>
         </el-table>
     </el-container>
@@ -141,7 +150,7 @@ watch(directory, debounce(updateRtfList, 100));
                 <el-table-column label="Type" width="200px">
                     <template #default="scope">
                         <el-tag :style="{ backgroundColor: scope.row.color, color: 'white', width: 70 + 'px' }">{{
-                            scope.row.kindValue() }}</el-tag>
+                            scope.row.kind }}</el-tag>
                     </template>
                 </el-table-column>
             </el-table>

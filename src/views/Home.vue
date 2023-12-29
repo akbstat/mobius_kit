@@ -1,20 +1,63 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { invoke } from "@tauri-apps/api/tauri";
+import router from "../router";
 
-const greetMsg = ref("");
-const name = ref("");
-
-async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-  greetMsg.value = await invoke("greet", { name: name.value });
+function gotoDivider() {
+  router.push("/divider")
 }
+
 </script>
 
 <template>
-  <form class="row" @submit.prevent="greet">
-    <div style="padding-top: 20px; font-size: 30px;">Welcome to Mobius Kit</div>
-  </form>
+  <el-container style="padding: 40px;">
+    <el-row style="width: 100%">
+      <el-col :span="11">
+        <el-card style="height: 250px;" @click="gotoDivider">
+          <template #header>
+            <span>Divider</span>
+          </template>
+          <div>A Tool for splitting large RTF files into seraval pieces</div>
+        </el-card>
+      </el-col>
+      <el-col :span="1">
+      </el-col>
+      <el-col :span="11">
+        <el-card style="height: 250px;">
+          <template #header>
+            <span>...</span>
+          </template>
+          <div>...</div>
+        </el-card>
+      </el-col>
+    </el-row>
+  </el-container>
 
-  <p>{{ greetMsg }}</p>
+  <el-container style="padding: 40px;">
+    <el-row style="width: 100%">
+      <el-col :span="11">
+        <el-card style="height: 250px;">
+          <template #header>
+            <span>...</span>
+          </template>
+          <div>...</div>
+        </el-card>
+      </el-col>
+      <el-col :span="1">
+      </el-col>
+      <el-col :span="11">
+        <el-card style="height: 250px;">
+          <template #header>
+            <span>...</span>
+          </template>
+          <div>...</div>
+        </el-card>
+      </el-col>
+    </el-row>
+  </el-container>
 </template>
+
+<style>
+.el-card:hover {
+  border-color: #3375b9;
+  cursor: pointer;
+}
+</style>

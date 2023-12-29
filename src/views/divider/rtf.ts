@@ -1,16 +1,9 @@
 export const rtfExtention = ".rtf";
 
-export enum Prefix {
-    Listing = "L",
-    Table = "T",
-    Figure = "F",
-}
-
-export enum Kind {
-    Listing,
-    Table,
-    Figure,
-    Unknown
+export enum KindName {
+    Listing = "Listing",
+    Table = "Table",
+    Figure = "Figure",
 }
 
 enum KindColor {
@@ -21,45 +14,30 @@ enum KindColor {
 }
 
 export class Rtf {
-    constructor(name: string, path: string) {
+    constructor(name: string, path: string, kind: string, size: number) {
         this.name = name.slice(0, name.length - 4);
         this.path = path;
-        const prefix = name[0].toUpperCase();
-        switch (prefix) {
-            case Prefix.Table:
-                this.kind = Kind.Table;
+        this.size = Math.ceil(size / 1024 / 1024 * 100) / 100;
+        this.kind = kind;
+        switch (this.kind) {
+            case KindName.Table:
                 this.color = KindColor.Table;
                 break;
-            case Prefix.Listing:
-                this.kind = Kind.Listing;
+            case KindName.Listing:
                 this.color = KindColor.Listing;
                 break;
-            case Prefix.Figure:
-                this.kind = Kind.Figure;
+            case KindName.Figure:
                 this.color = KindColor.Figure;
                 break;
             default:
-                this.kind = Kind.Unknown;
                 this.color = KindColor.Unknown;
         }
     }
-    kind: Kind;
+    kind: string;
     path: string;
     name: string;
     color: KindColor;
-
-    kindValue(): string {
-        if (this.kind === Kind.Listing) {
-            return "Listing";
-        }
-        if (this.kind === Kind.Table) {
-            return "Table";
-        }
-        if (this.kind === Kind.Figure) {
-            return "Figure";
-        }
-        return "Unknown";
-    }
+    size: number;
 }
 
 

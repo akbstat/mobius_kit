@@ -25,8 +25,11 @@ const rowClass = ({
 }
 
 const tagType = (value: string) => {
-    if (value === "Ready") {
-        return "success";
+    switch (value) {
+        case "Ready":
+            return "success";
+        case "Changed":
+            return "warning";
     }
     return "";
 }
@@ -163,7 +166,7 @@ async function submit() {
             </el-table-column>
             <el-table-column label="Validation">
                 <template #default="scope">
-                    <el-tag :type="tagType(scope.row.dev.status)" :style="{ width: 100 + 'px' }">{{ scope.row.qc.status
+                    <el-tag :type="tagType(scope.row.qc.status)" :style="{ width: 100 + 'px' }">{{ scope.row.qc.status
                     }}</el-tag>
                 </template>
             </el-table-column>

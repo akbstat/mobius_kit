@@ -2,7 +2,7 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
+    "devPath": "../dist",
     "distDir": "../dist"
   },
   "package": {
@@ -46,10 +46,11 @@
         "fullscreen": false,
         "resizable": true,
         "title": "MobiusKit",
-        "width": 1200,
-        "height": 600,
-        "x": 100,
-        "y": 50
+        "width": 1400,
+        "height": 800,
+        "center": true,
+        "maxHeight": 800,
+        "maximizable": false
       }
     ]
   }

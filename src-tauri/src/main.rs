@@ -21,6 +21,7 @@ fn main() {
             combiner::open_file,
             divider::divide_rtf,
             divider::open_directory,
+            divider::list_rtfs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,7 +2,11 @@
 import router from "../router";
 
 function gotoDivider() {
-  router.push("/divider")
+  router.push("/divider");
+}
+
+function gotoInspector() {
+  router.push("/project");
 }
 
 </script>
@@ -11,7 +15,7 @@ function gotoDivider() {
   <el-container style="padding: 40px;">
     <el-row style="width: 100%">
       <el-col :span="11">
-        <el-card style="height: 250px;" @click="gotoDivider">
+        <el-card style="height: 240px;" @click="gotoDivider">
           <template #header>
             <span>Divider</span>
           </template>
@@ -21,11 +25,11 @@ function gotoDivider() {
       <el-col :span="1">
       </el-col>
       <el-col :span="11">
-        <el-card style="height: 250px;">
+        <el-card style="height: 240px;" @click="gotoInspector">
           <template #header>
-            <span>...</span>
+            <span>Inspector</span>
           </template>
-          <div>...</div>
+          <div>A Tool for figure out the status of the project</div>
         </el-card>
       </el-col>
     </el-row>
@@ -34,7 +38,7 @@ function gotoDivider() {
   <el-container style="padding: 40px;">
     <el-row style="width: 100%">
       <el-col :span="11">
-        <el-card style="height: 250px;">
+        <el-card style="height: 240px;">
           <template #header>
             <span>...</span>
           </template>
@@ -44,7 +48,7 @@ function gotoDivider() {
       <el-col :span="1">
       </el-col>
       <el-col :span="11">
-        <el-card style="height: 250px;">
+        <el-card style="height: 240px;">
           <template #header>
             <span>...</span>
           </template>

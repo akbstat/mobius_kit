@@ -15,8 +15,12 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             greet,
-            inspector::inspect,
-            inspector::fetch_project,
+            inspector::fetch_sdtm,
+            inspector::fetch_adam,
+            inspector::fetch_tfls,
+            inspector::infer_path_sdtm,
+            inspector::infer_path_adam,
+            inspector::infer_path_tfls,
             combiner::get_target_file_path,
             combiner::open_file,
             divider::divide_rtf,

@@ -14,8 +14,8 @@ import { RouterView } from 'vue-router';
         <el-scrollbar>
           <el-menu router>
             <el-menu-item index="/">Home</el-menu-item>
-            <!-- <el-menu-item index="/project">Inspector</el-menu-item>
-            <el-menu-item index="/combiner">Combiner</el-menu-item> -->
+            <el-menu-item index="/project">Inspector</el-menu-item>
+            <!-- <el-menu-item index="/combiner">Combiner</el-menu-item> -->
             <el-menu-item index="/divider">Divider</el-menu-item>
             <!-- <el-menu-item index="/project">Project</el-menu-item> -->
           </el-menu>
@@ -49,6 +49,7 @@ import { RouterView } from 'vue-router';
 .layout-container .el-menu {
   border-right: none;
 }
+
 
 .layout-container .el-main {
   padding: 0;

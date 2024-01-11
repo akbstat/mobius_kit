@@ -114,7 +114,7 @@ watch(directory, debounce(updateRtfList, 100));
     </el-container>
     <el-container style="padding: 0px 15px 0px; height: 100%;">
         <el-table v-loading="loading" ref="multipleTableRef" :data="all_rtfs" style="width: 100%"
-            @selection-change="handleSelectionChange" height="616px">
+            @selection-change="handleSelectionChange" height="520px">
             <el-table-column type="selection" min-width="5%" />
             <el-table-column label="File" min-width="70%" sortable sort-by="name">
                 <template #default="scope">{{ scope.row.name }}</template>
@@ -138,12 +138,12 @@ watch(directory, debounce(updateRtfList, 100));
         <el-button @click="configPagesizeShow" type="primary" style="width: 100px; ">Divide</el-button>
         <el-button @click="clearSelections()" type="primary" style="width: 100px; ">Clear</el-button>
     </el-container>
-    <el-dialog v-model="configPagesizePageVisible" title="Configure Confirm" draggable>
+    <el-dialog v-model="configPagesizePageVisible" title="Configuration Confirm" draggable>
         <span style="font-size: 18px; margin-right: 30px;">Pagesize</span>
         <el-input-number v-model="pagesize" :min="1" :max="100" :step="10" controls-position="right" />
         <el-container style="font-size: 18px;padding-top: 50px;">Chosen RTF Files</el-container>
         <el-container style="padding-top: 15px;">
-            <el-table :data="selected_rtfs" style="width: 100%" max-height="200px">
+            <el-table :data="selected_rtfs" style="width: 100%" max-height="250px">
                 <el-table-column label="File" width="350px">
                     <template #default="scope">{{ scope.row.name }}</template>
                 </el-table-column>

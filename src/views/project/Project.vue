@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import { open } from '@tauri-apps/api/dialog';
-import { Item, File, ProjectKind, toISODatetimeInCst } from "./project";
+import { Item, ProjectKind, toISODatetimeInCst } from "./project";
 import { fetchSdtm, fetchAdam, fetchTfls, inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { ElNotification } from "element-plus";
 import { EpPropMergeType } from "element-plus/es/utils/vue/props/index.mjs";
@@ -18,24 +18,27 @@ const pathForInfer = ref("");
 const tableLoading = ref(false);
 const configFileList = ref<string[]>([]);
 
-const rowClass = ({
-    row,
-}: {
-    row: File
-}) => {
-    let result = "";
-    switch (row.status) {
-        case "Missing":
-            result = "danger";
-            break;
-        case "Unexpected":
-            result = "warning";
-            break;
-        default:
-            result = "info";
-    }
-    return result;
-};
+// const rowClass = ({
+//     row,
+// }: {
+//     row: File
+// }) => {
+//     let result = "";
+//     switch (row.status) {
+//         case "Missing":
+//             result = "danger";
+//             break;
+//         case "Unexpected":
+//             result = "warning";
+//             break;
+//         case "NotMatch":
+//             result = "danger";
+//             break;
+//         default:
+//             result = "info";
+//     }
+//     return result;
+// };
 
 const tagType = (value: string) => {
     switch (value) {
@@ -45,6 +48,10 @@ const tagType = (value: string) => {
             return "warning";
         case "Unexpected":
             return "danger";
+        case "Pass":
+            return "success";
+        case "NotMatch":
+            return "danger";
     }
     return "";
 };
@@ -52,9 +59,11 @@ const tagType = (value: string) => {
 const fileTagType = (status: string): EpPropMergeType<StringConstructor, "" | "success" | "warning" | "info" | "danger", unknown> | undefined => {
     switch (status) {
         case "Missing":
-            return "danger";
+            return "info";
         case "Unexpected":
             return "warning";
+        case "NotMatch":
+            return "danger";
         default:
             return "";
     }
@@ -74,6 +83,10 @@ const popContent = (status: string): string => {
             return "The file is missing";
         case "Fine":
             return "The file is fine";
+        case "Pass":
+            return "The item passed validation";
+        case "NotMatch":
+            return "The item did not pass validation";
     }
     return "default"
 };
@@ -162,6 +175,7 @@ async function submit() {
         })
         tableLoading.value = false;
     }
+    console.log(data)
     project.value = data.items;
     tableLoading.value = false;
 }
@@ -194,7 +208,7 @@ async function submit() {
                         <el-main>
                             <el-row>
                                 <el-col :span="12">
-                                    <el-table :data="scope.row.groups[0].files" :row-class-name="rowClass">
+                                    <el-table :data="scope.row.groups[0].files">
                                         <el-table-column label="Name" prop="name" />
                                         <el-table-column label="Type">
                                             <template #default="scope">
@@ -212,7 +226,7 @@ async function submit() {
                                     </el-table>
                                 </el-col>
                                 <el-col :span="12">
-                                    <el-table :data="scope.row.groups[1].files" :row-class-name="rowClass">
+                                    <el-table :data="scope.row.groups[1].files">
                                         <el-table-column label="Name" prop="name" />
                                         <el-table-column label="Type">
                                             <template #default="scope">

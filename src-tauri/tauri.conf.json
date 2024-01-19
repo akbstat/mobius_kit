@@ -24,6 +24,9 @@
       },
       "dialog": {
         "all": true
+      },
+      "window": {
+        "setCursorIcon": true
       }
     },
     "bundle": {

@@ -62,6 +62,5 @@ function gotoInspector() {
 <style>
 .el-card:hover {
   border-color: #3375b9;
-  cursor: pointer;
 }
 </style>

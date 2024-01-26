@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import { open } from '@tauri-apps/api/dialog';
-import { Item, ProjectKind, toISODatetimeInCst } from "./project";
+import { Item, ProjectKind } from "./project";
 import { fetchSdtm, fetchAdam, fetchTfls, inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { ElNotification } from "element-plus";
 import { EpPropMergeType } from "element-plus/es/utils/vue/props/index.mjs";
+import Timeline from "../../components/Timeline.vue";
 
 const configPageShow = ref(true);
 const configConfirmShow = ref(false);
@@ -18,28 +19,6 @@ const pathForInfer = ref("");
 const tableLoading = ref(false);
 const configFileList = ref<string[]>([]);
 
-// const rowClass = ({
-//     row,
-// }: {
-//     row: File
-// }) => {
-//     let result = "";
-//     switch (row.status) {
-//         case "Missing":
-//             result = "danger";
-//             break;
-//         case "Unexpected":
-//             result = "warning";
-//             break;
-//         case "NotMatch":
-//             result = "danger";
-//             break;
-//         default:
-//             result = "info";
-//     }
-//     return result;
-// };
-
 const tagType = (value: string) => {
     switch (value) {
         case "Ready":
@@ -52,6 +31,10 @@ const tagType = (value: string) => {
             return "success";
         case "NotMatch":
             return "danger";
+        case "NotApplicable":
+            return "info";
+        case "NotStart":
+            return "warning";
     }
     return "";
 };
@@ -87,16 +70,12 @@ const popContent = (status: string): string => {
             return "The item passed validation";
         case "NotMatch":
             return "The item did not pass validation";
+        case "NotApplicable":
+            return "Validation items are not applicable";
     }
     return "default"
 };
 
-const timelineHeight = (row: Item): string => {
-    const row1 = row.groups[0].files.length;
-    const row2 = row.groups[1].files.length;
-    const max = row1 > row2 ? row1 : row2;
-    return (max * 50 + 10) + "px";
-};
 
 const extractFileName = (name: string): string => {
     let paths = name.split("\\");
@@ -188,28 +167,17 @@ async function submit() {
                 <template #default="scope">
                     <el-container>
                         <el-aside width="250px">
-                            <el-scrollbar :height="timelineHeight(scope.row)">
-                                <el-timeline style="margin-top: 30px;">
-                                    <el-timeline-item v-for="(file, index) in scope.row.timeline" :key="index"
-                                        :timestamp="toISODatetimeInCst(file.modified_at)" placement="top">
-                                        <div style="padding: 5px; border-radius: 5px">
-                                            <div>
-                                                <el-tag :type="fileTagType(file.status)" :style="{ width: 70 + 'px' }">{{
-                                                    file.kind }}</el-tag>
-                                            </div>
-                                            <div>
-                                                {{ file.name }}
-                                            </div>
-                                        </div>
-                                    </el-timeline-item>
-                                </el-timeline>
-                            </el-scrollbar>
+                            <Timeline :item="scope.row" />
                         </el-aside>
                         <el-main>
                             <el-row>
                                 <el-col :span="12">
                                     <el-table :data="scope.row.groups[0].files">
-                                        <el-table-column label="Name" prop="name" />
+                                        <el-table-column label="Name" prop="name">
+                                            <template #default="scope">
+                                                <el-text truncated class="w-500px">{{ scope.row.name }}</el-text>
+                                            </template>
+                                        </el-table-column>
                                         <el-table-column label="Type">
                                             <template #default="scope">
                                                 <el-popover trigger="hover" :content="popContent(scope.row.status)"
@@ -227,7 +195,11 @@ async function submit() {
                                 </el-col>
                                 <el-col :span="12">
                                     <el-table :data="scope.row.groups[1].files">
-                                        <el-table-column label="Name" prop="name" />
+                                        <el-table-column label="Name" prop="name">
+                                            <template #default="scope">
+                                                <el-text truncated class="w-500px">{{ scope.row.name }}</el-text>
+                                            </template>
+                                        </el-table-column>
                                         <el-table-column label="Type">
                                             <template #default="scope">
                                                 <el-popover trigger="hover" :content="popContent(scope.row.status)"
@@ -276,14 +248,14 @@ async function submit() {
             <el-table-column width="70px">
                 <template #header>
                     <div>
-                        <el-button type="primary" size="small" @click="() => { submit() }" plain>
+                        <el-button type="primary" size="small" @click="() => { submit() }" style="width: 50px;" plain>
                             <el-icon>
                                 <Refresh />
                             </el-icon>
                         </el-button>
                     </div>
                     <div>
-                        <el-button type="primary" size="small" style="margin-top: 10px;"
+                        <el-button type="primary" size="small" style="margin-top: 10px;width: 50px;"
                             @click="() => configPageShow = true" plain>
                             <el-icon>
                                 <FolderOpened />
@@ -342,7 +314,7 @@ async function submit() {
 </template>
 
 <style>
-.el-dialog .el-button {
+.el-dialog.el-button {
     width: 70px
 }
 </style>

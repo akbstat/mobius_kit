@@ -1,0 +1,268 @@
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import { open } from '@tauri-apps/api/dialog';
+import { debounce } from "lodash";
+import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../api/inspector/project";
+import { createFromTemplate } from "../api/scaffold/create";
+import { invoke } from '@tauri-apps/api/tauri';
+import { ElNotification } from 'element-plus';
+
+enum ProjectKind {
+    SDTM = "SDTM",
+    ADaM = "ADaM",
+    TFLs = "TFL",
+    UNKNOWN = ""
+}
+let showCompleteDialag = ref(false);
+let loading = ref(false);
+let projectKind = ref<ProjectKind>(ProjectKind.SDTM);
+let rootPath = ref("");
+let devDestinationPath = ref("");
+let qcDestinationPath = ref("");
+let configPath = ref("");
+let project = ref("");
+let configs = ref<string[]>([]);
+let engine = ref("SAS 9.4 Unicode")
+let groupDev = ref(true);
+let groupQc = ref(false);
+let engines = ref<string[]>(["SAS 9.4 Unicode", "SAS 9.4", "SAS EG 8.3"]);
+watch(rootPath, debounce(update, 100));
+
+function update() {
+    switch (projectKind.value) {
+        case ProjectKind.SDTM:
+            inferPathSdtm(rootPath.value).then(data => {
+                ({ config: configs.value, root: rootPath.value } = JSON.parse(data));
+                configPath.value = configs.value.length > 0 ? configs.value[0] : "";
+                project.value = projectCode(rootPath.value);
+                devDestinationPath.value = referDevFolder(rootPath.value);
+                qcDestinationPath.value = referQcFolder(rootPath.value);
+            })
+            break;
+        case ProjectKind.ADaM:
+            inferPathAdam(rootPath.value).then(data => {
+                ({ config: configs.value, root: rootPath.value } = JSON.parse(data));
+                configPath.value = configs.value.length > 0 ? configs.value[0] : "";
+                project.value = projectCode(rootPath.value);
+                devDestinationPath.value = referDevFolder(rootPath.value);
+                qcDestinationPath.value = referQcFolder(rootPath.value);
+            })
+            break;
+        case ProjectKind.TFLs:
+            inferPathTfls(rootPath.value).then(data => {
+                ({ config: configs.value, root: rootPath.value } = JSON.parse(data));
+                configPath.value = configs.value.length > 0 ? configs.value[0] : "";
+                project.value = projectCode(rootPath.value);
+                devDestinationPath.value = referDevFolder(rootPath.value);
+                qcDestinationPath.value = referQcFolder(rootPath.value);
+            })
+            break;
+        default:
+    }
+}
+
+function readyToSubmit(): boolean {
+    if (rootPath.value.length === 0 || configPath.value.length === 0) {
+        return true;
+    }
+    if (groupDev && devDestinationPath.value.length === 0) {
+        return true
+    }
+    if (groupQc && qcDestinationPath.value.length === 0) {
+        return true
+    }
+    return false;
+}
+
+function extractFileName(name: string): string {
+    if (name === undefined) {
+        return ""
+    }
+    let paths = name.split("\\");
+    let names = paths[paths.length - 1].split(".");
+    return names.slice(0, names.length - 1).join(".");
+};
+
+function referDevFolder(root: string): string {
+    return `${root}\\product\\program\\${projectKind.value.toLowerCase()}`;
+}
+
+function referQcFolder(root: string): string {
+    return `${root}\\validation\\program\\${projectKind.value.toLowerCase()}`;
+}
+
+function projectCode(path: string): string {
+    if (path === undefined) {
+        return ""
+    }
+    let paths = path.split("\\");
+    let main = 0;
+    let supp = 0;
+    for (let i = 0; i < paths.length; i++) {
+        if (paths[i] === "Studies") {
+            main = i + 1;
+            supp = main + 1;
+            break;
+        }
+    }
+    return `${paths[main]}-${paths[supp]}`.toUpperCase();
+}
+
+function reset() {
+    rootPath.value = "";
+    configPath.value = "";
+    configs.value = [];
+    project.value = "";
+    groupDev.value = true;
+    groupQc.value = false;
+    engine.value = engines.value[0];
+    projectKind.value = ProjectKind.SDTM;
+    devDestinationPath.value = "";
+    qcDestinationPath.value = "";
+}
+
+async function openDirectory(path: string) {
+    await invoke(
+        "open_directory",
+        {
+            path,
+        },
+    );
+}
+
+async function submit() {
+    const param = {
+        project: project.value,
+        engine: engine.value,
+        config: configPath.value,
+        kind: projectKind.value,
+        dev: groupDev.value,
+        qc: groupQc.value,
+        dev_dest: devDestinationPath.value,
+        qc_dest: qcDestinationPath.value
+    };
+    loading.value = true
+    try {
+        await createFromTemplate(param);
+    } catch (error) {
+        ElNotification({
+            title: 'Error',
+            message: `${error}`,
+            type: 'error',
+        })
+        return
+    }
+    loading.value = false;
+    showCompleteDialag.value = true;
+}
+
+async function rootSelect() {
+    const dir = (await open({
+        directory: true,
+    })) as string;
+    if (dir.length > 0) {
+        rootPath.value = dir;
+    }
+}
+async function devDestinationSelect() {
+    const dir = (await open({
+        directory: true,
+    })) as string;
+    if (dir.length > 0) {
+        devDestinationPath.value = dir;
+    }
+}
+async function qcDestinationSelect() {
+    const dir = (await open({
+        directory: true,
+    })) as string;
+    if (dir.length > 0) {
+        qcDestinationPath.value = dir;
+    }
+}
+</script>
+
+<template>
+    <el-container>
+        <el-form label-position="left" label-width="100px" style="margin: 30px; width: 100%;">
+            <el-form-item label="Type">
+                <el-radio-group v-model="projectKind" @change="update">
+                    <el-radio-button :label="ProjectKind.SDTM" />
+                    <el-radio-button :label="ProjectKind.ADaM" />
+                    <el-radio-button :label="ProjectKind.TFLs" />
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item label="Project Root">
+                <el-col :span="2">
+                    <el-button @click="rootSelect" type="primary">Select</el-button>
+                </el-col>
+                <el-col :span="15">
+                    <el-input v-model="rootPath" clearable style="width: 400px;" />
+                </el-col>
+            </el-form-item>
+            <el-form-item label="Configuration">
+                <el-select v-model="configPath" style="width: 480px" default-first-option>
+                    <el-option v-for=" config  in  configs " :label="extractFileName(config)" :value="config" />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="Project Code">
+                <el-input v-model="project" clearable style="width: 480px;" />
+            </el-form-item>
+            <el-form-item label="Code Group">
+                <el-checkbox v-model="groupDev" label="Dev" size="default" />
+                <el-checkbox v-model="groupQc" label="Qc" size="default" />
+            </el-form-item>
+            <el-form-item label="SAS Version">
+                <el-select v-model="engine" style="width: 480px" default-first-option>
+                    <el-option v-for=" engine  in  engines " :key="engine" :label="engine" :value="engine" />
+                </el-select>
+            </el-form-item>
+            <el-form-item v-if="groupDev" label="Dev Folder">
+                <el-col :span="2">
+                    <el-button type="primary" @click="devDestinationSelect">Select</el-button>
+                </el-col>
+                <el-col :span="15">
+                    <el-input v-model="devDestinationPath" clearable style="width: 400px;" />
+                </el-col>
+            </el-form-item>
+            <el-form-item v-if="groupQc" label="Qc Folder">
+                <el-col :span="2">
+                    <el-button type="primary" @click="qcDestinationSelect">Select</el-button>
+                </el-col>
+                <el-col :span="15">
+                    <el-input v-model="qcDestinationPath" clearable style="width: 400px;" />
+                </el-col>
+            </el-form-item>
+            <el-form-item>
+                <el-button :disabled="readyToSubmit()" type="primary" @click="submit">Submit</el-button>
+                <el-button @click="reset">Reset</el-button>
+            </el-form-item>
+        </el-form>
+    </el-container>
+    <el-dialog v-model="showCompleteDialag" title="Complete" draggable>
+        <el-descriptions :column="2" direction="vertical" border>
+            <el-descriptions-item label="Project Code">{{ project }}</el-descriptions-item>
+            <el-descriptions-item label="SAS Version">{{ engine }}</el-descriptions-item>
+            <el-descriptions-item v-if="groupDev" label="Dev Directory" :span="2">
+                <el-button type="primary" link style="width: 400px; justify-content: left"
+                    @click="() => { openDirectory(devDestinationPath) }">
+                    {{ devDestinationPath }}
+                </el-button>
+            </el-descriptions-item>
+            <el-descriptions-item v-if="groupQc" label="Qc Directory" :span="2">
+                <el-button type="primary" link style="width: 400px; justify-content: left;"
+                    @click="() => { openDirectory(qcDestinationPath) }">
+                    {{ qcDestinationPath }}
+                </el-button>
+            </el-descriptions-item>
+        </el-descriptions>
+        <el-button type="primary" @click="() => { showCompleteDialag = false }"
+            style="margin-left: 540px; margin-top: 20px;">Close</el-button>
+    </el-dialog>
+</template>
+
+<style>
+.el-button {
+    width: 70px;
+}
+</style>

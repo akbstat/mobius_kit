@@ -9,6 +9,10 @@ function gotoInspector() {
   router.push("/project");
 }
 
+function gotoScaffold() {
+  router.push("/scaffold");
+}
+
 </script>
 
 <template>
@@ -38,11 +42,11 @@ function gotoInspector() {
   <el-container style="padding: 40px;">
     <el-row style="width: 100%">
       <el-col :span="11">
-        <el-card style="height: 240px;">
+        <el-card style="height: 240px;" @click="gotoScaffold">
           <template #header>
-            <span>...</span>
+            <span>Scaffold</span>
           </template>
-          <div>...</div>
+          <div>A Tool for generating sas code template</div>
         </el-card>
       </el-col>
       <el-col :span="1">

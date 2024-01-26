@@ -17,7 +17,7 @@ import { RouterView } from 'vue-router';
             <el-menu-item index="/project">Inspector</el-menu-item>
             <!-- <el-menu-item index="/combiner">Combiner</el-menu-item> -->
             <el-menu-item index="/divider">Divider</el-menu-item>
-            <!-- <el-menu-item index="/project">Project</el-menu-item> -->
+            <el-menu-item index="/scaffold">Scaffold</el-menu-item>
           </el-menu>
         </el-scrollbar>
       </el-aside>

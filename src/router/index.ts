@@ -4,6 +4,7 @@ import Inspector from "../views/inspector/Inspector.vue";
 import Project from "../views/project/Project.vue";
 import Combiner from "../views/Combiner.vue"
 import Divider from "../views/divider/Divider.vue"
+import Scaffold from "../views/Scaffold.vue"
 
 
 const routes: RouteRecordRaw[] = [
@@ -31,6 +32,11 @@ const routes: RouteRecordRaw[] = [
         path: "/project",
         name: "project",
         component: Project,
+    },
+    {
+        path: "/scaffold",
+        name: "scaffold",
+        component: Scaffold,
     }
 ];
 

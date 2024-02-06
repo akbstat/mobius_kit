@@ -1,17 +1,20 @@
-use std::path::Path;
+use std::{
+    env,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use scaffold::{Generator, Group, Kind, Param};
 use serde::{Deserialize, Serialize};
 
-// const TEMPLATE_DIR: &str = r"\\180.0.0.1\Data\Utility\tools\MobiusKit\scaffold\template";
-const TEMPLATE_DIR: &str = r"D:\projects\rusty\mobius_kit\.mocks\code\template";
+const TEMPLATE_DIR: &str = r"\\180.0.0.1\Data\Utility\tools\MobiusKit\scaffold\template";
 
 #[tauri::command]
 pub fn scaffold_generate(param: String) -> Result<(), String> {
     let param: Parameter = serde_json::from_str(&param).unwrap();
     let config = Path::new(&param.config);
     let kind = kind_match(&param.kind);
-    let generator = match Generator::new(config, Path::new(TEMPLATE_DIR), kind) {
+    let generator = match Generator::new(config, get_template_dir().as_path(), kind) {
         Ok(g) => g,
         Err(e) => return Err(e.to_string()),
     };
@@ -63,4 +66,17 @@ struct Parameter {
     pub qc: bool,
     pub dev_dest: String,
     pub qc_dest: String,
+}
+
+fn get_template_dir() -> PathBuf {
+    if let Ok(dir) = env::var("TEMPLATE_DIR") {
+        let p = Path::new(&dir);
+        if p.exists() && p.is_dir() {
+            PathBuf::from(p)
+        } else {
+            PathBuf::from_str(TEMPLATE_DIR).unwrap()
+        }
+    } else {
+        PathBuf::from_str(TEMPLATE_DIR).unwrap()
+    }
 }

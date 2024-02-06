@@ -72,6 +72,8 @@ const popContent = (status: string): string => {
             return "The item did not pass validation";
         case "NotApplicable":
             return "Validation items are not applicable";
+        case "NotStart":
+            return "Seems like code file of item is just initialized by template tools";
     }
     return "default"
 };

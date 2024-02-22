@@ -5,6 +5,7 @@ mod combiner;
 mod divider;
 mod inspector;
 mod scaffold;
+mod void_probe;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -28,6 +29,11 @@ fn main() {
             divider::open_directory,
             divider::list_rtfs,
             scaffold::scaffold_generate,
+            void_probe::probe,
+            void_probe::task_progress,
+            void_probe::get_probe_result,
+            void_probe::remove_temp_dir,
+            void_probe::open_pdf_page,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

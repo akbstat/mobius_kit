@@ -13,6 +13,10 @@ function gotoScaffold() {
   router.push("/scaffold");
 }
 
+function gotoVoidProbe() {
+  router.push("/void-probe");
+}
+
 </script>
 
 <template>
@@ -52,11 +56,11 @@ function gotoScaffold() {
       <el-col :span="1">
       </el-col>
       <el-col :span="11">
-        <el-card style="height: 240px;">
+        <el-card style="height: 240px;" @click="gotoVoidProbe">
           <template #header>
-            <span>...</span>
+            <span>Void Probe</span>
           </template>
-          <div>...</div>
+          <div>Finding out page break in outputs</div>
         </el-card>
       </el-col>
     </el-row>

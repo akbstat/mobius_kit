@@ -25,6 +25,7 @@ serde_json = "1.0"
 inspector = { path = "../../inspector" }
 rtf_divider = { path = "../../rtf_divider" }
 scaffold = { path = "../../scaffold" }
+void_probe = { path = "../../void_probe" }
 anyhow = "1.0.77"
 
 [features]

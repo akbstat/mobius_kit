@@ -5,6 +5,7 @@ import Project from "../views/project/Project.vue";
 import Combiner from "../views/Combiner.vue"
 import Divider from "../views/divider/Divider.vue"
 import Scaffold from "../views/Scaffold.vue"
+import VoidProbe from "../views/voidprobe/VoidProbe.vue"
 
 
 const routes: RouteRecordRaw[] = [
@@ -37,6 +38,11 @@ const routes: RouteRecordRaw[] = [
         path: "/scaffold",
         name: "scaffold",
         component: Scaffold,
+    },
+    {
+        path: "/void-probe",
+        name: "void-probe",
+        component: VoidProbe,
     }
 ];
 

@@ -6,6 +6,7 @@ import { debounce } from "lodash";
 // import { BaseDirectory, readDir } from "@tauri-apps/api/fs";
 import { Rtf, rtfExtention } from "./rtf";
 import { invoke } from "@tauri-apps/api/tauri";
+import OutputTag from "../../components/OutputTag.vue";
 
 
 const configPagesizePageVisible = ref(false);
@@ -20,7 +21,6 @@ const multipleTableRef = ref<InstanceType<typeof ElTable>>()
 
 function handleSelectionChange(val: Rtf[]) {
     selected_rtfs.value = val;
-    console.log(selected_rtfs.value);
 }
 
 function clearSelections(rows?: Rtf[]) {
@@ -121,8 +121,9 @@ watch(directory, debounce(updateRtfList, 100));
             </el-table-column>
             <el-table-column label="Type" min-width="15%">
                 <template #default="scope">
-                    <el-tag :style="{ backgroundColor: scope.row.color, color: 'white', width: 70 + 'px' }">{{
-                        scope.row.kind }}</el-tag>
+                    <OutputTag :type="scope.row.kind"></OutputTag>
+                    <!-- <el-tag :style="{ backgroundColor: scope.row.color, color: 'white', width: 70 + 'px' }">{{
+                        scope.row.kind }}</el-tag> -->
                 </template>
             </el-table-column>
             <el-table-column label="File Size" min-width="15%" sortable align="right" sort-by="size">
@@ -149,8 +150,9 @@ watch(directory, debounce(updateRtfList, 100));
                 </el-table-column>
                 <el-table-column label="Type" width="200px">
                     <template #default="scope">
-                        <el-tag :style="{ backgroundColor: scope.row.color, color: 'white', width: 70 + 'px' }">{{
-                            scope.row.kind }}</el-tag>
+                        <OutputTag :type="scope.row.kind" />
+                        <!-- <el-tag :style="{ backgroundColor: scope.row.color, color: 'white', width: 70 + 'px' }">{{
+                            scope.row.kind }}</el-tag> -->
                     </template>
                 </el-table-column>
             </el-table>

@@ -3,11 +3,30 @@
 // Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
 // import Greet from "./components/Greet.vue";
 import { RouterView } from 'vue-router';
+import { currentUser } from "./api/mobiuskit/user";
+import { onMounted, ref } from 'vue';
+
+const user = ref("")
+
+onMounted(async () => { user.value = await currentUser(); })
 </script>
 
 <template>
   <el-container class="layout-container">
-    <el-header style="text-align: right; font-size: 12px">
+    <el-header style="text-align: right; padding: 0px 0px 0px 0px">
+      <el-container style="height: 100%; color: #409EFF; background-color: #18222c;">
+        <el-aside width="15%"
+          style="font-size: 20px; text-align: center; height: 100%; padding-top: 15px; color: #409EFF; background-color: #18222c;">AkesoBio
+          - Möbius</el-aside>
+        <el-main style="padding: 15px;">
+          <div class="toolbar">
+            <el-icon style="margin-right: 8px; margin-top: 1px">
+              <ElementPlus />
+            </el-icon>
+            <span>{{ user }}</span>
+          </div>
+        </el-main>
+      </el-container>
     </el-header>
     <el-container>
       <el-aside width="15%" height="100%">

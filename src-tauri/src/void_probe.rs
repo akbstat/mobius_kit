@@ -54,7 +54,9 @@ pub fn get_probe_result(path: String) -> Result<String, String> {
 pub fn remove_temp_dir(path: String) -> Result<(), String> {
     let dest_dir = PathBuf::from(Path::new(&path)).join(".temp");
     if dest_dir.exists() {
-        fs::remove_dir_all(dest_dir).unwrap();
+        if fs::remove_dir_all(dest_dir).is_err() {
+            return Err("Failed to clear temp directory, please try to kill the \"Microsoft Word\" or \"WPS Printer\" in task manager and retry ".into());
+        };
     }
     Ok(())
 }

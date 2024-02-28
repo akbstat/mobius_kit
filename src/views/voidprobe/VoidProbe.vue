@@ -85,11 +85,20 @@ function openpageBreakDetail(detail: Result) {
 }
 
 async function run() {
+    try {
+        await removeTempDir(directory.value);
+    } catch (error) {
+        ElNotification({
+            title: "Error",
+            message: `${error}`,
+            type: "error",
+        })
+        return;
+    }
     const fullpaths = selectedFiles.value.map(e => e.path);
     result.value = [];
     loading.value = true;
     progress.value = 0;
-    await removeTempDir(directory.value);
     probe(fullpaths);
 
     const updateProgress = async () => {
@@ -132,7 +141,7 @@ async function selectDirectory() {
     }
 }
 
-watch(directory, debounce(async () => {
+async function list_rtfs() {
     if (directory.value.length === 0) {
         files.value = [];
         return;
@@ -152,7 +161,9 @@ watch(directory, debounce(async () => {
         return;
     }
     files.value = result;
-}, 100));
+}
+
+watch(directory, debounce(list_rtfs, 100));
 
 
 
@@ -163,7 +174,14 @@ watch(directory, debounce(async () => {
         <el-button type="primary" plain @click="selectDirectory">Select</el-button>
         <el-button type="primary" plain @click="showResultDialog">Result</el-button>
         <el-input v-model="directory" style="padding-left: 10px;" placeholder="Please input or select one directory"
-            clearable></el-input>
+            clearable>
+        </el-input>
+        <el-button type="primary" size="small" @click="list_rtfs" style="height: 30px;width: 40px; margin-left: 10px;"
+            plain>
+            <el-icon>
+                <Refresh />
+            </el-icon>
+        </el-button>
     </el-container>
     <el-progress v-if="loading" :text-inside="true" style="padding: 5px;"
         :percentage="(() => { return Math.round(progress * 100) / 100 })()" :stroke-width="18">
@@ -187,7 +205,7 @@ watch(directory, debounce(async () => {
         <el-button type="primary" plain @click="run">Run</el-button>
         <el-button type="primary" plain @click="clear">Clear</el-button>
     </el-container>
-    <el-dialog v-model="resultShow" title="Result" draggable>
+    <el-dialog v-model="resultShow" title="Result" draggable style="width: 80%">
         <el-button v-if="!positiveResultOnly" type="primary" plain @click="positiveResultOnlySwtich"
             style="width: 150px;">Positive Result
             Only</el-button>
@@ -230,10 +248,6 @@ watch(directory, debounce(async () => {
 <style>
 .el-table .error-row {
     --el-table-tr-bg-color: var(--el-color-danger-light-3);
-}
-
-.el-dialog {
-    width: 80%;
 }
 </style>
 

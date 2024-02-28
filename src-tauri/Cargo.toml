@@ -27,6 +27,8 @@ rtf_divider = { path = "../../rtf_divider" }
 scaffold = { path = "../../scaffold" }
 void_probe = { path = "../../void_probe" }
 anyhow = "1.0.77"
+serde_yaml = "0.9.32"
+winapi = { version = "0.3.9", features = ["winbase"] }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

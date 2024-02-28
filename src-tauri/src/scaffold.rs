@@ -69,7 +69,7 @@ struct Parameter {
 }
 
 fn get_template_dir() -> PathBuf {
-    if let Ok(dir) = env::var("TEMPLATE_DIR") {
+    if let Ok(dir) = env::var("MK_TEMPLATE") {
         let p = Path::new(&dir);
         if p.exists() && p.is_dir() {
             PathBuf::from(p)

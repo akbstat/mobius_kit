@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { File } from './file';
 import { Result } from './result';
 import { open } from '@tauri-apps/api/dialog';
@@ -8,12 +8,15 @@ import { debounce } from 'lodash';
 import { invoke } from '@tauri-apps/api/tauri';
 import { ElNotification } from 'element-plus';
 import { probe, getProgress, getProbeResult, removeTempDir, openPDF } from "../../api/void_probe/probe";
+import { useVoidProbeStore } from "../../store/voidprobe";
+import { storeToRefs } from 'pinia';
 
-const directory = ref("");
+const store = useVoidProbeStore();
+const { directory, result } = storeToRefs(store);
 const files = ref<File[]>([]);
 const selectedFiles = ref<File[]>([]);
 const resultShow = ref(false);
-const result = ref<Result[]>([]);
+// const result = ref<Result[]>([]);
 const loading = ref(false);
 const progress = ref(0);
 const positiveResultOnly = ref(false);
@@ -165,7 +168,7 @@ async function list_rtfs() {
 
 watch(directory, debounce(list_rtfs, 100));
 
-
+onMounted(list_rtfs);
 
 </script>
 

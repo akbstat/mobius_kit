@@ -79,7 +79,7 @@ onMounted(async () => { user.value = await currentUser(); })
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  height: 90%;
   right: 20px;
 }
 </style>

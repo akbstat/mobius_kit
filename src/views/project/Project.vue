@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { open } from '@tauri-apps/api/dialog';
-import { Item, ProjectKind } from "./project";
+import { storeToRefs } from 'pinia';
+import { ProjectKind } from "./project";
 import { fetchSdtm, fetchAdam, fetchTfls, inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { ElNotification } from "element-plus";
 import { EpPropMergeType } from "element-plus/es/utils/vue/props/index.mjs";
+import { useInspector } from "../../store/inspector";
 import Timeline from "../../components/Timeline.vue";
 
-const configPageShow = ref(true);
+const store = useInspector();
+const configPageShow = ref(false);
 const configConfirmShow = ref(false);
-const project = ref<Item[]>();
+// const project = ref<Item[]>();
+const { project } = storeToRefs(store);
 const projectKind = ref<ProjectKind>(ProjectKind.SDTM);
 const form = reactive({
     root: "",
@@ -156,10 +160,16 @@ async function submit() {
         })
         tableLoading.value = false;
     }
-    console.log(data)
     project.value = data.items;
     tableLoading.value = false;
 }
+
+onMounted(() => {
+    if (project.value.length === 0) {
+        configPageShow.value = true;
+    }
+});
+
 </script>
 
 <template>

@@ -194,7 +194,7 @@ async function qcDestinationSelect() {
             </el-form-item>
             <el-form-item label="Project Root">
                 <el-col :span="2">
-                    <el-button @click="rootSelect" type="primary">Select</el-button>
+                    <el-button @click="rootSelect" type="primary" plain>Select</el-button>
                 </el-col>
                 <el-col :span="15">
                     <el-input v-model="rootPath" clearable style="width: 400px;" />
@@ -219,7 +219,7 @@ async function qcDestinationSelect() {
             </el-form-item>
             <el-form-item v-if="groupDev" label="Dev Folder">
                 <el-col :span="2">
-                    <el-button type="primary" @click="devDestinationSelect">Select</el-button>
+                    <el-button type="primary" @click="devDestinationSelect" plain>Select</el-button>
                 </el-col>
                 <el-col :span="15">
                     <el-input v-model="devDestinationPath" clearable style="width: 400px;" />
@@ -227,15 +227,15 @@ async function qcDestinationSelect() {
             </el-form-item>
             <el-form-item v-if="groupQc" label="Qc Folder">
                 <el-col :span="2">
-                    <el-button type="primary" @click="qcDestinationSelect">Select</el-button>
+                    <el-button type="primary" @click="qcDestinationSelect" plain>Select</el-button>
                 </el-col>
                 <el-col :span="15">
                     <el-input v-model="qcDestinationPath" clearable style="width: 400px;" />
                 </el-col>
             </el-form-item>
             <el-form-item>
-                <el-button :disabled="readyToSubmit()" type="primary" @click="submit">Submit</el-button>
-                <el-button @click="reset">Reset</el-button>
+                <el-button :disabled="readyToSubmit()" type="primary" @click="submit" plain>Submit</el-button>
+                <el-button @click="reset" plain>Reset</el-button>
             </el-form-item>
         </el-form>
     </el-container>
@@ -257,12 +257,17 @@ async function qcDestinationSelect() {
             </el-descriptions-item>
         </el-descriptions>
         <el-button type="primary" @click="() => { showCompleteDialag = false }"
-            style="margin-left: 540px; margin-top: 20px;">Close</el-button>
+            style="margin-left: 540px; margin-top: 20px;" plain>Close</el-button>
     </el-dialog>
 </template>
 
 <style>
 .el-button {
     width: 70px;
+}
+
+.el-radio-button__original-radio:checked+.el-radio-button__inner {
+    background-color: #18222c;
+    color: #409EFF;
 }
 </style>

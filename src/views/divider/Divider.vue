@@ -108,7 +108,7 @@ watch(directory, debounce(updateRtfList, 100));
 
 <template>
     <el-container style="padding:15px">
-        <el-button @click="selectDirectory" type="primary" style="width: 100px;">Select</el-button>
+        <el-button @click="selectDirectory" type="primary" style="width: 100px;" plain>Select</el-button>
         <el-input v-model="directory" style="padding-left: 10px;" placeholder="Please input or select one directory"
             clearable />
     </el-container>
@@ -136,8 +136,8 @@ watch(directory, debounce(updateRtfList, 100));
         </el-table>
     </el-container>
     <el-container style="padding:15px">
-        <el-button @click="configPagesizeShow" type="primary" style="width: 100px; ">Divide</el-button>
-        <el-button @click="clearSelections()" type="primary" style="width: 100px; ">Clear</el-button>
+        <el-button @click="configPagesizeShow" type="primary" style="width: 100px; " plain>Divide</el-button>
+        <el-button @click="clearSelections()" type="primary" style="width: 100px; " plain>Clear</el-button>
     </el-container>
     <el-dialog v-model="configPagesizePageVisible" title="Configuration Confirm" draggable>
         <span style="font-size: 18px; margin-right: 30px;">Pagesize</span>
@@ -158,14 +158,15 @@ watch(directory, debounce(updateRtfList, 100));
             </el-table>
         </el-container>
         <el-container style="padding-top: 30px;">
-            <el-button @click="divide" type="primary" style="width: 100px; ">Divide</el-button>
-            <el-button @click="() => { configPagesizePageVisible = false; }" type="primary"
-                style="width: 100px; ">Cancel</el-button>
+            <el-button @click="divide" type="primary" style="width: 100px; " plain>Divide</el-button>
+            <el-button @click="() => { configPagesizePageVisible = false; }" type="primary" style="width: 100px; "
+                plain>Cancel</el-button>
         </el-container>
     </el-dialog>
     <el-dialog v-model="resultPageVisible" title="Divide Complete" draggable>
-        <el-button @click="openResultDirectory" type="primary" style="width: 150px; margin-left: 240px;">Go to
+        <el-button @click="openResultDirectory" type="primary" style="width: 150px; margin-left: 240px;" plain>Go to
             Directory</el-button>
-        <el-button @click="() => { resultPageVisible = false; }" type="primary" style="width: 150px; ">Cancel</el-button>
+        <el-button @click="() => { resultPageVisible = false; }" type="primary" style="width: 150px; "
+            plain>Cancel</el-button>
     </el-dialog>
 </template>

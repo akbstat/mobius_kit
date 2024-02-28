@@ -257,7 +257,7 @@ async function submit() {
                         </el-button>
                     </div>
                     <div>
-                        <el-button type="primary" size="small" style="margin-top: 10px;width: 50px;"
+                        <el-button type="primary" size="small" style="margin-top: 10px;width: 50px; plain"
                             @click="() => configPageShow = true" plain>
                             <el-icon>
                                 <FolderOpened />
@@ -279,7 +279,7 @@ async function submit() {
             </el-form-item>
             <el-form-item label="Directory">
                 <el-col :span="3">
-                    <el-button type="primary" @click="selectDirectory">Select</el-button>
+                    <el-button type="primary" @click="selectDirectory" plain>Select</el-button>
                 </el-col>
                 <el-col :span="1"></el-col>
                 <el-col :span="19">
@@ -287,8 +287,8 @@ async function submit() {
                 </el-col>
             </el-form-item>
         </el-form>
-        <el-button type="primary" style="margin:30px 0px 0px 438px" @click="projectPath">Confirm</el-button>
-        <el-button style="margin:30px 0px 0px 10px" @click="() => configPageShow = false">Cancel</el-button>
+        <el-button type="primary" style="margin:30px 0px 0px 438px" @click="projectPath" plain>Confirm</el-button>
+        <el-button style="margin:30px 0px 0px 10px" @click="() => configPageShow = false" plain>Cancel</el-button>
     </el-dialog>
     <el-dialog v-model="configConfirmShow" draggable title="Configruation Confirm" style="width: 510px">
         <el-form label-position="left" label-width="90px" :model="form">
@@ -307,11 +307,11 @@ async function submit() {
                 </el-select>
             </el-form-item>
         </el-form>
-        <el-button type="primary" style="margin:30px 0px 0px 210px" @click="submit">Confirm</el-button>
+        <el-button type="primary" style="margin:30px 0px 0px 210px" @click="submit" plain>Confirm</el-button>
         <el-button type="primary" style="margin:30px 0px 0px 10px"
-            @click="() => { configConfirmShow = false; configPageShow = true; form.config = '' }">Back</el-button>
-        <el-button style="margin:30px 0px 0px 10px"
-            @click="() => { configConfirmShow = false; form.config = '' }">Cancel</el-button>
+            @click="() => { configConfirmShow = false; configPageShow = true; form.config = '' }" plain>Back</el-button>
+        <el-button style="margin:30px 0px 0px 10px" @click="() => { configConfirmShow = false; form.config = '' }"
+            plain>Cancel</el-button>
     </el-dialog>
 </template>
 

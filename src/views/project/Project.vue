@@ -114,7 +114,7 @@ async function projectPath() {
         }
         pathForInfer.value = form.root;
         if (configFileList.value.length > 0) {
-            form.config = configFileList.value[0];
+            form.config = configFileList.value[configFileList.value.length - 1];
         }
         configPageShow.value = false;
         configConfirmShow.value = true;

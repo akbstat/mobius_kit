@@ -33,7 +33,7 @@ function update() {
         case ProjectKind.SDTM:
             inferPathSdtm(rootPath.value).then(data => {
                 ({ config: configs.value, root: rootPath.value } = JSON.parse(data));
-                configPath.value = configs.value.length > 0 ? configs.value[0] : "";
+                configPath.value = configs.value.length > 0 ? configs.value[configs.value.length - 1] : "";
                 project.value = projectCode(rootPath.value);
                 devDestinationPath.value = referDevFolder(rootPath.value);
                 qcDestinationPath.value = referQcFolder(rootPath.value);
@@ -42,7 +42,7 @@ function update() {
         case ProjectKind.ADaM:
             inferPathAdam(rootPath.value).then(data => {
                 ({ config: configs.value, root: rootPath.value } = JSON.parse(data));
-                configPath.value = configs.value.length > 0 ? configs.value[0] : "";
+                configPath.value = configs.value.length > 0 ? configs.value[configs.value.length - 1] : "";
                 project.value = projectCode(rootPath.value);
                 devDestinationPath.value = referDevFolder(rootPath.value);
                 qcDestinationPath.value = referQcFolder(rootPath.value);
@@ -51,7 +51,7 @@ function update() {
         case ProjectKind.TFLs:
             inferPathTfls(rootPath.value).then(data => {
                 ({ config: configs.value, root: rootPath.value } = JSON.parse(data));
-                configPath.value = configs.value.length > 0 ? configs.value[0] : "";
+                configPath.value = configs.value.length > 0 ? configs.value[configs.value.length - 1] : "";
                 project.value = projectCode(rootPath.value);
                 devDestinationPath.value = referDevFolder(rootPath.value);
                 qcDestinationPath.value = referQcFolder(rootPath.value);

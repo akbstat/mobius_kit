@@ -55,6 +55,14 @@ function gotoVoidProbe() {
       </el-col>
       <el-col :span="1">
       </el-col>
+      <!-- <el-col :span="11">
+        <el-card style="height: 240px;">
+          <template #header>
+            <span>...</span>
+          </template>
+          <div>...</div>
+        </el-card>
+      </el-col> -->
       <el-col :span="11">
         <el-card style="height: 240px;" @click="gotoVoidProbe">
           <template #header>

@@ -4,13 +4,14 @@ use std::{
     str::FromStr,
 };
 
-use scaffold::{Generator, Group, Kind, Param};
+use scaffold::{FileResult, Generator, Group, Kind, Param};
 use serde::{Deserialize, Serialize};
 
 const TEMPLATE_DIR: &str = r"\\180.0.0.1\Data\Utility\tools\MobiusKit\scaffold\template";
 
 #[tauri::command]
-pub fn scaffold_generate(param: String) -> Result<(), String> {
+pub fn scaffold_generate(param: String) -> Result<String, String> {
+    let mut result = GenerateResult::default();
     let param: Parameter = serde_json::from_str(&param).unwrap();
     let config = Path::new(&param.config);
     let kind = kind_match(&param.kind);
@@ -25,9 +26,10 @@ pub fn scaffold_generate(param: String) -> Result<(), String> {
                 study: param.project.clone(),
                 engine: param.engine.clone(),
                 group: Group::Dev,
+                custom_code: param.custom_code.clone(),
             },
         ) {
-            Ok(_) => {}
+            Ok(data) => result.dev = data,
             Err(e) => return Err(e.to_string()),
         }
     }
@@ -38,19 +40,21 @@ pub fn scaffold_generate(param: String) -> Result<(), String> {
                 study: param.project.clone(),
                 engine: param.engine.clone(),
                 group: Group::Qc,
+                custom_code: param.custom_code.clone(),
             },
         ) {
-            Ok(_) => {}
+            Ok(data) => result.qc = data,
             Err(e) => return Err(e.to_string()),
         }
     }
-    Ok(())
+    Ok(serde_json::to_string(&result).unwrap())
 }
 
 fn kind_match(k: &str) -> Kind {
     if k.eq("SDTM") {
         return Kind::SDTM;
-    } else if k.eq("ADaM") {
+    }
+    if k.eq("ADaM") {
         return Kind::ADAM;
     }
     Kind::TFL
@@ -66,6 +70,13 @@ struct Parameter {
     pub qc: bool,
     pub dev_dest: String,
     pub qc_dest: String,
+    pub custom_code: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+struct GenerateResult {
+    pub dev: Vec<FileResult>,
+    pub qc: Vec<FileResult>,
 }
 
 fn get_template_dir() -> PathBuf {

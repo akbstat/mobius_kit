@@ -1,8 +1,8 @@
 import { invoke } from '@tauri-apps/api/tauri';
 
-export async function createFromTemplate(param: Param) {
+export async function createFromTemplate(param: Param): Promise<GeneratedResult> {
     const p = JSON.stringify(param);
-    return await invoke("scaffold_generate", { "param": p });
+    return JSON.parse(await invoke("scaffold_generate", { "param": p })) as GeneratedResult;
 }
 
 export interface Param {
@@ -14,6 +14,17 @@ export interface Param {
     qc: boolean,
     dev_dest: string,
     qc_dest: string,
+    custom_code: string,
+}
+
+export interface GeneratedResult {
+    dev: FileResult[],
+    qc: FileResult[],
+}
+
+export interface FileResult {
+    name: string,
+    existed: boolean,
 }
 
 export default {

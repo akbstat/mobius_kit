@@ -3,7 +3,7 @@ import { ref, watch } from 'vue';
 import { open } from '@tauri-apps/api/dialog';
 import { debounce } from "lodash";
 import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../api/inspector/project";
-import { createFromTemplate } from "../api/scaffold/create";
+import { createFromTemplate, FileResult } from "../api/scaffold/create";
 import { invoke } from '@tauri-apps/api/tauri';
 import { ElNotification } from 'element-plus';
 
@@ -13,6 +13,7 @@ enum ProjectKind {
     TFLs = "TFL",
     UNKNOWN = ""
 }
+
 let showCompleteDialag = ref(false);
 let loading = ref(false);
 let projectKind = ref<ProjectKind>(ProjectKind.SDTM);
@@ -26,6 +27,14 @@ let engine = ref("SAS 9.4 Unicode")
 let groupDev = ref(true);
 let groupQc = ref(false);
 let engines = ref<string[]>(["SAS 9.4 Unicode", "SAS 9.4", "SAS EG 8.3"]);
+let customCodePanelShow = ref(false);
+let customCode = ref("");
+let devResultDetailPanelShow = ref(false);
+let qcResultDetailPanelShow = ref(false);
+let devResult = ref<FileResult[]>([]);
+let qcResult = ref<FileResult[]>([]);
+let devResultFilter = ref(false);
+let qcResultFilter = ref(false);
 watch(rootPath, debounce(update, 100));
 
 function update() {
@@ -119,6 +128,40 @@ function reset() {
     projectKind.value = ProjectKind.SDTM;
     devDestinationPath.value = "";
     qcDestinationPath.value = "";
+    customCode.value = "";
+}
+
+function showCustomPanel() {
+    customCodePanelShow.value = true;
+}
+
+function showDevResultDetailPanel() {
+    devResultDetailPanelShow.value = true;
+}
+
+
+function showQcResultDetailPanel() {
+    qcResultDetailPanelShow.value = true;
+}
+
+function fileTagType(f: FileResult) {
+    if (f.existed) {
+        return "info";
+    }
+    return "";
+}
+
+function showResult(result: FileResult[], filter: boolean): FileResult[] {
+    return result.filter((e: FileResult) => {
+        return filter ? (!e.existed) : true
+    });
+}
+
+function fileTagWidth(): string {
+    if (projectKind.value === ProjectKind.TFLs) {
+        return "250px";
+    }
+    return "100px";
 }
 
 async function openDirectory(path: string) {
@@ -139,11 +182,14 @@ async function submit() {
         dev: groupDev.value,
         qc: groupQc.value,
         dev_dest: devDestinationPath.value,
-        qc_dest: qcDestinationPath.value
+        qc_dest: qcDestinationPath.value,
+        custom_code: customCode.value,
     };
     loading.value = true
     try {
-        await createFromTemplate(param);
+        let result = await createFromTemplate(param);
+        devResult.value = result.dev;
+        qcResult.value = result.qc;
     } catch (error) {
         ElNotification({
             title: 'Error',
@@ -217,6 +263,9 @@ async function qcDestinationSelect() {
                     <el-option v-for=" engine  in  engines " :key="engine" :label="engine" :value="engine" />
                 </el-select>
             </el-form-item>
+            <el-form-item label="Custom Code">
+                <el-button type="primary" @click="showCustomPanel" plain>Edit</el-button>
+            </el-form-item>
             <el-form-item v-if="groupDev" label="Dev Folder">
                 <el-col :span="2">
                     <el-button type="primary" @click="devDestinationSelect" plain>Select</el-button>
@@ -244,21 +293,62 @@ async function qcDestinationSelect() {
             <el-descriptions-item label="Project Code">{{ project }}</el-descriptions-item>
             <el-descriptions-item label="SAS Version">{{ engine }}</el-descriptions-item>
             <el-descriptions-item v-if="groupDev" label="Dev Directory" :span="2">
-                <el-button type="primary" link style="width: 400px; justify-content: left"
+                <el-button type="primary" link style="width: 514px; justify-content: left"
                     @click="() => { openDirectory(devDestinationPath) }">
                     {{ devDestinationPath }}
                 </el-button>
+                <el-button type="primary" plain style="width: 60px; "
+                    @click="showDevResultDetailPanel">
+                    Details
+                </el-button>
             </el-descriptions-item>
             <el-descriptions-item v-if="groupQc" label="Qc Directory" :span="2">
-                <el-button type="primary" link style="width: 400px; justify-content: left;"
+                <el-button type="primary" link style="width: 514px; justify-content: left;"
                     @click="() => { openDirectory(qcDestinationPath) }">
                     {{ qcDestinationPath }}
+                </el-button>
+                <el-button type="primary" plain style="width: 60px; "
+                    @click="showQcResultDetailPanel">
+                    Details
                 </el-button>
             </el-descriptions-item>
         </el-descriptions>
         <el-button type="primary" @click="() => { showCompleteDialag = false }"
-            style="margin-left: 540px; margin-top: 20px;" plain>Close</el-button>
+            style="margin-left: 0px; margin-top: 20px;" plain>Close</el-button>
     </el-dialog>
+    <el-drawer v-model="customCodePanelShow" title="Custom Code"  size="500px">
+        <el-input v-model="customCode" :autosize="{ minRows: 26, maxRows: 26 }" type="textarea"/>
+    </el-drawer>
+    <el-drawer v-model="devResultDetailPanelShow" title="Details of Dev Group" size="600px">
+        <el-switch
+            style="--el-switch-on-color: #3375b9; --el-switch-off-color: #393a3c;"
+            v-model="devResultFilter"
+            class="ml-2"
+            width="80"
+            size="large"
+            inline-prompt
+            active-text="Created"
+            inactive-text="All"
+        />
+        <el-space style="margin-top: 20px;" wrap >
+            <el-tag v-for="item in showResult(devResult, devResultFilter)" :type="fileTagType(item)" :style="{width: fileTagWidth()}">{{ item.name }}</el-tag>
+        </el-space>
+    </el-drawer>
+    <el-drawer v-model="qcResultDetailPanelShow" title="Details of Qc Group" size="600px">
+        <el-switch
+            style="--el-switch-on-color: #3375b9; --el-switch-off-color: #393a3c;"
+            v-model="qcResultFilter"
+            class="ml-2"
+            width="80"
+            size="large"
+            inline-prompt
+            active-text="Created"
+            inactive-text="All"
+        />
+        <el-space style="margin-top: 20px;" wrap >
+            <el-tag v-for="item in showResult(qcResult, qcResultFilter)" :type="fileTagType(item)" :style="{width: fileTagWidth()}">{{ item.name }}</el-tag>
+        </el-space>
+    </el-drawer>
 </template>
 
 <style>

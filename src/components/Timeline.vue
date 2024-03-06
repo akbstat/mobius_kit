@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { EpPropMergeType } from 'element-plus/es/utils/index.mjs';
-import { Item, File } from '../views/project/project';
+import { Item, File } from '../views/inspector/project';
 import { reactive, ref, watch } from 'vue';
 
 interface Param {
@@ -87,7 +87,7 @@ function fileTagType(status: string): EpPropMergeType<StringConstructor, "" | "s
                         <div style="padding: 5px; border-radius: 5px">
                             <div>
                                 <el-tag :type="fileTagType(file.status)" :style="{ width: 70 + 'px' }">{{
-                                    file.kind }}</el-tag>
+                    file.kind }}</el-tag>
                             </div>
                             <div>
                                 <el-text truncated class="w-500px">{{ file.name }}</el-text>
@@ -99,4 +99,3 @@ function fileTagType(status: string): EpPropMergeType<StringConstructor, "" | "s
         </el-main>
     </el-container>
 </template>
-

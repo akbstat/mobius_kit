@@ -5,6 +5,8 @@
 import { RouterView } from 'vue-router';
 import { currentUser } from "./api/mobiuskit/user";
 import { onMounted, ref } from 'vue';
+import { routes } from "./router";
+// import 'element-plus/packages/menu-item/src/menu-item.css';
 
 const user = ref("")
 
@@ -31,13 +33,8 @@ onMounted(async () => { user.value = await currentUser(); })
     <el-container>
       <el-aside width="15%" height="100%">
         <el-scrollbar>
-          <el-menu router>
-            <el-menu-item index="/">Home</el-menu-item>
-            <el-menu-item index="/project">Inspector</el-menu-item>
-            <!-- <el-menu-item index="/combiner">Combiner</el-menu-item> -->
-            <el-menu-item index="/divider">Divider</el-menu-item>
-            <el-menu-item index="/scaffold">Scaffold</el-menu-item>
-            <el-menu-item index="/void-probe">Void Probe</el-menu-item>
+          <el-menu router> 
+            <el-menu-item v-for="route in routes" :index="route.path"> {{ route.name }}</el-menu-item>
           </el-menu>
         </el-scrollbar>
       </el-aside>

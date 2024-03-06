@@ -2,8 +2,8 @@
 import { ref, watch } from 'vue';
 import { open } from '@tauri-apps/api/dialog';
 import { debounce } from "lodash";
-import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../api/inspector/project";
-import { createFromTemplate, FileResult } from "../api/scaffold/create";
+import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
+import { createFromTemplate, FileResult } from "../../api/scaffold/create";
 import { invoke } from '@tauri-apps/api/tauri';
 import { ElNotification } from 'element-plus';
 
@@ -297,8 +297,7 @@ async function qcDestinationSelect() {
                     @click="() => { openDirectory(devDestinationPath) }">
                     {{ devDestinationPath }}
                 </el-button>
-                <el-button type="primary" plain style="width: 60px; "
-                    @click="showDevResultDetailPanel">
+                <el-button type="primary" plain style="width: 60px; " @click="showDevResultDetailPanel">
                     Details
                 </el-button>
             </el-descriptions-item>
@@ -307,8 +306,7 @@ async function qcDestinationSelect() {
                     @click="() => { openDirectory(qcDestinationPath) }">
                     {{ qcDestinationPath }}
                 </el-button>
-                <el-button type="primary" plain style="width: 60px; "
-                    @click="showQcResultDetailPanel">
+                <el-button type="primary" plain style="width: 60px; " @click="showQcResultDetailPanel">
                     Details
                 </el-button>
             </el-descriptions-item>
@@ -316,37 +314,23 @@ async function qcDestinationSelect() {
         <el-button type="primary" @click="() => { showCompleteDialag = false }"
             style="margin-left: 0px; margin-top: 20px;" plain>Close</el-button>
     </el-dialog>
-    <el-drawer v-model="customCodePanelShow" title="Custom Code"  size="500px">
-        <el-input v-model="customCode" :autosize="{ minRows: 26, maxRows: 26 }" type="textarea"/>
+    <el-drawer v-model="customCodePanelShow" title="Custom Code" size="500px">
+        <el-input v-model="customCode" :autosize="{ minRows: 26, maxRows: 26 }" type="textarea" />
     </el-drawer>
     <el-drawer v-model="devResultDetailPanelShow" title="Details of Dev Group" size="600px">
-        <el-switch
-            style="--el-switch-on-color: #3375b9; --el-switch-off-color: #393a3c;"
-            v-model="devResultFilter"
-            class="ml-2"
-            width="80"
-            size="large"
-            inline-prompt
-            active-text="Created"
-            inactive-text="All"
-        />
-        <el-space style="margin-top: 20px;" wrap >
-            <el-tag v-for="item in showResult(devResult, devResultFilter)" :type="fileTagType(item)" :style="{width: fileTagWidth()}">{{ item.name }}</el-tag>
+        <el-switch style="--el-switch-on-color: #3375b9; --el-switch-off-color: #393a3c;" v-model="devResultFilter"
+            class="ml-2" width="80" size="large" inline-prompt active-text="Created" inactive-text="All" />
+        <el-space style="margin-top: 20px;" wrap>
+            <el-tag v-for="item in showResult(devResult, devResultFilter)" :type="fileTagType(item)"
+                :style="{ width: fileTagWidth() }">{{ item.name }}</el-tag>
         </el-space>
     </el-drawer>
     <el-drawer v-model="qcResultDetailPanelShow" title="Details of Qc Group" size="600px">
-        <el-switch
-            style="--el-switch-on-color: #3375b9; --el-switch-off-color: #393a3c;"
-            v-model="qcResultFilter"
-            class="ml-2"
-            width="80"
-            size="large"
-            inline-prompt
-            active-text="Created"
-            inactive-text="All"
-        />
-        <el-space style="margin-top: 20px;" wrap >
-            <el-tag v-for="item in showResult(qcResult, qcResultFilter)" :type="fileTagType(item)" :style="{width: fileTagWidth()}">{{ item.name }}</el-tag>
+        <el-switch style="--el-switch-on-color: #3375b9; --el-switch-off-color: #393a3c;" v-model="qcResultFilter"
+            class="ml-2" width="80" size="large" inline-prompt active-text="Created" inactive-text="All" />
+        <el-space style="margin-top: 20px;" wrap>
+            <el-tag v-for="item in showResult(qcResult, qcResultFilter)" :type="fileTagType(item)"
+                :style="{ width: fileTagWidth() }">{{ item.name }}</el-tag>
         </el-space>
     </el-drawer>
 </template>

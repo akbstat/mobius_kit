@@ -1,5 +1,10 @@
 import { invoke } from "@tauri-apps/api/tauri";
 
+export interface Running {
+    running: boolean,
+    locker: string,
+}
+
 export async function probe(files: string[]): Promise<string> {
     return await invoke("probe", { paths: files });
 }
@@ -24,6 +29,12 @@ export async function openPDF(dir: string, page: number) {
     return await invoke("open_pdf_page", { path: dir, page });
 }
 
+export async function probeRunning(path: string): Promise<Running> {
+    let result = await invoke("probe_running", { path });
+    let response: Running = JSON.parse(result as string)
+    return response;
+}
+
 
 export default {
     probe,
@@ -31,4 +42,5 @@ export default {
     getProbeResult,
     removeTempDir,
     openPDF,
+    probeRunning,
 }

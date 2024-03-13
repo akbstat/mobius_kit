@@ -3,3 +3,4 @@ export interface Result {
     type: string,
     void: number[],
 }
+

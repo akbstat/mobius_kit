@@ -6,7 +6,10 @@ use std::{
     thread,
 };
 
+use serde_json::json;
 use void_probe::void_probe;
+
+use crate::user::get_user_id;
 
 #[tauri::command]
 pub fn probe(paths: Vec<String>) -> Result<(), String> {
@@ -14,7 +17,13 @@ pub fn probe(paths: Vec<String>) -> Result<(), String> {
         return Ok(());
     }
     let dest_dir = paths.first().unwrap().to_owned();
-    let dest_dir = PathBuf::from(Path::new(&dest_dir).parent().unwrap()).join(".temp\\result.json");
+    let runner = get_user_id().unwrap();
+    let temp_dir = PathBuf::from(Path::new(&dest_dir).parent().unwrap()).join(".temp");
+    if !temp_dir.exists() {
+        fs::create_dir_all(&temp_dir).unwrap();
+    }
+    fs::write(temp_dir.join("lock"), runner).unwrap();
+    let dest_dir = temp_dir.join("result.json");
     thread::spawn(move || {
         let rtfs = paths
             .iter()
@@ -26,6 +35,7 @@ pub fn probe(paths: Vec<String>) -> Result<(), String> {
             }
             Err(_) => {}
         }
+        fs::remove_file(&temp_dir.join("lock")).unwrap();
     });
     Ok(())
 }
@@ -42,6 +52,19 @@ pub fn open_pdf_page(path: String, page: usize) {
             .arg(format!("page={}", page));
         cmd.output().unwrap();
     });
+}
+
+#[tauri::command]
+pub fn probe_running(path: String) -> Result<String, String> {
+    let temp_dir = Path::new(&path).join(".temp");
+    if temp_dir.exists() {
+        let lock = temp_dir.join("lock");
+        if lock.exists() {
+            let locker = fs::read_to_string(&lock).unwrap();
+            return Ok(json!({"running": true, "locker": locker}).to_string());
+        }
+    }
+    Ok(json!({"running": false}).to_string())
 }
 
 #[tauri::command]

@@ -2,15 +2,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use config::config_env_init;
-use std::ffi::OsString;
-use std::os::windows::prelude::*;
-use winapi::um::winbase::GetUserNameW;
 
 mod combiner;
 mod config;
 mod divider;
 mod inspector;
 mod scaffold;
+mod user;
 mod void_probe;
 
 fn main() {
@@ -34,24 +32,9 @@ fn main() {
             void_probe::get_probe_result,
             void_probe::remove_temp_dir,
             void_probe::open_pdf_page,
-            get_current_username,
+            void_probe::probe_running,
+            user::get_current_username,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-#[tauri::command]
-fn get_current_username() -> Result<String, ()> {
-    let mut buffer: Vec<u16> = vec![0; 260];
-    let mut size = buffer.len() as u32;
-
-    if unsafe { GetUserNameW(buffer.as_mut_ptr(), &mut size as *mut _) } == 0 {
-        Err(())
-    } else {
-        buffer.resize(size as usize, 0);
-        unsafe {
-            buffer.set_len(size as usize - 1);
-        }
-        Ok(OsString::from_wide(&buffer).to_string_lossy().to_string())
-    }
 }

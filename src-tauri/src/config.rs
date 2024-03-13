@@ -1,12 +1,20 @@
 use serde::{Deserialize, Serialize};
 use serde_yaml;
-use std::{env, error::Error, fs, path::Path};
+use std::{
+    env,
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
+
+use crate::user::get_user_id;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub pdf_reader: String,
     pub word_worker: usize,
     pub template: String,
+    pub temp_scripts: String,
 }
 
 pub fn config_env_init() -> Result<(), Box<dyn Error>> {
@@ -21,15 +29,25 @@ pub fn config_env_init() -> Result<(), Box<dyn Error>> {
 
 /// read config yaml and export into env
 pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
+    let user_id = get_user_id().unwrap();
     let yaml = fs::read_to_string(path)?;
     let mut config: Config = serde_yaml::from_str(&yaml)?;
     env::set_var("MK_PDF_READER", config.pdf_reader);
     env::set_var("MK_TEMPLATE", config.template);
+
+    let script_path = build_temp_script_path(&config.temp_scripts, &user_id);
+    fs::create_dir_all(&script_path)?;
+
+    env::set_var("MK_TEMP_SCRIPT", script_path.to_string_lossy().to_string());
     if config.word_worker < 1 {
         config.word_worker = 5;
     }
     env::set_var("MK_WORD_WORKER", config.word_worker.to_string());
     Ok(())
+}
+
+fn build_temp_script_path(template: &str, user_id: &str) -> PathBuf {
+    PathBuf::from(Path::new(&template.replace(r"{user_id}", user_id)))
 }
 
 #[cfg(test)]
@@ -52,5 +70,15 @@ mod config_test {
             "D:\\projects\\rusty\\mobius_kit\\.mocks\\code\\template"
         );
         assert_eq!(env::var("MK_WORD_WORKER").unwrap(), "5");
+    }
+    #[test]
+    fn build_temp_script_path_test() {
+        let template = r"D:\Users\{user_id}\.temp\app\mobiuskit\void_probe";
+        let user_id = "yuqi01.chen";
+        let expect = r"D:\Users\yuqi01.chen\.temp\app\mobiuskit\void_probe";
+        assert_eq!(
+            Path::new(expect),
+            build_temp_script_path(template, user_id).as_path()
+        );
     }
 }

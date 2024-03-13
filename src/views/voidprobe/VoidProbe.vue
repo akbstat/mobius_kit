@@ -7,7 +7,7 @@ import OutputTag from "../../components/OutputTag.vue";
 import { debounce } from 'lodash';
 import { invoke } from '@tauri-apps/api/tauri';
 import { ElNotification } from 'element-plus';
-import { probe, getProgress, getProbeResult, removeTempDir, openPDF } from "../../api/void_probe/probe";
+import { probe, getProgress, getProbeResult, removeTempDir, openPDF, probeRunning } from "../../api/void_probe/probe";
 import { useVoidProbeStore } from "../../store/voidprobe";
 import { storeToRefs } from 'pinia';
 
@@ -88,6 +88,16 @@ function openpageBreakDetail(detail: Result) {
 }
 
 async function run() {
+    const isRunning = await probeRunning(directory.value);
+    if (isRunning.running === true) {
+        ElNotification({
+            title: "Error",
+            dangerouslyUseHTMLString: true,
+            message: `<i style="color:#66b1ff">${directory.value}</i> <br /> is running by <i style="color:#f78989">${isRunning.locker}</i>, please wait and try again later`,
+            type: "error",
+        })
+        return;
+    }
     try {
         await removeTempDir(directory.value);
     } catch (error) {
@@ -253,4 +263,3 @@ onMounted(list_rtfs);
     --el-table-tr-bg-color: var(--el-color-danger-light-3);
 }
 </style>
-

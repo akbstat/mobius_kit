@@ -17,6 +17,7 @@ declare module 'vue' {
     ElDescriptionsItem: typeof import('element-plus/es')['ElDescriptionsItem']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDrawer: typeof import('element-plus/es')['ElDrawer']
+    ElDrower: typeof import('element-plus/es')['ElDrower']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElHeader: typeof import('element-plus/es')['ElHeader']
@@ -43,9 +44,11 @@ declare module 'vue' {
     ElText: typeof import('element-plus/es')['ElText']
     ElTimeline: typeof import('element-plus/es')['ElTimeline']
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
+    InspectorItem: typeof import('./src/components/InspectorItem.vue')['default']
     OutputTag: typeof import('./src/components/OutputTag.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TableFilter: typeof import('./src/components/TableFilter.vue')['default']
     Timeline: typeof import('./src/components/Timeline.vue')['default']
   }
   export interface ComponentCustomProperties {

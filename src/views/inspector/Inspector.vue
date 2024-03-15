@@ -138,6 +138,7 @@ async function submit() {
     project.value = data.items;
     itemShow.value = project.value;
     tableLoading.value = false;
+    itemFilter.value = "";
 }
 
 watch(pathForInfer, debounce(projectPath, 100));

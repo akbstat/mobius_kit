@@ -1,8 +1,11 @@
 import { defineStore } from "pinia";
-import { Item } from '../views/inspector/project';
+import { ProjectKind } from "../views/inspector/project";
 
 export const useInspector = defineStore("inspector", {
     state: () => ({
-        project: [] as Item[]
+        config: "",
+        configFileList: [] as string[],
+        root: "",
+        projectKind: ProjectKind.SDTM
     }),
 });

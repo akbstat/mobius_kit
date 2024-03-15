@@ -33,7 +33,7 @@ onMounted(async () => { user.value = await currentUser(); })
     <el-container>
       <el-aside width="15%" height="100%">
         <el-scrollbar>
-          <el-menu router> 
+          <el-menu router>
             <el-menu-item v-for="route in routes" :index="route.path"> {{ route.name }}</el-menu-item>
           </el-menu>
         </el-scrollbar>

@@ -7,11 +7,15 @@ import { fetchSdtm, fetchAdam, fetchTfls, inferPathAdam, inferPathSdtm, inferPat
 import { ElNotification } from "element-plus";
 import { useInspector } from "../../store/inspector";
 import InspectorItem from "../../components/InspectorItem.vue";
+import InspectorSummary from "../../components/InspectorSummary.vue";
+import InspectorGauge from "../../components/InspectorGauge.vue";
 import { debounce } from "lodash";
+import { Histogram } from "@element-plus/icons-vue";
 
 const store = useInspector();
 
 const configPageShow = ref(false);
+const summaryPageShow = ref(false);
 const itemFilter = ref("");
 const { config, root, projectKind, configFileList } = storeToRefs(store);
 const project = ref<Item[]>([]);
@@ -169,7 +173,7 @@ onMounted(() => {
 
 <template>
     <el-container style="padding:5px">
-        <div style="width: 91.5%;">
+        <div style="width: 86.5%;">
             <el-radio-group v-model="projectKind">
                 <el-radio-button :label="ProjectKind.SDTM" />
                 <el-radio-button :label="ProjectKind.ADaM" />
@@ -185,6 +189,11 @@ onMounted(() => {
             <el-button type="primary" style="width: 40px;" @click="() => configPageShow = true" plain>
                 <el-icon>
                     <Tools />
+                </el-icon>
+            </el-button>
+            <el-button type="primary" style="width: 40px;" @click="() => summaryPageShow = true" plain>
+                <el-icon>
+                    <Histogram />
                 </el-icon>
             </el-button>
         </div>
@@ -262,6 +271,14 @@ onMounted(() => {
             <el-button @click="() => configPageShow = false" plain>Cancel</el-button>
         </div>
     </el-drawer>
+    <el-dialog draggable v-model="summaryPageShow" :title="`Summary of ${projectKind}`" style="width: 1200px;"
+        destroy-on-close>
+        <el-container>
+            <InspectorSummary :item="{ dev: [10, 5, 20, 19, 2, 11, 6], qc: [11, 20, 3, 1, 6, 14, 7]}" />
+            <InspectorGauge :item="{dev: 20, qc: 22.1, all: 10.5}" />
+        </el-container>
+
+    </el-dialog>
 
 </template>
 

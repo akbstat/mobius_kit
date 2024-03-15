@@ -65,7 +65,7 @@ export function popContent(status: string): string {
 };
 
 export function statusFilter(kind: GroupKind): { text: string, value: string }[] {
-    let status = ["Building", "Changed", "Unexpected", "NotStart"];
+    let status = ["NotStart", "Building", "Changed", "Unexpected"];
     if (kind === GroupKind.Production) {
         status.push("Ready");
     } else {
@@ -75,3 +75,4 @@ export function statusFilter(kind: GroupKind): { text: string, value: string }[]
     }
     return status.map(item => { return { text: item, value: item } });
 }
+

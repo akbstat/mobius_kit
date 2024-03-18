@@ -1,3 +1,4 @@
+
 export enum ProjectKind {
     SDTM = "SDTM",
     ADaM = "ADaM",
@@ -76,3 +77,31 @@ export function statusFilter(kind: GroupKind): { text: string, value: string }[]
     return status.map(item => { return { text: item, value: item } });
 }
 
+export function statusIndexMapping(status: string): number {
+    switch (status) {
+        case "NotStart":
+            return 6;
+        case "Building":
+            return 5;
+        case "Changed":
+            return 4;
+        case "Unexpected":
+            return 3;
+        case "Ready":
+            return 2;
+        case "Pass":
+            return 2;
+        case "NotMatch":
+            return 1;
+        case "NotApplicable":
+            return 0;
+    }
+    return 0;
+}
+
+export function percentageShow(n: number): number {
+    if (n > 1) {
+        return n;
+    }
+    return Math.round(n * 10000) / 100;
+}

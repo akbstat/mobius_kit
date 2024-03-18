@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { open } from '@tauri-apps/api/dialog';
 import { storeToRefs } from 'pinia';
-import { Item, ProjectKind, popContent, statusFilter, GroupKind } from "./project";
+import { Item, ProjectKind, popContent, statusFilter, GroupKind, statusIndexMapping, percentageShow } from "./project";
 import { fetchSdtm, fetchAdam, fetchTfls, inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { ElNotification } from "element-plus";
 import { useInspector } from "../../store/inspector";
@@ -13,7 +13,6 @@ import { debounce } from "lodash";
 import { Histogram } from "@element-plus/icons-vue";
 
 const store = useInspector();
-
 const configPageShow = ref(false);
 const summaryPageShow = ref(false);
 const itemFilter = ref("");
@@ -22,6 +21,46 @@ const project = ref<Item[]>([]);
 const itemShow = ref<Item[]>([]);
 const pathForInfer = ref("");
 const tableLoading = ref(false);
+const statusSummary = computed(() => {
+    let dev = [0, 0, 0, 0, 0, 0, 0];
+    let qc = [0, 0, 0, 0, 0, 0, 0];
+    if (project.value.length === 0) {
+        return { dev, qc };
+    }
+    project.value.forEach(item => {
+        dev[statusIndexMapping(item.groups[0].status)] += 1;
+        qc[statusIndexMapping(item.groups[1].status)] += 1;
+    })
+
+    return { dev, qc };
+});
+const percentages = computed(() => {
+    let devComplete = 0;
+    let qcComplete = 0;
+    if (project.value.length === 0) {
+        return { dev: 0, qc: 0, all: 0 };
+    }
+    let devItemCounts = project.value.length;
+    let qcItemCounts = project.value.length;
+
+    project.value.forEach(item => {
+        if (item.groups[0].status == "Ready") {
+            devComplete += 1;
+        }
+        if (item.groups[1].status == "NotApplicable") {
+            qcItemCounts -= 1;
+        } else if (item.groups[1].status == "Pass") {
+            qcComplete += 1;
+        }
+    })
+
+    return {
+        dev: percentageShow(devComplete / devItemCounts),
+        qc: percentageShow(qcComplete / qcItemCounts),
+        all: percentageShow((devComplete + qcComplete) / (devItemCounts + qcItemCounts)),
+    };
+});
+
 
 const tagType = (value: string) => {
     switch (value) {
@@ -52,7 +91,6 @@ const extractFileName = (name: string): string => {
 function devStatusFilterHandler(
     value: string,
     row: Item,
-    // column: TableColumnCtx<Item>
 ) {
     return row.groups[0].status === value;
 }
@@ -60,7 +98,6 @@ function devStatusFilterHandler(
 function qcStatusFilterHandler(
     value: string,
     row: Item,
-    // column: TableColumnCtx<Item>
 ) {
     return row.groups[1].status === value;
 }
@@ -138,6 +175,7 @@ async function submit() {
         })
         tableLoading.value = false;
     }
+
     configPageShow.value = false;
     project.value = data.items;
     itemShow.value = project.value;
@@ -274,8 +312,8 @@ onMounted(() => {
     <el-dialog draggable v-model="summaryPageShow" :title="`Summary of ${projectKind}`" style="width: 1200px;"
         destroy-on-close>
         <el-container>
-            <InspectorSummary :item="{ dev: [10, 5, 20, 19, 2, 11, 6], qc: [11, 20, 3, 1, 6, 14, 7]}" />
-            <InspectorGauge :item="{dev: 20, qc: 22.1, all: 10.5}" />
+            <InspectorSummary :item="statusSummary" />
+            <InspectorGauge :item="percentages" />
         </el-container>
 
     </el-dialog>

@@ -7,14 +7,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::user::get_user_id;
+use crate::{user::get_user_id, utils};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub pdf_reader: String,
     pub word_worker: usize,
     pub template: String,
-    pub temp_scripts: String,
+    pub user_temp: String,
 }
 
 pub fn config_env_init() -> Result<(), Box<dyn Error>> {
@@ -35,9 +35,15 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     env::set_var("MK_PDF_READER", config.pdf_reader);
     env::set_var("MK_TEMPLATE", config.template);
 
-    let script_path = build_temp_script_path(&config.temp_scripts, &user_id);
-    fs::create_dir_all(&script_path)?;
-
+    let user_temp_path = build_temp_script_path(&config.user_temp, &user_id);
+    if !user_temp_path.exists() {
+        fs::create_dir_all(&user_temp_path)?;
+        utils::hide_directory(&user_temp_path)?;
+    }
+    let script_path = user_temp_path.join(r"app\mobiuskit\void_probe");
+    if !script_path.exists() {
+        fs::create_dir_all(&script_path)?;
+    }
     env::set_var("MK_TEMP_SCRIPT", script_path.to_string_lossy().to_string());
     if config.word_worker < 1 {
         config.word_worker = 5;

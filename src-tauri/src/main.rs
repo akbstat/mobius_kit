@@ -9,6 +9,7 @@ mod divider;
 mod inspector;
 mod scaffold;
 mod user;
+mod utils;
 mod void_probe;
 
 fn main() {

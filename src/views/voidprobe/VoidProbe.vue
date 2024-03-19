@@ -88,6 +88,14 @@ function openpageBreakDetail(detail: Result) {
 }
 
 async function run() {
+    if (selectedFiles.value.length === 0) {
+        ElNotification({
+            title: "Warning",
+            message: `No output has been selected`,
+            type: "warning",
+        })
+        return;
+    }
     const isRunning = await probeRunning(directory.value);
     if (isRunning.running === true) {
         ElNotification({

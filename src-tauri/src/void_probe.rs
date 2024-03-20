@@ -11,6 +11,10 @@ use void_probe::void_probe;
 
 use crate::user::get_user_id;
 
+use self::record::{sys_to_unix, RecordManager};
+
+mod record;
+
 #[tauri::command]
 pub fn probe(paths: Vec<String>) -> Result<(), String> {
     if paths.is_empty() {
@@ -24,13 +28,60 @@ pub fn probe(paths: Vec<String>) -> Result<(), String> {
     }
     fs::write(temp_dir.join("lock"), runner).unwrap();
     let dest_dir = temp_dir.join("result.json");
+    let previous = temp_dir.join("previous.json");
+
+    if dest_dir.exists() {
+        if previous.exists() {
+            fs::remove_file(&previous).unwrap();
+        }
+        fs::rename(&dest_dir, &previous).unwrap();
+    }
+
+    let mut modified_outputs = vec![];
+
+    // try to read latest result, build to hash map, if result does not exist, build a empty map
+    let record_manager = RecordManager::new(&previous).unwrap();
+    // let mut map = build_record_map(&dest_dir).unwrap();
+
+    // get the modified time of source output
+    for path in paths.iter() {
+        let path = Path::new(&path);
+        if !path.exists() {
+            continue;
+        }
+        let modified_at = sys_to_unix(fs::metadata(path).unwrap().modified().unwrap()).unwrap();
+        let id = path.file_stem().unwrap().to_string_lossy().to_string();
+        // filter source output if modified time is the same in latest result, if modified. update modified time in map
+        if let Some(original) = record_manager.modified_at(&id) {
+            if original.ne(&modified_at) {
+                modified_outputs.push(PathBuf::from(path));
+                record_manager.update_modified_at(&id, modified_at);
+            }
+        } else {
+            modified_outputs.push(PathBuf::from(path));
+            record_manager.insert_record(&id, modified_at);
+        }
+    }
     thread::spawn(move || {
-        let rtfs = paths
+        let rtfs = modified_outputs
             .iter()
             .map(|p| PathBuf::from(Path::new(p)))
             .collect::<Vec<PathBuf>>();
+        // get probe result
         match void_probe(rtfs.as_slice()) {
             Ok(reports) => {
+                // update probe result in map
+                for report in reports {
+                    let id = Path::new(&report.file())
+                        .file_stem()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string();
+                    record_manager.update_result(&id, &report.file(), &report.void());
+                }
+                // turn map into slice, and sort then by id
+                let reports = record_manager.result();
+                // return result to client end
                 fs::write(dest_dir, serde_json::to_string(&reports).unwrap()).unwrap();
             }
             Err(_) => {}
@@ -86,7 +137,7 @@ pub fn remove_temp_dir(path: String) -> Result<(), String> {
 
 #[tauri::command]
 pub fn task_progress(path: String) -> Result<f64, String> {
-    let p = PathBuf::from(Path::new(&path)).join(".temp");
+    let p = PathBuf::from(Path::new(&path)).join(".temp\\process");
     if !p.exists() {
         return Ok(0f64);
     }

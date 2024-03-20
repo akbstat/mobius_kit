@@ -7,7 +7,7 @@ import OutputTag from "../../components/OutputTag.vue";
 import { debounce } from 'lodash';
 import { invoke } from '@tauri-apps/api/tauri';
 import { ElNotification } from 'element-plus';
-import { probe, getProgress, getProbeResult, removeTempDir, openPDF, probeRunning } from "../../api/void_probe/probe";
+import { probe, getProgress, getProbeResult, openPDF, probeRunning } from "../../api/void_probe/probe";
 import { useVoidProbeStore } from "../../store/voidprobe";
 import { storeToRefs } from 'pinia';
 
@@ -21,7 +21,7 @@ const loading = ref(false);
 const progress = ref(0);
 const positiveResultOnly = ref(false);
 const pageBreakDetailShow = ref(false);
-const currentpageBreakDetail = ref<Result>({ name: "", type: "", void: [] });
+const currentpageBreakDetail = ref<Result>({ name: "", type: "", path: "", void: [] });
 
 function clear() {
     files.value = [];
@@ -78,8 +78,8 @@ function showResultDialog() {
     resultShow.value = true;
 }
 
-async function openResultFile(filename: string, page: number) {
-    await openPDF(`${directory.value}\\.temp\\${filename}`, page);
+async function openResultFile(filepath: string, page: number) {
+    await openPDF(filepath, page);
 }
 
 function openpageBreakDetail(detail: Result) {
@@ -106,16 +106,16 @@ async function run() {
         })
         return;
     }
-    try {
-        await removeTempDir(directory.value);
-    } catch (error) {
-        ElNotification({
-            title: "Error",
-            message: `${error}`,
-            type: "error",
-        })
-        return;
-    }
+    // try {
+    //     await removeTempDir(directory.value);
+    // } catch (error) {
+    //     ElNotification({
+    //         title: "Error",
+    //         message: `${error}`,
+    //         type: "error",
+    //     })
+    //     return;
+    // }
     const fullpaths = selectedFiles.value.map(e => e.path);
     result.value = [];
     loading.value = true;
@@ -144,6 +144,7 @@ async function run() {
         return {
             name: filename,
             void: e.void,
+            path: e.file,
             type: outputType,
         }
     });
@@ -157,7 +158,7 @@ async function selectDirectory() {
     const dir = (await open({
         directory: true,
     })) as string;
-    if (dir.length > 0) {
+    if (dir !== null && dir.length > 0) {
         directory.value = dir
     }
 }
@@ -235,7 +236,7 @@ onMounted(list_rtfs);
         <el-table :data="showResult()" :row-class-name="resultRowClassName" height="370px">
             <el-table-column prop="name" label="File">
                 <template #default="scope">
-                    <el-link @click="() => { openResultFile(scope.row.name, 1) }">{{ scope.row.name }}</el-link>
+                    <el-link @click="() => { openResultFile(scope.row.path, 1) }">{{ scope.row.name }}</el-link>
                 </template>
             </el-table-column>
             <el-table-column prop="void" label="Type">
@@ -259,7 +260,7 @@ onMounted(list_rtfs);
     </el-dialog>
     <el-drawer size="500px" destroy-on-close v-model="pageBreakDetailShow" :title="currentpageBreakDetail.name">
         <el-space wrap>
-            <el-button @click="() => { openResultFile(currentpageBreakDetail.name, v) }" style="width: 100px;"
+            <el-button @click="() => { openResultFile(currentpageBreakDetail.path, v) }" style="width: 100px;"
                 type="primary" plain v-for="v in currentpageBreakDetail.void">Page {{ v
                 }}</el-button>
         </el-space>

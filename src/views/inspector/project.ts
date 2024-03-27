@@ -79,6 +79,8 @@ export function statusFilter(kind: GroupKind): { text: string, value: string }[]
 
 export function statusIndexMapping(status: string): number {
     switch (status) {
+        case "All":
+            return 7;
         case "NotStart":
             return 6;
         case "Building":

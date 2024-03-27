@@ -20,7 +20,7 @@ function init() {
         },
         yAxis: {
             type: "category",
-            data: ["NotStart", "Building", "Changed", "Unexpect", "Ready/Pass", "NotMatch", "NA"].reverse(),
+            data: ["All Items", "NotStart", "Building", "Changed", "Unexpect", "Ready/Pass", "NotMatch", "NA"].reverse(),
         },
         series: [
             {

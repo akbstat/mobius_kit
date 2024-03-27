@@ -22,14 +22,18 @@ const itemShow = ref<Item[]>([]);
 const pathForInfer = ref("");
 const tableLoading = ref(false);
 const statusSummary = computed(() => {
-    let dev = [0, 0, 0, 0, 0, 0, 0];
-    let qc = [0, 0, 0, 0, 0, 0, 0];
+    let dev = [0, 0, 0, 0, 0, 0, 0, 0];
+    let qc = [0, 0, 0, 0, 0, 0, 0, 0];
     if (project.value.length === 0) {
         return { dev, qc };
     }
     project.value.forEach(item => {
         dev[statusIndexMapping(item.groups[0].status)] += 1;
+        dev[statusIndexMapping("All")] += 1;
         qc[statusIndexMapping(item.groups[1].status)] += 1;
+        if (item.groups[1].status !== "NotApplicable") {
+            qc[statusIndexMapping("All")] += 1;
+        }
     })
 
     return { dev, qc };

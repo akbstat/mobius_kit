@@ -14,7 +14,7 @@ export interface Param {
     qc: boolean,
     dev_dest: string,
     qc_dest: string,
-    custom_code: string,
+    custom_code: string[],
 }
 
 export interface GeneratedResult {

@@ -28,7 +28,7 @@ let groupDev = ref(true);
 let groupQc = ref(false);
 let engines = ref<string[]>(["SAS 9.4 Unicode", "SAS 9.4", "SAS EG 8.3"]);
 let customCodePanelShow = ref(false);
-let customCode = ref("");
+let customCode = ref(["", "", ""]);
 let devResultDetailPanelShow = ref(false);
 let qcResultDetailPanelShow = ref(false);
 let devResult = ref<FileResult[]>([]);
@@ -128,7 +128,7 @@ function reset() {
     projectKind.value = ProjectKind.SDTM;
     devDestinationPath.value = "";
     qcDestinationPath.value = "";
-    customCode.value = "";
+    customCode.value = ["", "", ""];
 }
 
 function showCustomPanel() {
@@ -315,7 +315,18 @@ async function qcDestinationSelect() {
             style="margin-left: 0px; margin-top: 20px;" plain>Close</el-button>
     </el-dialog>
     <el-drawer v-model="customCodePanelShow" title="Custom Code" size="500px">
-        <el-input v-model="customCode" :autosize="{ minRows: 26, maxRows: 26 }" type="textarea" />
+        <div style="padding-bottom: 10px;">
+            <span>Before Init General</span>
+            <el-input v-model="customCode[0]" :autosize="{ minRows: 7, maxRows: 7 }" type="textarea" />
+        </div>
+        <div style="padding-bottom: 10px;">
+            <span>Programming Personally</span>
+            <el-input v-model="customCode[1]" :autosize="{ minRows: 7, maxRows: 7 }" type="textarea" />
+        </div>
+        <div style="padding-bottom: 10px;">
+            <span>After Savelog End</span>
+            <el-input v-model="customCode[2]" :autosize="{ minRows: 7, maxRows: 7 }" type="textarea" />
+        </div>
     </el-drawer>
     <el-drawer v-model="devResultDetailPanelShow" title="Details of Dev Group" size="600px">
         <el-switch style="--el-switch-on-color: #3375b9; --el-switch-off-color: #393a3c;" v-model="devResultFilter"

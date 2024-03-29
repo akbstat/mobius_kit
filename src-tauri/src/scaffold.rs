@@ -40,7 +40,7 @@ pub fn scaffold_generate(param: String) -> Result<String, String> {
                 study: param.project.clone(),
                 engine: param.engine.clone(),
                 group: Group::Qc,
-                custom_code: param.custom_code.clone(),
+                custom_code: param.custom_code,
             },
         ) {
             Ok(data) => result.qc = data,
@@ -70,7 +70,7 @@ struct Parameter {
     pub qc: bool,
     pub dev_dest: String,
     pub qc_dest: String,
-    pub custom_code: String,
+    pub custom_code: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]

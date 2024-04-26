@@ -6,6 +6,7 @@ import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector
 import { createFromTemplate, FileResult } from "../../api/scaffold/create";
 import { invoke } from '@tauri-apps/api/tauri';
 import { ElNotification } from 'element-plus';
+import { ErrorInfo } from "./errorInfo";
 
 enum ProjectKind {
     SDTM = "SDTM",
@@ -14,6 +15,8 @@ enum ProjectKind {
     UNKNOWN = ""
 }
 
+let showErrorPanel = ref(false);
+let errorMessages = ref<ErrorInfo[]>([]);
 let showCompleteDialag = ref(false);
 let loading = ref(false);
 let projectKind = ref<ProjectKind>(ProjectKind.SDTM);
@@ -191,11 +194,16 @@ async function submit() {
         devResult.value = result.dev;
         qcResult.value = result.qc;
     } catch (error) {
-        ElNotification({
-            title: 'Error',
-            message: `${error}`,
-            type: 'error',
-        })
+        try {
+            errorMessages = JSON.parse(`${error}`);
+            showErrorPanel.value = true;
+        } catch {
+            ElNotification({
+                title: 'Error',
+                message: `${error}`,
+                type: 'error',
+            })
+        }
         return
     }
     loading.value = false;
@@ -313,6 +321,18 @@ async function qcDestinationSelect() {
         </el-descriptions>
         <el-button type="primary" @click="() => { showCompleteDialag = false }"
             style="margin-left: 0px; margin-top: 20px;" plain>Close</el-button>
+    </el-dialog>
+    <el-dialog v-model="showErrorPanel" title="Task Failed">
+        <el-text class="mx-1" type="danger" size="large">Failed to generate templates, please fix following issues and
+            retry</el-text>
+        <div style="margin-top: 20px;">
+            <el-table :data="errorMessages">
+                <el-table-column label="Item" prop="item" />
+                <el-table-column label="Issue" prop="message" />
+            </el-table>
+        </div>
+        <el-button style="margin-top: 20px;" type="primary" @click="() => showErrorPanel = false" plain>Got
+            it</el-button>
     </el-dialog>
     <el-drawer v-model="customCodePanelShow" title="Custom Code" size="500px">
         <div style="padding-bottom: 10px;">

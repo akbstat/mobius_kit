@@ -15,6 +15,9 @@ const routeDescription = [
   {
     name: "Void Probe", description: "Finding out page break in outputs",
   },
+  {
+    name: "Code Flow", description: "Encoding check and convert",
+  },
 ];
 
 const routeMap = (() => {

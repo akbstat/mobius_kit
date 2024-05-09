@@ -3,6 +3,7 @@
 
 use config::config_env_init;
 
+mod code_flow;
 mod combiner;
 mod config;
 mod divider;
@@ -35,6 +36,8 @@ fn main() {
             void_probe::open_pdf_page,
             void_probe::probe_running,
             user::get_current_username,
+            code_flow::list_file_tree,
+            code_flow::convert,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

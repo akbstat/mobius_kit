@@ -6,6 +6,7 @@ import Inspector from "../views/inspector/Inspector.vue";
 import Divider from "../views/divider/Divider.vue"
 import Scaffold from "../views/scaffold/Scaffold.vue"
 import VoidProbe from "../views/voidprobe/VoidProbe.vue"
+import CodeFlow from "../views/codeflow/CodeFlow.vue"
 
 
 export const routes: RouteRecordRaw[] = [
@@ -43,6 +44,11 @@ export const routes: RouteRecordRaw[] = [
         path: "/void-probe",
         name: "Void Probe",
         component: VoidProbe,
+    },
+    {
+        path: "/code-flow",
+        name: "Code Flow",
+        component: CodeFlow,
     },
 ];
 

@@ -166,7 +166,15 @@ async function submit() {
         let node = e as TreeNode;
         return (node.is_file && node.encoding !== "UTF8BOM");
     }) as TreeNode[];
-    await ConvertEncodingToUTF8BOM(fileList);
+    try {
+        await ConvertEncodingToUTF8BOM(fileList);
+    } catch (error) {
+        ElNotification({
+            title: 'Error',
+            message: `${error}`,
+            type: 'error',
+        })
+    }
     await getFileTree();
 }
 

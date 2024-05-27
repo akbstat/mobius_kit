@@ -47,7 +47,7 @@ export const routes: RouteRecordRaw[] = [
     },
     {
         path: "/code-flow",
-        name: "Code Flow",
+        name: "Encoding",
         component: CodeFlow,
     },
 ];

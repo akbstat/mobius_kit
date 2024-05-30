@@ -7,14 +7,30 @@ import { createFromTemplate, FileResult } from "../../api/scaffold/create";
 import { invoke } from '@tauri-apps/api/tauri';
 import { ElNotification } from 'element-plus';
 import { ErrorInfo } from "./errorInfo";
+import { Product } from "../../components/project-list/project";
+import ProjectList from "../../components/project-list/ProjectList.vue";
+import { ArrowRight } from '@element-plus/icons-vue';
 
 enum ProjectKind {
     SDTM = "SDTM",
     ADaM = "ADaM",
-    TFLs = "TFL",
+    TFLs = "TFLs",
     UNKNOWN = ""
 }
 
+// let purpose_list = [
+//     "draft",
+//     "",
+//     "",
+//     "",
+//     "",
+//     "",
+//     "",
+// ].sort((x, y) =>x.toUpperCase() < y.toUpperCase());
+let newProject = ref<{ product: string, trail: string, kind: string }>({
+    product: "", trail: "", kind: "",
+});
+let showCreateProject = ref(false);
 let showErrorPanel = ref(false);
 let errorMessages = ref<ErrorInfo[]>([]);
 let showCompleteDialag = ref(false);
@@ -38,6 +54,19 @@ let devResult = ref<FileResult[]>([]);
 let qcResult = ref<FileResult[]>([]);
 let devResultFilter = ref(false);
 let qcResultFilter = ref(false);
+
+let project_list = ref<Product[]>((() => {
+    const list = [];
+    for (let i = 1; i < 21; i++) {
+        const product = i < 10 ? `AK10${i}` : `AK1${i}`;
+        const propose = i % 2 === 0 ? "CSR" : "adhoc";
+        const propose_id = `${product}-202-${propose}`;
+        list.push({ id: product, name: product, trails: [{ id: "AK101-202", "name": "202", purpose: [{ id: propose_id, name: propose }] }] })
+    }
+    return list;
+})());
+
+
 watch(rootPath, debounce(update, 100));
 
 function update() {
@@ -176,6 +205,28 @@ async function openDirectory(path: string) {
     );
 }
 
+function productCodeSearch(queryString: string, cb: any) {
+    let products = project_list.value.map((product) => {
+        return { value: product.name };
+    });
+    cb(queryString.length === 0 ? products : products.filter((product) => product.value.toLowerCase().includes(queryString.toLowerCase())));
+}
+
+function trailCodeSearch(queryString: string, cb: any) {
+    let product_code = newProject.value.product;
+    if (!product_code || product_code.length === 0) {
+        return cb([]);
+    }
+    const products = project_list.value.filter((p) => p.name === product_code);
+    if (products.length === 0) {
+        return cb([]);
+    }
+    const trails = products[0].trails.map((trail) => {
+        return { value: trail.name };
+    });
+    cb(queryString.length === 0 ? trails : trails.filter((t) => t.value.toLowerCase().includes(queryString)));
+}
+
 async function submit() {
     const param = {
         project: project.value,
@@ -237,64 +288,95 @@ async function qcDestinationSelect() {
 </script>
 
 <template>
-    <el-container>
-        <el-form label-position="left" label-width="100px" style="margin: 30px; width: 100%;">
-            <el-form-item label="Type">
-                <el-radio-group v-model="projectKind" @change="update">
-                    <el-radio-button :label="ProjectKind.SDTM" />
-                    <el-radio-button :label="ProjectKind.ADaM" />
-                    <el-radio-button :label="ProjectKind.TFLs" />
-                </el-radio-group>
-            </el-form-item>
-            <el-form-item label="Project Root">
-                <el-col :span="2">
-                    <el-button @click="rootSelect" type="primary" plain>Select</el-button>
-                </el-col>
-                <el-col :span="15">
-                    <el-input v-model="rootPath" clearable style="width: 400px;" />
-                </el-col>
-            </el-form-item>
-            <el-form-item label="Configuration">
-                <el-select v-model="configPath" style="width: 480px" default-first-option>
-                    <el-option v-for=" config  in  configs " :label="extractFileName(config)" :value="config" />
-                </el-select>
-            </el-form-item>
-            <el-form-item label="Project Code">
-                <el-input v-model="project" clearable style="width: 480px;" />
-            </el-form-item>
-            <el-form-item label="Code Group">
-                <el-checkbox v-model="groupDev" label="Dev" size="default" />
-                <el-checkbox v-model="groupQc" label="Qc" size="default" />
-            </el-form-item>
-            <el-form-item label="SAS Version">
-                <el-select v-model="engine" style="width: 480px" default-first-option>
-                    <el-option v-for=" engine  in  engines " :key="engine" :label="engine" :value="engine" />
-                </el-select>
-            </el-form-item>
-            <el-form-item label="Custom Code">
-                <el-button type="primary" @click="showCustomPanel" plain>Edit</el-button>
-            </el-form-item>
-            <el-form-item v-if="groupDev" label="Dev Folder">
-                <el-col :span="2">
-                    <el-button type="primary" @click="devDestinationSelect" plain>Select</el-button>
-                </el-col>
-                <el-col :span="15">
-                    <el-input v-model="devDestinationPath" clearable style="width: 400px;" />
-                </el-col>
-            </el-form-item>
-            <el-form-item v-if="groupQc" label="Qc Folder">
-                <el-col :span="2">
-                    <el-button type="primary" @click="qcDestinationSelect" plain>Select</el-button>
-                </el-col>
-                <el-col :span="15">
-                    <el-input v-model="qcDestinationPath" clearable style="width: 400px;" />
-                </el-col>
-            </el-form-item>
-            <el-form-item>
-                <el-button :disabled="readyToSubmit()" type="primary" @click="submit" plain>Submit</el-button>
-                <el-button @click="reset" plain>Reset</el-button>
-            </el-form-item>
-        </el-form>
+    <el-container style="height: 650px;">
+        <el-aside width="200px">
+            <el-container>
+                <el-main style="padding: 0px;">
+                    <ProjectList :projects="project_list" />
+                </el-main>
+                <el-footer style="padding: 0; height: auto;">
+                    <el-button @click="() => { showCreateProject = true }" type="primary" style="width: 100%"
+                        plain>New</el-button>
+                </el-footer>
+            </el-container>
+        </el-aside>
+        <el-main style="padding: 0px;">
+            <el-container>
+                <el-header style="padding: 10px 0px 9px 20px; height: auto; border-color: red;">
+                    <el-breadcrumb :separator-icon="ArrowRight">
+                        <el-breadcrumb-item>
+                            <span style="color: #409EFF;">AK101</span>
+                        </el-breadcrumb-item>
+                        <el-breadcrumb-item>
+                            <span style="color: #409EFF;">202</span>
+                        </el-breadcrumb-item>
+                        <el-breadcrumb-item>
+                            <span style=" color: #409EFF;">CSR</span>
+                        </el-breadcrumb-item>
+                    </el-breadcrumb>
+                </el-header>
+                <el-main>
+                    <el-form label-position="left" label-width="100px">
+                        <el-form-item label="Type">
+                            <el-radio-group v-model="projectKind" @change="update">
+                                <el-radio-button :label="ProjectKind.SDTM" />
+                                <el-radio-button :label="ProjectKind.ADaM" />
+                                <el-radio-button :label="ProjectKind.TFLs" />
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="Project Root">
+                            <el-input v-model="rootPath" clearable style="width: 480px;">
+                                <template #prepend>
+                                    <el-button @click="rootSelect" type="primary" plain>Select</el-button>
+                                </template>
+                            </el-input>
+                        </el-form-item>
+                        <el-form-item label="Configuration">
+                            <el-select v-model="configPath" style="width: 480px" default-first-option>
+                                <el-option v-for=" config  in  configs " :label="extractFileName(config)"
+                                    :value="config" />
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="Project Code">
+                            <el-input v-model="project" clearable style="width: 480px;" />
+                        </el-form-item>
+                        <el-form-item label="Code Group">
+                            <el-checkbox v-model="groupDev" label="Dev" size="default" />
+                            <el-checkbox v-model="groupQc" label="Qc" size="default" />
+                        </el-form-item>
+                        <el-form-item label="SAS Version">
+                            <el-select v-model="engine" style="width: 480px" default-first-option>
+                                <el-option v-for=" engine  in  engines " :key="engine" :label="engine"
+                                    :value="engine" />
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="Custom Code">
+                            <el-button type="primary" @click="showCustomPanel" plain>Edit</el-button>
+                        </el-form-item>
+                        <el-form-item v-if="groupDev" label="Dev Folder">
+                            <el-input v-model="devDestinationPath" clearable style="width: 480px;">
+                                <template #prepend>
+                                    <el-button type="primary" @click="devDestinationSelect" plain>Select</el-button>
+                                </template>
+                            </el-input>
+                        </el-form-item>
+                        <el-form-item v-if="groupQc" label="Qc Folder">
+                            <el-input v-model="qcDestinationPath" clearable style="width: 480px;">
+                                <template #prepend>
+                                    <el-button type="primary" @click="qcDestinationSelect" plain>Select</el-button>
+                                </template>
+                            </el-input>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button :disabled="readyToSubmit()" type="primary" @click="submit"
+                                plain>Submit</el-button>
+                            <el-button @click="reset" plain>Reset</el-button>
+                        </el-form-item>
+                    </el-form>
+                </el-main>
+            </el-container>
+        </el-main>
+
     </el-container>
     <el-dialog v-model="showCompleteDialag" title="Complete" draggable>
         <el-descriptions :column="2" direction="vertical" border>
@@ -364,6 +446,23 @@ async function qcDestinationSelect() {
                 :style="{ width: fileTagWidth() }">{{ item.name }}</el-tag>
         </el-space>
     </el-drawer>
+    <el-dialog v-model="showCreateProject" title="Create New Project" draggable>
+        <el-form label-width="auto" :model="newProject">
+            <el-form-item label="Product Code">
+                <el-autocomplete v-model="newProject.product" style="width: 90%;" :fetch-suggestions="productCodeSearch"
+                    clearable></el-autocomplete>
+            </el-form-item>
+            <el-form-item label="Trail Code">
+                <el-autocomplete v-model="newProject.trail" style="width: 90%;" :fetch-suggestions="trailCodeSearch"
+                    earable></el-autocomplete>
+            </el-form-item>
+            <el-form-item label="Trail Type">
+                <el-autocomplete style="width: 90%;" clearable></el-autocomplete>
+            </el-form-item>
+        </el-form>
+        <el-button style="margin-left: 405px;" type="primary" plain>Create</el-button>
+        <el-button @click="() => { showCreateProject = false }" plain>Cancel</el-button>
+    </el-dialog>
 </template>
 
 <style>

@@ -1,41 +1,39 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { open } from '@tauri-apps/api/dialog';
 import { debounce } from "lodash";
 import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { createFromTemplate, FileResult } from "../../api/scaffold/create";
-import { invoke } from '@tauri-apps/api/tauri';
-import { ElNotification } from 'element-plus';
+import { getProjects, createProject, buildRootPath, openDirectory } from "../../api/scaffold/project";
+import { ElMessage, ElNotification, FormInstance, FormRules } from 'element-plus';
 import { ErrorInfo } from "./errorInfo";
-import { Product } from "../../components/project-list/project";
-import ProjectList from "../../components/project-list/ProjectList.vue";
+import { inferChosenProject, CreateProjectForm, purposes, ProjectKind } from "./scaffold";
+import { ChosenProject, Product } from "../../components/project-list/project";
 import { ArrowRight } from '@element-plus/icons-vue';
+import ProjectList from "../../components/project-list/ProjectList.vue";
+import ProjectNavigator from "../../components/project-navigator/ProjectNavigator.vue";
+import { useScaffold } from "../../store/scaffold";
+import { storeToRefs } from 'pinia';
 
-enum ProjectKind {
-    SDTM = "SDTM",
-    ADaM = "ADaM",
-    TFLs = "TFLs",
-    UNKNOWN = ""
+
+const buttonStyle = {
+    backgroundColor: "#18222c",
+    color: "#409EFF",
+    borderColor: "#2a598a",
+    borderWidth: "1px"
 }
-
-// let purpose_list = [
-//     "draft",
-//     "",
-//     "",
-//     "",
-//     "",
-//     "",
-//     "",
-// ].sort((x, y) =>x.toUpperCase() < y.toUpperCase());
-let newProject = ref<{ product: string, trail: string, kind: string }>({
-    product: "", trail: "", kind: "",
+let store = useScaffold();
+let { chosenProject, openedTab, projectKind } = storeToRefs(store);
+let newProject = ref<CreateProjectForm>({
+    product: "", trail: "", purpose: "", from: "",
 });
+const ruleFormRef = ref<FormInstance>();
 let showCreateProject = ref(false);
 let showErrorPanel = ref(false);
 let errorMessages = ref<ErrorInfo[]>([]);
 let showCompleteDialag = ref(false);
 let loading = ref(false);
-let projectKind = ref<ProjectKind>(ProjectKind.SDTM);
+// let projectKind = ref<ProjectKind>(ProjectKind.SDTM);
 let rootPath = ref("");
 let devDestinationPath = ref("");
 let qcDestinationPath = ref("");
@@ -54,20 +52,29 @@ let devResult = ref<FileResult[]>([]);
 let qcResult = ref<FileResult[]>([]);
 let devResultFilter = ref(false);
 let qcResultFilter = ref(false);
-
-let project_list = ref<Product[]>((() => {
-    const list = [];
-    for (let i = 1; i < 21; i++) {
-        const product = i < 10 ? `AK10${i}` : `AK1${i}`;
-        const propose = i % 2 === 0 ? "CSR" : "adhoc";
-        const propose_id = `${product}-202-${propose}`;
-        list.push({ id: product, name: product, trails: [{ id: "AK101-202", "name": "202", purpose: [{ id: propose_id, name: propose }] }] })
-    }
-    return list;
-})());
-
+let projectList = ref<Product[]>([]);
+const createProjectRules = reactive<FormRules<CreateProjectForm>>({
+    product: [
+        { validator: validateProductID, trigger: "change" },
+    ],
+    trail: [{ required: true, trigger: "change" }],
+    purpose: [{ required: true, trigger: "change" }],
+});
 
 watch(rootPath, debounce(update, 100));
+
+watch(chosenProject, debounce(async () => {
+    if (chosenProject.value) {
+        rootPath.value = await buildRootPath(chosenProject.value);
+    }
+}, 100))
+
+onMounted(async () => {
+    if (chosenProject.value.purpose) {
+        rootPath.value = await buildRootPath(chosenProject.value);
+    }
+    projectList.value = await getProjects();
+});
 
 function update() {
     switch (projectKind.value) {
@@ -99,6 +106,18 @@ function update() {
             })
             break;
         default:
+    }
+    const currentChosenProject = inferChosenProject(rootPath.value);
+    setChosenProject(currentChosenProject);
+}
+
+function setChosenProject(project: ChosenProject | undefined) {
+    if (project !== undefined) {
+        ElMessage({
+            message: `Switch to project: ${project.product.toUpperCase()}-${project.trail.toUpperCase()}-${project.purpose} (${projectKind.value})`,
+            type: "success",
+        })
+        chosenProject.value = project;
     }
 }
 
@@ -196,17 +215,9 @@ function fileTagWidth(): string {
     return "100px";
 }
 
-async function openDirectory(path: string) {
-    await invoke(
-        "open_directory",
-        {
-            path,
-        },
-    );
-}
 
 function productCodeSearch(queryString: string, cb: any) {
-    let products = project_list.value.map((product) => {
+    let products = projectList.value.map((product) => {
         return { value: product.name };
     });
     cb(queryString.length === 0 ? products : products.filter((product) => product.value.toLowerCase().includes(queryString.toLowerCase())));
@@ -217,7 +228,7 @@ function trailCodeSearch(queryString: string, cb: any) {
     if (!product_code || product_code.length === 0) {
         return cb([]);
     }
-    const products = project_list.value.filter((p) => p.name === product_code);
+    const products = projectList.value.filter((p) => p.name === product_code);
     if (products.length === 0) {
         return cb([]);
     }
@@ -225,6 +236,50 @@ function trailCodeSearch(queryString: string, cb: any) {
         return { value: trail.name };
     });
     cb(queryString.length === 0 ? trails : trails.filter((t) => t.value.toLowerCase().includes(queryString)));
+}
+
+function purposeSearch(queryString: string, cb: any) {
+    cb(queryString.length === 0 ? purposes : purposes.filter((purpose) => purpose.value.toLowerCase().includes(queryString.toLowerCase())));
+}
+
+function fromSearch(queryString: string, cb: any) {
+    const { product, trail } = newProject.value;
+    if (product.length === 0 || trail.length === 0) {
+        cb([]);
+        return;
+    }
+    const purposes = projectList.value.flatMap((product) => product.trails.flatMap((trail) => trail.purpose)).filter((purpose) => purpose.id.includes(`${product}-${trail}`)).map(purpose => { return { value: purpose.name } });
+    cb(queryString.length === 0 ? purposes : purposes.filter((purpose) => purpose.value.includes(queryString.toLowerCase())));
+}
+
+function validateProductID(_: any, value: string, callback: any) {
+    if (!value.trim().match(/^ak\d{3}$/igm)) {
+        callback(new Error("Please enter a valid product ID, such as ak101"))
+    }
+    callback()
+}
+
+async function createNewProject(formEl: FormInstance | undefined) {
+    if (!formEl) return;
+    let result = await formEl.validate();
+    if (!result) {
+        return;
+    }
+    await createProject(newProject.value);
+    showCreateProject.value = false;
+    const { product, trail, purpose } = newProject.value;
+    ElMessage({
+        type: "success",
+        message: `Project ${product.toUpperCase()}-${trail}-${purpose.toUpperCase()} has been created`,
+    });
+    formEl.resetFields();
+    projectList.value = await getProjects();
+}
+
+function cancelCreateProject(formEl: FormInstance | undefined) {
+    showCreateProject.value = false;
+    if (!formEl) return;
+    formEl.resetFields();
 }
 
 async function submit() {
@@ -289,90 +344,103 @@ async function qcDestinationSelect() {
 
 <template>
     <el-container style="height: 650px;">
-        <el-aside width="200px">
+        <el-aside width="200px" style="padding: 5px;">
             <el-container>
                 <el-main style="padding: 0px;">
-                    <ProjectList :projects="project_list" />
+                    <ProjectList :projects="projectList"
+                        @project-change="(project: ChosenProject) => { chosenProject = project; }" />
+
                 </el-main>
-                <el-footer style="padding: 0; height: auto;">
-                    <el-button @click="() => { showCreateProject = true }" type="primary" style="width: 100%"
+                <el-footer style="padding: 5px 0px 0px 0px; height: auto;">
+                    <el-button disabled click="() => { showCreateProject = true }" type="primary" style="width: 100%"
                         plain>New</el-button>
                 </el-footer>
             </el-container>
         </el-aside>
         <el-main style="padding: 0px;">
             <el-container>
-                <el-header style="padding: 10px 0px 9px 20px; height: auto; border-color: red;">
-                    <el-breadcrumb :separator-icon="ArrowRight">
+                <el-header style="padding: 15px 0px 9px 20px; height: 40px; ">
+                    <el-breadcrumb v-if="chosenProject.purpose" :separator-icon="ArrowRight">
                         <el-breadcrumb-item>
-                            <span style="color: #409EFF;">AK101</span>
+                            <span style="color: #409EFF;">{{ chosenProject.product }}</span>
                         </el-breadcrumb-item>
                         <el-breadcrumb-item>
-                            <span style="color: #409EFF;">202</span>
+                            <span style="color: #409EFF;">{{ chosenProject.trail }}</span>
                         </el-breadcrumb-item>
                         <el-breadcrumb-item>
-                            <span style=" color: #409EFF;">CSR</span>
+                            <span style=" color: #409EFF;">{{ chosenProject.purpose }}</span>
                         </el-breadcrumb-item>
                     </el-breadcrumb>
                 </el-header>
                 <el-main>
-                    <el-form label-position="left" label-width="100px">
-                        <el-form-item label="Type">
-                            <el-radio-group v-model="projectKind" @change="update">
-                                <el-radio-button :label="ProjectKind.SDTM" />
-                                <el-radio-button :label="ProjectKind.ADaM" />
-                                <el-radio-button :label="ProjectKind.TFLs" />
-                            </el-radio-group>
-                        </el-form-item>
-                        <el-form-item label="Project Root">
-                            <el-input v-model="rootPath" clearable style="width: 480px;">
-                                <template #prepend>
-                                    <el-button @click="rootSelect" type="primary" plain>Select</el-button>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item label="Configuration">
-                            <el-select v-model="configPath" style="width: 480px" default-first-option>
-                                <el-option v-for=" config  in  configs " :label="extractFileName(config)"
-                                    :value="config" />
-                            </el-select>
-                        </el-form-item>
-                        <el-form-item label="Project Code">
-                            <el-input v-model="project" clearable style="width: 480px;" />
-                        </el-form-item>
-                        <el-form-item label="Code Group">
-                            <el-checkbox v-model="groupDev" label="Dev" size="default" />
-                            <el-checkbox v-model="groupQc" label="Qc" size="default" />
-                        </el-form-item>
-                        <el-form-item label="SAS Version">
-                            <el-select v-model="engine" style="width: 480px" default-first-option>
-                                <el-option v-for=" engine  in  engines " :key="engine" :label="engine"
-                                    :value="engine" />
-                            </el-select>
-                        </el-form-item>
-                        <el-form-item label="Custom Code">
-                            <el-button type="primary" @click="showCustomPanel" plain>Edit</el-button>
-                        </el-form-item>
-                        <el-form-item v-if="groupDev" label="Dev Folder">
-                            <el-input v-model="devDestinationPath" clearable style="width: 480px;">
-                                <template #prepend>
-                                    <el-button type="primary" @click="devDestinationSelect" plain>Select</el-button>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item v-if="groupQc" label="Qc Folder">
-                            <el-input v-model="qcDestinationPath" clearable style="width: 480px;">
-                                <template #prepend>
-                                    <el-button type="primary" @click="qcDestinationSelect" plain>Select</el-button>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item>
-                            <el-button :disabled="readyToSubmit()" type="primary" @click="submit"
-                                plain>Submit</el-button>
-                            <el-button @click="reset" plain>Reset</el-button>
-                        </el-form-item>
-                    </el-form>
+                    <el-radio-group v-model="projectKind" @change="update" style="margin-bottom: 30px;">
+                        <el-radio-button :label="ProjectKind.SDTM" />
+                        <el-radio-button :label="ProjectKind.ADaM" />
+                        <el-radio-button :label="ProjectKind.TFLs" />
+                    </el-radio-group>
+                    <el-tabs tab-position="right" :model-value="openedTab"
+                        @tab-change="(tab) => { openedTab = tab as string }">
+                        <el-tab-pane label="Template Builder" key="builder" name="builder">
+                            <el-form :rules="createProjectRules" label-position="left" label-width="100px">
+                                <el-form-item label=" Project Root">
+                                    <el-input v-model="rootPath" clearable style="width: 480px;">
+                                        <template #prepend>
+                                            <el-button @click="rootSelect" :style="buttonStyle">Select</el-button>
+                                        </template>
+                                    </el-input>
+                                </el-form-item>
+                                <el-form-item label="Configuration">
+                                    <el-select v-model="configPath" style="width: 480px" default-first-option>
+                                        <el-option v-for=" config  in  configs " :label="extractFileName(config)"
+                                            :value="config" />
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item label="Project Code">
+                                    <el-input v-model="project" clearable style="width: 480px;" />
+                                </el-form-item>
+                                <el-form-item label="Code Group">
+                                    <el-checkbox v-model="groupDev" label="Dev" size="default" />
+                                    <el-checkbox v-model="groupQc" label="Qc" size="default" />
+                                </el-form-item>
+                                <el-form-item label="SAS Version">
+                                    <el-select v-model="engine" style="width: 480px" default-first-option>
+                                        <el-option v-for=" engine  in  engines " :key="engine" :label="engine"
+                                            :value="engine" />
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item label="Custom Code">
+                                    <el-button type="primary" @click="showCustomPanel" plain>Edit</el-button>
+                                </el-form-item>
+                                <el-form-item v-if="groupDev" label="Dev Folder">
+                                    <el-input v-model="devDestinationPath" clearable style="width: 480px;">
+                                        <template #prepend>
+                                            <el-button :style="buttonStyle" type="primary" @click="devDestinationSelect"
+                                                plain>Select</el-button>
+                                        </template>
+                                    </el-input>
+                                </el-form-item>
+                                <el-form-item v-if="groupQc" label="Qc Folder">
+                                    <el-input v-model="qcDestinationPath" clearable style="width: 480px;">
+                                        <template #prepend>
+                                            <el-button :style="buttonStyle" type="primary" @click="qcDestinationSelect"
+                                                plain>Select</el-button>
+                                        </template>
+                                    </el-input>
+                                </el-form-item>
+                                <el-form-item>
+                                    <el-button :disabled="readyToSubmit()" type="primary" @click="submit"
+                                        plain>Submit</el-button>
+                                    <el-button @click="reset" plain>Reset</el-button>
+                                </el-form-item>
+                            </el-form>
+                        </el-tab-pane>
+                        <el-tab-pane label="Project Navigator" key="navigator" name="navigator">
+                            <ProjectNavigator v-if="chosenProject"
+                                :config="{ product: chosenProject.product, trail: chosenProject.trail, purpose: chosenProject.purpose, kind: projectKind }" />
+                            <div v-else>Please select one project</div>
+                        </el-tab-pane>
+                    </el-tabs>
+
                 </el-main>
             </el-container>
         </el-main>
@@ -447,21 +515,30 @@ async function qcDestinationSelect() {
         </el-space>
     </el-drawer>
     <el-dialog v-model="showCreateProject" title="Create New Project" draggable>
-        <el-form label-width="auto" :model="newProject">
-            <el-form-item label="Product Code">
-                <el-autocomplete v-model="newProject.product" style="width: 90%;" :fetch-suggestions="productCodeSearch"
-                    clearable></el-autocomplete>
+        <el-form ref="ruleFormRef" label-width="auto" :model="newProject" :rules="createProjectRules">
+            <el-form-item label="Product Code" prop="product">
+                <el-autocomplete v-model="newProject.product" @change="(value: string) => {
+                        newProject.product = value.toLowerCase();
+                    }" style="width: 90%;" :fetch-suggestions="productCodeSearch" clearable></el-autocomplete>
             </el-form-item>
-            <el-form-item label="Trail Code">
+            <el-form-item label="Trail Code" prop="trail">
                 <el-autocomplete v-model="newProject.trail" style="width: 90%;" :fetch-suggestions="trailCodeSearch"
-                    earable></el-autocomplete>
+                    clearable />
             </el-form-item>
-            <el-form-item label="Trail Type">
-                <el-autocomplete style="width: 90%;" clearable></el-autocomplete>
+            <el-form-item label="Trail Type" prop="purpose">
+                <el-autocomplete v-model="newProject.purpose" :fetch-suggestions="purposeSearch" style="width: 90%;"
+                    clearable />
+            </el-form-item>
+            <el-form-item label="From" prop="from">
+                <el-autocomplete v-model="newProject.from" :fetch-suggestions="fromSearch" style="width: 90%;"
+                    clearable />
+            </el-form-item>
+            <el-form-item>
+                <el-button @click="createNewProject(ruleFormRef)" style="margin-left: 98px;" type="primary"
+                    plain>Create</el-button>
+                <el-button @click="cancelCreateProject(ruleFormRef)" plain>Cancel</el-button>
             </el-form-item>
         </el-form>
-        <el-button style="margin-left: 405px;" type="primary" plain>Create</el-button>
-        <el-button @click="() => { showCreateProject = false }" plain>Cancel</el-button>
     </el-dialog>
 </template>
 

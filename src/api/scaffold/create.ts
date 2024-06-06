@@ -5,6 +5,18 @@ export async function createFromTemplate(param: Param): Promise<GeneratedResult>
     return JSON.parse(await invoke("scaffold_generate", { "param": p })) as GeneratedResult;
 }
 
+export async function inferPathSdtm(path: string): Promise<string> {
+    return await invoke("infer_path_sdtm", { path });
+}
+
+export async function inferPathAdam(path: string): Promise<string> {
+    return await invoke("infer_path_adam", { path });
+}
+
+export async function inferPathTfls(path: string): Promise<string> {
+    return await invoke("infer_path_tfls", { path });
+}
+
 export interface Param {
     project: string,
     engine: string,

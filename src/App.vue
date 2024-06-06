@@ -43,7 +43,7 @@ onMounted(async () => { user.value = await currentUser(); })
         </el-scrollbar>
       </el-aside>
       <el-main>
-        <el-scrollbar>
+        <el-scrollbar style="margin: 0;">
           <RouterView />
         </el-scrollbar>
       </el-main>

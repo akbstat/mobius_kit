@@ -14,3 +14,9 @@ export interface Purpose {
     id: string,
     name: string,
 }
+
+export interface ChosenProject {
+    product: string,
+    trail: string,
+    purpose: string,
+}

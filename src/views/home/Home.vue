@@ -18,6 +18,9 @@ const routeDescription = [
   {
     name: "Encoding", description: "Encoding check and convert",
   },
+  {
+    name: "Voyager", description: "Navigator for reading annotation information in aCRF",
+  },
 ];
 
 const routeMap = (() => {

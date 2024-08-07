@@ -12,6 +12,7 @@ mod scaffold;
 mod user;
 mod utils;
 mod void_probe;
+mod voyager;
 
 fn main() {
     config_env_init().expect("failed to read configration");
@@ -24,7 +25,7 @@ fn main() {
             inspector::infer_path_adam,
             inspector::infer_path_tfls,
             combiner::get_target_file_path,
-            combiner::open_file,
+            utils::open_file,
             divider::divide_rtf,
             divider::open_directory,
             divider::list_rtfs,
@@ -38,6 +39,8 @@ fn main() {
             user::get_current_username,
             code_flow::list_file_tree,
             code_flow::convert,
+            voyager::list_annotations,
+            voyager::export_annotations,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

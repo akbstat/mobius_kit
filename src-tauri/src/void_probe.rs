@@ -94,13 +94,13 @@ pub fn probe(paths: Vec<String>) -> Result<(), String> {
 #[tauri::command]
 pub fn open_pdf_page(path: String, page: usize) {
     thread::spawn(move || {
-        let mut cmd = Command::new("cmd");
+        let mut cmd = Command::new(
+            "C:\\Program Files (x86)\\Foxit Software\\Foxit PhantomPDF\\FoxitPhantomPDF.exe",
+        );
         cmd.creation_flags(0x08000000);
-        cmd.arg("/C")
-            .arg("C:\\Program Files (x86)\\Foxit Software\\Foxit PhantomPDF\\FoxitPhantomPDF.exe")
-            .arg(path)
-            .arg("/A")
-            .arg(format!("page={}", page));
+        // cmd.arg("/C")
+        // .arg("C:\\Program Files (x86)\\Foxit Software\\Foxit PhantomPDF\\FoxitPhantomPDF.exe")
+        cmd.arg(path).arg("/A").arg(format!("page={}", page));
         cmd.output().unwrap();
     });
 }

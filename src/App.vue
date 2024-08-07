@@ -6,9 +6,13 @@ import { RouterView } from 'vue-router';
 import { currentUser } from "./api/mobiuskit/user";
 import { onMounted, ref } from 'vue';
 import { routes } from "./router";
+import "element-plus/theme-chalk/el-message.css";
+
 // import 'element-plus/packages/menu-item/src/menu-item.css';
 
 const user = ref("")
+
+
 
 onMounted(async () => { user.value = await currentUser(); })
 </script>

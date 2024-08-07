@@ -14,6 +14,7 @@ tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
 tauri = { version = "1.5", features = [
+    "clipboard-all",
     "window-set-cursor-icon",
     "dialog-all",
     "path-all",
@@ -27,6 +28,7 @@ rtf_divider = { path = "../../rtf_divider" }
 scaffold = { path = "../../scaffold" }
 void_probe = { path = "../../void_probe" }
 code_flow = { path = "../../code_flow" }
+voyager = { path = "../../voyager" }
 anyhow = "1.0.77"
 serde_yaml = "0.9.32"
 winapi = { version = "0.3.9", features = ["winbase"] }

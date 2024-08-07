@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 const TARGET_FILE_PATH: &str = r"CombinePDF\Final.pdf";
 
@@ -14,12 +14,12 @@ pub fn get_target_file_path(directory: &str) -> String {
     result
 }
 
-#[tauri::command]
-pub fn open_file(path: &str) {
-    Command::new("cmd")
-        .arg("/C")
-        .arg("start")
-        .arg(path)
-        .output()
-        .unwrap();
-}
+// #[tauri::command]
+// pub fn open_file(path: &str) {
+//     Command::new("cmd")
+//         .arg("/C")
+//         .arg("start")
+//         .arg(path)
+//         .output()
+//         .unwrap();
+// }

@@ -3,10 +3,11 @@ import Home from "../views/home/Home.vue";
 // import Inspector from "../views/inspector/Inspector.vue";
 import Inspector from "../views/inspector/Inspector.vue";
 // import Combiner from "../views/Combiner.vue"
-import Divider from "../views/divider/Divider.vue"
-import Scaffold from "../views/scaffold/Scaffold.vue"
-import VoidProbe from "../views/voidprobe/VoidProbe.vue"
-import CodeFlow from "../views/codeflow/CodeFlow.vue"
+import Divider from "../views/divider/Divider.vue";
+import Scaffold from "../views/scaffold/Scaffold.vue";
+import VoidProbe from "../views/voidprobe/VoidProbe.vue";
+import CodeFlow from "../views/codeflow/CodeFlow.vue";
+import Voyager from "../views/voyager/Voyager.vue";
 
 
 export const routes: RouteRecordRaw[] = [
@@ -49,6 +50,11 @@ export const routes: RouteRecordRaw[] = [
         path: "/code-flow",
         name: "Encoding",
         component: CodeFlow,
+    },
+    {
+        path: "/voyager",
+        name: "Voyager",
+        component: Voyager,
     },
 ];
 

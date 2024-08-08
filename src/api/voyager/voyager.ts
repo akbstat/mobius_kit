@@ -18,7 +18,6 @@ export interface PageDescription {
 
 export async function listAnnotations(filePath: string): Promise<Annotation[]> {
     const reply: ListAnnotationReply = await invoke("list_annotations", { filepath: filePath });
-    console.log(reply);
     return reply.data;
 }
 

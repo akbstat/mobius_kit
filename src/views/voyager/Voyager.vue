@@ -212,7 +212,9 @@ onMounted(async () => {
                             <el-descriptions size="small" border :column="1" style="margin: 0 40px 0 60px;">
                                 <el-descriptions-item v-for="pages in scope.row.pageDescription" width="200px">
                                     <template #label>
-                                        {{ pages.description }}
+                                        <div @click="copyPages(pages.page)" style="cursor: pointer;">
+                                            {{ pages.description }}
+                                        </div>
                                     </template>
                                     <div style="float: left;" v-for="page in pages.page">
                                         <el-link type="primary" @click="() => { openAcrf(page) }">
@@ -231,7 +233,8 @@ onMounted(async () => {
                     </el-table-column>
                     <el-table-column label="Variable" width="120">
                         <template #default="scope">
-                            <el-tag :type="variableTagType(scope.row)" style="width: 85px; justify-content: left">
+                            <el-tag :type="variableTagType(scope.row)" @click="() => { copyPages(scope.row.page) }"
+                                style="width: 85px; justify-content: left; cursor: pointer;">
                                 {{ scope.row.variable }}
                             </el-tag>
                         </template>

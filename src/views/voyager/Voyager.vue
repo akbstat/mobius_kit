@@ -7,7 +7,7 @@ import { listAnnotations, exportAnnotations, openPDF, openFile } from "../../api
 import { Annotation } from "./voyager";
 import { computed } from '@vue/reactivity';
 import { open } from '@tauri-apps/api/dialog';
-import { Search } from '@element-plus/icons-vue';
+import { Search, Connection, Aim } from '@element-plus/icons-vue';
 import { storeToRefs } from 'pinia';
 import { useVoyager } from "../../store/voyager";
 
@@ -24,11 +24,16 @@ const domainDisplay = computed(() => {
     }
     return domains.value.filter((domain: string) => domain.includes(filterValue));
 });
+const globalScope = ref(false);
 const exportPath = ref("");
 const exportFileName = ref("annotations");
 const domainFilter = ref("");
 const variableFilter = ref("");
 const annotationDisplay = computed(() => {
+    if (globalScope.value && variableFilter.value.length > 0) {
+        return annotations.value.filter((item: Annotation) => item.variable.includes(variableFilter.value.toUpperCase()));
+    }
+
     const domain = domainSelected.value;
     if (domain.length === 0) {
         return [];
@@ -239,7 +244,7 @@ onMounted(async () => {
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column label="Pages" width="600">
+                    <el-table-column label="Pages" width="550">
                         <template #default="scope">
                             <div style="float: left;" v-for="page in scope.row.page">
                                 <el-link type="primary" @click="() => { openAcrf(page) }">{{ page
@@ -249,7 +254,9 @@ onMounted(async () => {
                     </el-table-column>
                     <el-table-column>
                         <template #header>
-                            <el-input v-model="variableFilter" clearable :suffix-icon="Search" />
+                            <el-switch v-model="globalScope" style="margin-right: 5px;" :active-action-icon="Connection"
+                                :inactive-action-icon="Aim" />
+                            <el-input style="width: 157px" v-model="variableFilter" clearable :suffix-icon="Search" />
                         </template>
                         <template #default="scope">
                             <el-button type="primary" plain style="width: 10px; float: right;"

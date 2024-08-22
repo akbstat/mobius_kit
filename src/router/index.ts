@@ -7,6 +7,7 @@ import Divider from "../views/divider/Divider.vue"
 import Scaffold from "../views/scaffold/Scaffold.vue"
 import VoidProbe from "../views/voidprobe/VoidProbe.vue"
 import CodeFlow from "../views/codeflow/CodeFlow.vue"
+import Transient from "../views/transient/Transient.vue"
 
 
 export const routes: RouteRecordRaw[] = [
@@ -49,6 +50,11 @@ export const routes: RouteRecordRaw[] = [
         path: "/code-flow",
         name: "Encoding",
         component: CodeFlow,
+    },
+    {
+        path: "/transient",
+        name: "Transient",
+        component: Transient,
     },
 ];
 

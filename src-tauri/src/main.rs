@@ -9,6 +9,7 @@ mod config;
 mod divider;
 mod inspector;
 mod scaffold;
+mod transient;
 mod user;
 mod utils;
 mod void_probe;
@@ -38,6 +39,12 @@ fn main() {
             user::get_current_username,
             code_flow::list_file_tree,
             code_flow::convert,
+            transient::worker::extract_translate,
+            transient::worker::fetch_log,
+            transient::worker::fetch_progress,
+            transient::worker::fetch_translation,
+            transient::worker::stuff,
+            transient::worker::clear_progress,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

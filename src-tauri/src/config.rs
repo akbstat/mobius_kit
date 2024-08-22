@@ -15,6 +15,7 @@ pub struct Config {
     pub word_worker: usize,
     pub template: String,
     pub user_temp: String,
+    pub llm_api_key: String,
 }
 
 pub fn config_env_init() -> Result<(), Box<dyn Error>> {
@@ -49,6 +50,7 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
         config.word_worker = 5;
     }
     env::set_var("MK_WORD_WORKER", config.word_worker.to_string());
+    env::set_var("MK_LLM_API_KEY", config.llm_api_key.to_string());
     Ok(())
 }
 

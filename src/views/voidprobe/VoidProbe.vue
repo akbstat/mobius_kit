@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
-import { File } from './file';
+import { File, timestampDisplay } from './file';
 import { Result } from './result';
 import { open } from '@tauri-apps/api/dialog';
 import OutputTag from "../../components/OutputTag.vue";
@@ -172,7 +172,7 @@ async function list_rtfs() {
     try {
         let data: string = await invoke("list_rtfs", { "dir": directory.value });
         JSON.parse(data).forEach((item: any) => {
-            result.push({ name: item.name, type: item.kind, size: bytesToMegaBytes(item.size), path: `${directory.value}\\${item.name}` });
+            result.push({ name: item.name, type: item.kind, size: bytesToMegaBytes(item.size), path: `${directory.value}\\${item.name}`, modifiedAt: timestampDisplay(item.modified_at) });
         });
     } catch (e) {
         ElNotification({
@@ -212,15 +212,19 @@ onMounted(list_rtfs);
         <el-table v-loading="loading" :data="files" height="520px" @selection-change="handleSelectionChange">
             <el-table-column type="selection"></el-table-column>
             <el-table-column label="File" property="name" sortable sort-by="name" width="400px" />
-            <el-table-column label="Type">
+            <el-table-column width="150px" label="Type">
                 <template #default="scope">
                     <OutputTag :type="scope.row.type"></OutputTag>
                 </template>
             </el-table-column>
-            <el-table-column label="File Size" sortable sort-by="size" align="right">
+            <el-table-column label="File Size" sortable sort-by="size" align="right" width="120px">
                 <template #default="scope">{{ scope.row.size }} MB</template>
             </el-table-column>
-            <el-table-column />
+            <el-table-column align="center" sortable sort-by="modifiedAt" label=" Modified At">
+                <template #default="scope">
+                    {{ scope.row.modifiedAt }}
+                </template>
+            </el-table-column>
         </el-table>
     </el-container>
     <el-container style="padding: 5px;">

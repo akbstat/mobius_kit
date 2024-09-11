@@ -1,6 +1,12 @@
 import { invoke } from "@tauri-apps/api";
 import { ChosenProject, Product } from "../../components/project-list/project";
 
+interface TaskItem {
+    name: string,
+    supp: boolean,
+    qc_required: boolean,
+}
+
 export async function getProjects(): Promise<Product[]> {
     return JSON.parse(await invoke("get_projects")) as Product[];
 }
@@ -21,4 +27,22 @@ export async function openDirectory(path: string): Promise<void> {
             path,
         },
     );
+}
+
+export async function listItems(kind: string, path: string): Promise<string[]> {
+    const items: TaskItem[] = await invoke(
+        "list_task_items",
+        {
+            kind,
+            path,
+        },
+    );
+    const domains: string[] = [];
+    items.forEach((item) => {
+        domains.push(`${item.name}|dev`);
+        if (item.qc_required) {
+            domains.push(`${item.name}|qc`);
+        }
+    });
+    return domains;
 }

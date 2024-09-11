@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use config::config_env_init;
+use scaffold::template;
 
 mod code_flow;
 mod combiner;
@@ -34,6 +35,7 @@ fn main() {
             scaffold::skeleton_generate,
             scaffold::build_root_path,
             scaffold::open_directory_with_root,
+            scaffold::list_task_items,
             void_probe::probe,
             void_probe::task_progress,
             void_probe::get_probe_result,
@@ -45,6 +47,9 @@ fn main() {
             code_flow::convert,
             voyager::list_annotations,
             voyager::export_annotations,
+            template::list_templates,
+            template::read_template,
+            template::save_template,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

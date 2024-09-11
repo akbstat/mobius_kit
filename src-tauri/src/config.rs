@@ -11,7 +11,8 @@ use crate::{user::get_user_id, utils};
 
 const CONFIG: &str = "MK_CONFIG";
 const PDF_READER: &str = "MK_PDF_READER";
-const TEMPLATE: &str = "MK_TEMPLATE";
+pub const TEMPLATE: &str = "MK_TEMPLATE";
+pub const PRIVATE_TEMPLATE: &str = "MK_PRIVATE_TEMPLATE";
 pub const PROJECT_ROOT: &str = "MK_PROJECT_ROOT";
 pub const SKELETON_DOCUMENT: &str = "MK_SKELETON_DOCUMENT";
 pub const SKELETON_STAT: &str = "MK_SKELETON_STAT";
@@ -59,7 +60,22 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     if !script_path.exists() {
         fs::create_dir_all(&script_path)?;
     }
+
     env::set_var(TEMP_SCRIPT, script_path.to_string_lossy().to_string());
+
+    // init private template dir
+    let private_template_root = user_temp_path.join(r"app\mobiuskit\scaffold");
+    for kind in ["sdtm", "adam", "tfls"].into_iter() {
+        let kind_dir = private_template_root.join(kind);
+        if !kind_dir.exists() {
+            fs::create_dir_all(&kind_dir)?;
+        }
+    }
+    env::set_var(
+        PRIVATE_TEMPLATE,
+        private_template_root.to_string_lossy().to_string(),
+    );
+
     if config.word_worker < 1 {
         config.word_worker = 5;
     }

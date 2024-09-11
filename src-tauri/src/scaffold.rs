@@ -1,18 +1,14 @@
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-    process::Command,
-    str::FromStr,
-};
+use std::{env, fs, path::Path, process::Command};
 
 use scaffold::{
-    list_projects, DocumentSkeleton, FileResult, Generator, Group, Kind, Param, StatSkeleton, STAT,
+    list_projects, new_reader, Assignment, ConfigItem, DocumentSkeleton, FileResult, Generator,
+    Group, Kind, Param, StatSkeleton, STAT,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::config;
 
-const TEMPLATE_DIR: &str = r"\\180.0.0.1\Data\Utility\tools\MobiusKit\scaffold\template";
+pub mod template;
 
 #[tauri::command]
 pub fn get_projects() -> Result<String, String> {
@@ -51,12 +47,11 @@ pub fn skeleton_generate(param: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn scaffold_generate(param: String) -> Result<String, String> {
+pub fn scaffold_generate(param: Parameter) -> Result<String, String> {
     let mut result = GenerateResult::default();
-    let param: Parameter = serde_json::from_str(&param).unwrap();
     let config = Path::new(&param.config);
     let kind = kind_match(&param.kind);
-    let generator = match Generator::new(config, get_template_dir().as_path(), kind) {
+    let generator = match Generator::new(config, kind, param.assignment) {
         Ok(g) => g,
         Err(e) => return Err(e.to_string()),
     };
@@ -68,6 +63,7 @@ pub fn scaffold_generate(param: String) -> Result<String, String> {
                 engine: param.engine.clone(),
                 group: Group::Dev,
                 custom_code: param.custom_code.clone(),
+                template: param.template.dev,
             },
         ) {
             Ok(data) => result.dev = data,
@@ -82,6 +78,7 @@ pub fn scaffold_generate(param: String) -> Result<String, String> {
                 engine: param.engine.clone(),
                 group: Group::Qc,
                 custom_code: param.custom_code,
+                template: param.template.qc,
             },
         ) {
             Ok(data) => result.qc = data,
@@ -118,6 +115,15 @@ pub fn open_directory_with_root(path: String) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+pub fn list_task_items(kind: String, path: String) -> Result<Vec<ConfigItem>, String> {
+    let reader = new_reader(&kind_match(&kind), Path::new(&path));
+    match reader.read() {
+        Ok(items) => Ok(items),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
 fn kind_match(k: &str) -> Kind {
     if k.eq("SDTM") {
         return Kind::SDTM;
@@ -129,7 +135,7 @@ fn kind_match(k: &str) -> Kind {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Parameter {
+pub struct Parameter {
     pub project: String,
     pub engine: String,
     pub config: String,
@@ -139,6 +145,14 @@ struct Parameter {
     pub dev_dest: String,
     pub qc_dest: String,
     pub custom_code: Vec<String>,
+    pub template: Template,
+    pub assignment: Vec<Assignment>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Template {
+    pub dev: String,
+    pub qc: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -152,17 +166,4 @@ struct GenerateSkeletonParam {
     pub product: String,
     pub trail: String,
     pub purpose: String,
-}
-
-fn get_template_dir() -> PathBuf {
-    if let Ok(dir) = env::var("MK_TEMPLATE") {
-        let p = Path::new(&dir);
-        if p.exists() && p.is_dir() {
-            PathBuf::from(p)
-        } else {
-            PathBuf::from_str(TEMPLATE_DIR).unwrap()
-        }
-    } else {
-        PathBuf::from_str(TEMPLATE_DIR).unwrap()
-    }
 }

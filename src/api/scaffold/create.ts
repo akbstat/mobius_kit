@@ -1,8 +1,9 @@
 import { invoke } from '@tauri-apps/api/tauri';
+import { TemplateSelected } from '../../components/template/template';
+import { Assignment } from '../../components/task-assignment/assignment';
 
 export async function createFromTemplate(param: Param): Promise<GeneratedResult> {
-    const p = JSON.stringify(param);
-    return JSON.parse(await invoke("scaffold_generate", { "param": p })) as GeneratedResult;
+    return JSON.parse(await invoke("scaffold_generate", { param })) as GeneratedResult;
 }
 
 export async function inferPathSdtm(path: string): Promise<string> {
@@ -27,6 +28,8 @@ export interface Param {
     dev_dest: string,
     qc_dest: string,
     custom_code: string[],
+    template: TemplateSelected,
+    assignment: Assignment[],
 }
 
 export interface GeneratedResult {

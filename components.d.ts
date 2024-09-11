@@ -50,14 +50,18 @@ declare module 'vue' {
     ElText: typeof import('element-plus/es')['ElText']
     ElTimeline: typeof import('element-plus/es')['ElTimeline']
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
+    ElTransfer: typeof import('element-plus/es')['ElTransfer']
     InspectorGauge: typeof import('./src/components/InspectorGauge.vue')['default']
     InspectorItem: typeof import('./src/components/InspectorItem.vue')['default']
     InspectorSummary: typeof import('./src/components/InspectorSummary.vue')['default']
     OutputTag: typeof import('./src/components/OutputTag.vue')['default']
+    Preview: typeof import('./src/components/task-assignment/Preview.vue')['default']
     ProjectList: typeof import('./src/components/project-list/ProjectList.vue')['default']
     ProjectNavigator: typeof import('./src/components/project-navigator/ProjectNavigator.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TaskAssignment: typeof import('./src/components/task-assignment/TaskAssignment.vue')['default']
+    Template: typeof import('./src/components/template/Template.vue')['default']
     Timeline: typeof import('./src/components/Timeline.vue')['default']
   }
   export interface ComponentCustomProperties {

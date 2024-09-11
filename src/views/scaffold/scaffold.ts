@@ -41,3 +41,8 @@ export const purposes = [
 ].sort((x, y) => x.toUpperCase().localeCompare(y.toUpperCase())).map(p => {
     return { value: p };
 });
+
+export interface Item {
+    name: string,
+    developer: string,
+}

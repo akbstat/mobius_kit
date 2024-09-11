@@ -4,16 +4,21 @@ import { open } from '@tauri-apps/api/dialog';
 import { debounce } from "lodash";
 import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { createFromTemplate, FileResult } from "../../api/scaffold/create";
-import { getProjects, createProject, buildRootPath, openDirectory } from "../../api/scaffold/project";
+import { getProjects, createProject, buildRootPath, openDirectory, listItems } from "../../api/scaffold/project";
 import { ElMessage, ElNotification, FormInstance, FormRules } from 'element-plus';
 import { ErrorInfo } from "./errorInfo";
-import { inferChosenProject, CreateProjectForm, purposes, ProjectKind } from "./scaffold";
+import { inferChosenProject, CreateProjectForm, purposes, ProjectKind, Item } from "./scaffold";
 import { ChosenProject, Product } from "../../components/project-list/project";
 import { ArrowRight } from '@element-plus/icons-vue';
 import ProjectList from "../../components/project-list/ProjectList.vue";
 import ProjectNavigator from "../../components/project-navigator/ProjectNavigator.vue";
+import Template from "../../components/template/Template.vue";
+import TaskAssignment from '../../components/task-assignment/TaskAssignment.vue';
 import { useScaffold } from "../../store/scaffold";
 import { storeToRefs } from 'pinia';
+import { TemplateSelected } from '../../components/template/template';
+import { fetchOfficalTemplate } from "../../api/scaffold/template";
+import { Assignment } from '../../components/task-assignment/assignment';
 
 
 const buttonStyle = {
@@ -53,6 +58,7 @@ let qcResult = ref<FileResult[]>([]);
 let devResultFilter = ref(false);
 let qcResultFilter = ref(false);
 let projectList = ref<Product[]>([]);
+let templateSelected: TemplateSelected = { dev: "", qc: "" };
 const createProjectRules = reactive<FormRules<CreateProjectForm>>({
     product: [
         { validator: validateProductID, trigger: "change" },
@@ -60,6 +66,9 @@ const createProjectRules = reactive<FormRules<CreateProjectForm>>({
     trail: [{ required: true, trigger: "change" }],
     purpose: [{ required: true, trigger: "change" }],
 });
+const items = ref<Item[]>([]);
+const taskAssignmentDisplay = ref(false);
+let assignment: Assignment[] = [];
 
 watch(rootPath, debounce(update, 100));
 
@@ -69,6 +78,12 @@ watch(chosenProject, debounce(async () => {
     }
 }, 100))
 
+watch(configPath, debounce(async () => {
+    if (configPath.value.length > 0) {
+        items.value = (await listItems(projectKind.value, configPath.value)).map((item: string) => { return { name: item, developer: "" } });
+    }
+}, 100));
+
 onMounted(async () => {
     if (chosenProject.value.purpose) {
         rootPath.value = await buildRootPath(chosenProject.value);
@@ -77,6 +92,9 @@ onMounted(async () => {
 });
 
 function update() {
+    fetchOfficalTemplate(projectKind.value).then(data => {
+        templateSelected = data;
+    });
     switch (projectKind.value) {
         case ProjectKind.SDTM:
             inferPathSdtm(rootPath.value).then(data => {
@@ -85,6 +103,11 @@ function update() {
                 project.value = projectCode(rootPath.value);
                 devDestinationPath.value = referDevFolder(rootPath.value);
                 qcDestinationPath.value = referQcFolder(rootPath.value);
+                if (configPath.value.length > 0) {
+                    listItems(projectKind.value, configPath.value).then(data => {
+                        items.value = data.map((item: string) => { return { name: item, developer: "" } });
+                    });
+                }
             })
             break;
         case ProjectKind.ADaM:
@@ -94,6 +117,11 @@ function update() {
                 project.value = projectCode(rootPath.value);
                 devDestinationPath.value = referDevFolder(rootPath.value);
                 qcDestinationPath.value = referQcFolder(rootPath.value);
+                if (configPath.value.length > 0) {
+                    listItems(projectKind.value, configPath.value).then(data => {
+                        items.value = data.map((item: string) => { return { name: item, developer: "" } });
+                    });
+                }
             })
             break;
         case ProjectKind.TFLs:
@@ -103,6 +131,11 @@ function update() {
                 project.value = projectCode(rootPath.value);
                 devDestinationPath.value = referDevFolder(rootPath.value);
                 qcDestinationPath.value = referQcFolder(rootPath.value);
+                if (configPath.value.length > 0) {
+                    listItems(projectKind.value, configPath.value).then(data => {
+                        items.value = data.map((item: string) => { return { name: item, developer: "" } });
+                    });
+                }
             })
             break;
         default:
@@ -259,6 +292,11 @@ function validateProductID(_: any, value: string, callback: any) {
     callback()
 }
 
+function changeAssignemt(data: Assignment[]) {
+    assignment = data;
+    taskAssignmentDisplay.value = false;
+}
+
 async function createNewProject(formEl: FormInstance | undefined) {
     if (!formEl) return;
     let result = await formEl.validate();
@@ -293,6 +331,8 @@ async function submit() {
         dev_dest: devDestinationPath.value,
         qc_dest: qcDestinationPath.value,
         custom_code: customCode.value,
+        template: templateSelected,
+        assignment,
     };
     loading.value = true
     try {
@@ -379,7 +419,7 @@ async function qcDestinationSelect() {
                         <el-radio-button :label="ProjectKind.TFLs" />
                     </el-radio-group>
                     <el-tabs tab-position="right" :model-value="openedTab"
-                        @tab-change="(tab) => { openedTab = tab as string }">
+                        @tab-change="(tab: string) => { openedTab = tab as string }">
                         <el-tab-pane label="Template Builder" key="builder" name="builder">
                             <el-form :rules="createProjectRules" label-position="left" label-width="100px">
                                 <el-form-item label=" Project Root">
@@ -391,9 +431,16 @@ async function qcDestinationSelect() {
                                 </el-form-item>
                                 <el-form-item label="Configuration">
                                     <el-select v-model="configPath" style="width: 480px" default-first-option>
-                                        <el-option v-for=" config  in  configs " :label="extractFileName(config)"
+                                        <el-option v-for=" config in configs " :label="extractFileName(config)"
                                             :value="config" />
                                     </el-select>
+                                    <el-button :disabled="configPath.length === 0" type="primary" plain
+                                        style="width: 40px; margin-left: 5px;"
+                                        @click="() => taskAssignmentDisplay = true">
+                                        <el-icon>
+                                            <UserFilled />
+                                        </el-icon>
+                                    </el-button>
                                 </el-form-item>
                                 <el-form-item label="Project Code">
                                     <el-input v-model="project" clearable style="width: 480px;" />
@@ -404,7 +451,7 @@ async function qcDestinationSelect() {
                                 </el-form-item>
                                 <el-form-item label="SAS Version">
                                     <el-select v-model="engine" style="width: 480px" default-first-option>
-                                        <el-option v-for=" engine  in  engines " :key="engine" :label="engine"
+                                        <el-option v-for=" engine in engines " :key="engine" :label="engine"
                                             :value="engine" />
                                     </el-select>
                                 </el-form-item>
@@ -484,19 +531,11 @@ async function qcDestinationSelect() {
         <el-button style="margin-top: 20px;" type="primary" @click="() => showErrorPanel = false" plain>Got
             it</el-button>
     </el-dialog>
-    <el-drawer v-model="customCodePanelShow" title="Custom Code" size="500px">
-        <div style="padding-bottom: 10px;">
-            <span>Before Init General</span>
-            <el-input v-model="customCode[0]" :autosize="{ minRows: 7, maxRows: 7 }" type="textarea" />
-        </div>
-        <div style="padding-bottom: 10px;">
-            <span>Programming Personally</span>
-            <el-input v-model="customCode[1]" :autosize="{ minRows: 7, maxRows: 7 }" type="textarea" />
-        </div>
-        <div style="padding-bottom: 10px;">
-            <span>After Savelog End</span>
-            <el-input v-model="customCode[2]" :autosize="{ minRows: 7, maxRows: 7 }" type="textarea" />
-        </div>
+    <el-drawer v-model="customCodePanelShow" title="Custom Code" size="1100px" destroy-on-close>
+        <Template :kind="projectKind" @template-change="(template: TemplateSelected) => {
+            templateSelected = template;
+            customCodePanelShow = false;
+        }" />
     </el-drawer>
     <el-drawer v-model="devResultDetailPanelShow" title="Details of Dev Group" size="600px">
         <el-switch style="--el-switch-on-color: #3375b9; --el-switch-off-color: #393a3c;" v-model="devResultFilter"
@@ -518,8 +557,8 @@ async function qcDestinationSelect() {
         <el-form ref="ruleFormRef" label-width="auto" :model="newProject" :rules="createProjectRules">
             <el-form-item label="Product Code" prop="product">
                 <el-autocomplete v-model="newProject.product" @change="(value: string) => {
-                        newProject.product = value.toLowerCase();
-                    }" style="width: 90%;" :fetch-suggestions="productCodeSearch" clearable></el-autocomplete>
+                    newProject.product = value.toLowerCase();
+                }" style="width: 90%;" :fetch-suggestions="productCodeSearch" clearable></el-autocomplete>
             </el-form-item>
             <el-form-item label="Trail Code" prop="trail">
                 <el-autocomplete v-model="newProject.trail" style="width: 90%;" :fetch-suggestions="trailCodeSearch"
@@ -540,6 +579,9 @@ async function qcDestinationSelect() {
             </el-form-item>
         </el-form>
     </el-dialog>
+    <el-drawer destroy-on-close v-model="taskAssignmentDisplay" title="Task Assignment" size="1100px">
+        <TaskAssignment :items="items.map(item => item.name)" @change-assignment="changeAssignemt" />
+    </el-drawer>
 </template>
 
 <style>

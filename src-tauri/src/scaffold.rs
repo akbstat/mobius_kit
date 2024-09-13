@@ -64,6 +64,7 @@ pub fn scaffold_generate(param: Parameter) -> Result<String, String> {
                 group: Group::Dev,
                 custom_code: param.custom_code.clone(),
                 template: param.template.dev,
+                path: path_display(&param.dev_dest),
             },
         ) {
             Ok(data) => result.dev = data,
@@ -79,6 +80,7 @@ pub fn scaffold_generate(param: Parameter) -> Result<String, String> {
                 group: Group::Qc,
                 custom_code: param.custom_code,
                 template: param.template.qc,
+                path: path_display(&param.qc_dest),
             },
         ) {
             Ok(data) => result.qc = data,
@@ -132,6 +134,15 @@ fn kind_match(k: &str) -> Kind {
         return Kind::ADAM;
     }
     Kind::TFL
+}
+
+fn path_display(source: &str) -> String {
+    let paths = source.split("\\").collect::<Vec<_>>();
+    if paths.len().gt(&7) {
+        format!("..\\\\{}", paths.get(paths.len() - 7..).unwrap().join("\\"))
+    } else {
+        source.into()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

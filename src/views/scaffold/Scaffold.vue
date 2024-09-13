@@ -176,12 +176,17 @@ function extractFileName(name: string): string {
     return names.slice(0, names.length - 1).join(".");
 };
 
+function projectKindtoFolderName(source: string) {
+    if (source === "TFLs") return "tfl";
+    else return source.toLowerCase();
+}
+
 function referDevFolder(root: string): string {
-    return `${root}\\product\\program\\${projectKind.value.toLowerCase()}`;
+    return `${root}\\product\\program\\${projectKindtoFolderName(projectKind.value)}`;
 }
 
 function referQcFolder(root: string): string {
-    return `${root}\\validation\\program\\${projectKind.value.toLowerCase()}`;
+    return `${root}\\validation\\program\\${projectKindtoFolderName(projectKind.value)}`;
 }
 
 function projectCode(path: string): string {

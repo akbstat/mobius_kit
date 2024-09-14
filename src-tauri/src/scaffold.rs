@@ -1,8 +1,8 @@
 use std::{env, fs, path::Path, process::Command};
 
 use scaffold::{
-    list_projects, new_reader, Assignment, ConfigItem, DocumentSkeleton, FileResult, Generator,
-    Group, Kind, Param, StatSkeleton, STAT,
+    list_projects, new_reader, read_assignment_from_top, Assignment, ConfigItem, DocumentSkeleton,
+    FileResult, Generator, Group, Kind, Param, StatSkeleton, STAT,
 };
 use serde::{Deserialize, Serialize};
 
@@ -48,10 +48,21 @@ pub fn skeleton_generate(param: String) -> Result<(), String> {
 
 #[tauri::command]
 pub fn scaffold_generate(param: Parameter) -> Result<String, String> {
-    let mut result = GenerateResult::default();
     let config = Path::new(&param.config);
     let kind = kind_match(&param.kind);
-    let generator = match Generator::new(config, kind, param.assignment) {
+    // did not assign task in tfl generation, try to get assignment from top
+    let assignment = if Kind::TFL.eq(&kind) && param.assignment.is_empty() {
+        if let Ok(assignment) = read_assignment_from_top(&config) {
+            assignment
+        } else {
+            param.assignment
+        }
+    } else {
+        param.assignment
+    };
+    let mut result = GenerateResult::default();
+    let kind = kind_match(&param.kind);
+    let generator = match Generator::new(config, kind, assignment) {
         Ok(g) => g,
         Err(e) => return Err(e.to_string()),
     };

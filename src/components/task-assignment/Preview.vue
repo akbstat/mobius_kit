@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { Assignment, SpanMethodProps } from './assignment';
+import { Assignment } from './assignment';
 import { Search } from '@element-plus/icons-vue';
 
 // a map to record the start row index and task count of each developer, for building the merge cell
@@ -8,16 +8,24 @@ let developerPositionInfo: Map<string, { start: number, count: number }> = new M
 const { assignment } = defineProps<{ assignment: Assignment[] }>();
 const searchValue = ref("");
 const assignmentDisplay = computed(() => {
+    let filteredAssignments = assignment;
     if (searchValue.value.length > 0) {
-        const filteredAssignments = assignment.filter(assign => {
+        filteredAssignments = assignment.filter(assign => {
             return assign.developer.toUpperCase().includes(searchValue.value.toUpperCase()) || assign.task.toUpperCase().includes(searchValue.value.toUpperCase());
-        });
-        updatePositionInfo(filteredAssignments);
-        return filteredAssignments;
+        }).sort((x, y) => x.developer < y.developer ? -1 : 1);
     }
-    updatePositionInfo(assignment);
-    return assignment;
+    const result: { developer: string, tasks: string[] }[] = [];
+    filteredAssignments.forEach((assign, index) => {
+        if (index === 0 || assign.developer !== filteredAssignments[index - 1].developer) {
+            result.push({ developer: assign.developer, tasks: [assign.task] });
+        } else {
+            result[result.length - 1].tasks.push(assign.task);
+        }
+    });
+    return result;
 });
+
+// const assignmentDisplay = [{ developer: "jun.Lei", tasks: ["ta|qc", "ae|dev", "lb|dev"] }];
 
 function updatePositionInfo(assignments: Assignment[]) {
     developerPositionInfo = new Map();
@@ -34,26 +42,6 @@ function updatePositionInfo(assignments: Assignment[]) {
     });
 }
 
-function spanMethod(props: SpanMethodProps): { rowspan: number, colspan: number } | undefined {
-    const { row, rowIndex, columnIndex } = props;
-    if (columnIndex === 0) {
-        const devloper = row.developer;
-        const posistionInfo = developerPositionInfo.get(devloper);
-        if (posistionInfo) {
-            if (rowIndex === posistionInfo.start) {
-                return {
-                    rowspan: posistionInfo.count,
-                    colspan: 1,
-                }
-            } else {
-                return {
-                    rowspan: 0,
-                    colspan: 0,
-                }
-            }
-        }
-    }
-}
 
 onMounted(() => {
     updatePositionInfo(assignment);
@@ -64,16 +52,15 @@ onMounted(() => {
 <template>
     <el-input clearable v-model="searchValue" placeholder="Search member or task" :prefix-icon="Search"
         style="margin-bottom: 10px; width: 250px;" />
-    <el-table :span-method="spanMethod" :data="assignmentDisplay" max-height="400px">
+    <el-table :data="assignmentDisplay" max-height="400px">
         <el-table-column prop="developer" label="Member" width="250px" />
-        <el-table-column prop="task" label="Task">
+        <el-table-column prop="tasks" label="Task">
             <template #default="scope">
-                <div>
-                    <span style="width: 300px; display: inline-block;">{{ scope.row.task.split("|")[0] }}</span>
-                    <el-tag size="small" style="width: 50px;"
-                        :type="scope.row.task.split('|')[1] === 'dev' ? '' : 'warning'">{{
-                            scope.row.task.split("|")[1] }}</el-tag>
-                </div>
+                <el-space wrap>
+                    <el-tag style="font-size: medium;" :type="task.split('|')[1] === 'dev' ? '' : 'warning'"
+                        v-for="task in scope.row.tasks">{{
+                            task.split("|")[0] }}</el-tag>
+                </el-space>
             </template>
         </el-table-column>
     </el-table>

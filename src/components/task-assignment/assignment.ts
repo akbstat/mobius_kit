@@ -1,5 +1,3 @@
-import type { TableColumnCtx } from "element-plus";
-
 export interface Assignment {
     developer: string,
     task: string,
@@ -18,9 +16,3 @@ export function newAssignment(mapper: Map<string, string[]>): Assignment[] {
     return assignment;
 }
 
-export interface SpanMethodProps {
-    row: Assignment
-    column: TableColumnCtx<Assignment>
-    rowIndex: number
-    columnIndex: number
-}

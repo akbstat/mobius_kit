@@ -5,7 +5,7 @@ import { debounce } from "lodash";
 import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { createFromTemplate, FileResult } from "../../api/scaffold/create";
 import { getProjects, createProject, buildRootPath, openDirectory, listItems } from "../../api/scaffold/project";
-import { ElMessage, ElNotification, FormInstance, FormRules } from 'element-plus';
+import { ElMessage, ElNotification, FormInstance, FormRules, TabPaneName } from 'element-plus';
 import { ErrorInfo } from "./errorInfo";
 import { inferChosenProject, CreateProjectForm, purposes, ProjectKind, Item } from "./scaffold";
 import { ChosenProject, Product } from "../../components/project-list/project";
@@ -424,7 +424,7 @@ async function qcDestinationSelect() {
                         <el-radio-button :label="ProjectKind.TFLs" />
                     </el-radio-group>
                     <el-tabs tab-position="right" :model-value="openedTab"
-                        @tab-change="(tab: string) => { openedTab = tab as string }">
+                        @tab-change="(tab: TabPaneName) => { openedTab = tab as string }">
                         <el-tab-pane label="Template Builder" key="builder" name="builder">
                             <el-form :rules="createProjectRules" label-position="left" label-width="100px">
                                 <el-form-item label=" Project Root">

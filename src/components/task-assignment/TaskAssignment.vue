@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref, nextTick, onMounted } from 'vue';
-import { ElMessage, type InputInstance } from 'element-plus';
+import { ElMessage, TransferDirection, TransferKey, type InputInstance } from 'element-plus';
 import Preview from './Preview.vue';
 import { newAssignment, Assignment } from './assignment';
 
@@ -8,7 +8,7 @@ const assignmentPreviewDisplay = ref(false);
 const developers = ref<string[]>([]);
 const newDeveloper = ref("");
 const currentDeveloper = ref("");
-const transferTitles = ["Unassigned Task", "Assigned Task"];
+const transferTitles: [string, string] = ["Unassigned Task", "Assigned Task"];
 const addMemberInputDisplay = ref(false);
 const InputRef = ref<InputInstance>();
 const assignment: Map<string, string[]> = new Map();
@@ -56,7 +56,7 @@ function removeDeveloper(developer: string) {
     assignedItems.value = [];
 }
 
-function developerTagType(developer: string): string {
+function developerTagType(developer: string): "" | "success" | "warning" | "info" | "danger" {
     if (currentDeveloper.value === developer) {
         return "success";
     }
@@ -70,11 +70,11 @@ function switchDeveloper(developer: string) {
     const itemsOfOtherDevelopers = Array.from(assignment.keys()).filter(developer => developer !== currentDeveloper.value).flatMap(key => assignment.get(key)) as string[];
     items.value = props.items.filter(item => !itemsOfOtherDevelopers.includes(item));
 }
-
+// (value: TransferKey[], direction: TransferDirection, movedKeys: TransferKey[]) => void
 function handleChange(
-    _keys: number[] | string[],
-    direction: 'left' | 'right',
-    movedKeys: string[] | number[]
+    _keys: TransferKey[],
+    direction: TransferDirection,
+    movedKeys: TransferKey[]
 ) {
     const developer = currentDeveloper.value;
     let items = assignment.get(developer) as string[];

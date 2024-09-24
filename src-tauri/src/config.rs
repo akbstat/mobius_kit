@@ -16,6 +16,7 @@ pub const PRIVATE_TEMPLATE: &str = "MK_PRIVATE_TEMPLATE";
 pub const PROJECT_ROOT: &str = "MK_PROJECT_ROOT";
 pub const SKELETON_DOCUMENT: &str = "MK_SKELETON_DOCUMENT";
 pub const SKELETON_STAT: &str = "MK_SKELETON_STAT";
+pub const TRACE: &str = "MK_TRACE";
 const TEMP_SCRIPT: &str = "MK_TEMP_SCRIPT";
 const WORD_WORKER: &str = "MK_WORD_WORKER";
 
@@ -75,6 +76,8 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
         PRIVATE_TEMPLATE,
         private_template_root.to_string_lossy().to_string(),
     );
+    let trace = user_temp_path.join(r"app\mobiuskit\trace.log");
+    env::set_var(TRACE, trace.to_string_lossy().to_string());
 
     if config.word_worker < 1 {
         config.word_worker = 5;

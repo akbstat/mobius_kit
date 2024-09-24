@@ -7,6 +7,15 @@ interface TaskItem {
     qc_required: boolean,
 }
 
+export async function saveTrace(trace: string[]) {
+    await invoke("save_trace", { trace });
+}
+
+export async function readTrace(): Promise<string[]> {
+    let trace: string[] = await invoke("read_trace", {});
+    return trace;
+}
+
 export async function getProjects(): Promise<Product[]> {
     return JSON.parse(await invoke("get_projects")) as Product[];
 }

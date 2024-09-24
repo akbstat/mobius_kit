@@ -36,6 +36,8 @@ fn main() {
             scaffold::build_root_path,
             scaffold::open_directory_with_root,
             scaffold::list_task_items,
+            scaffold::save_trace,
+            scaffold::read_trace,
             void_probe::probe,
             void_probe::task_progress,
             void_probe::get_probe_result,

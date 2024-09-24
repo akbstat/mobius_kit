@@ -1,4 +1,9 @@
-use std::{env, fs, path::Path, process::Command};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+    process::Command,
+    thread,
+};
 
 use scaffold::{
     list_projects, new_reader, read_assignment_from_top, Assignment, ConfigItem, DocumentSkeleton,
@@ -9,6 +14,8 @@ use serde::{Deserialize, Serialize};
 use crate::config;
 
 pub mod template;
+
+const NEW_LINE: char = '\n';
 
 #[tauri::command]
 pub fn get_projects() -> Result<String, String> {
@@ -134,6 +141,30 @@ pub fn list_task_items(kind: String, path: String) -> Result<Vec<ConfigItem>, St
     match reader.read() {
         Ok(items) => Ok(items),
         Err(err) => Err(err.to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn save_trace(trace: Vec<String>) -> Result<(), String> {
+    let trace_file = env::var(config::TRACE).unwrap();
+    let trace_file = PathBuf::new().join(trace_file);
+    let data = trace.join("\n");
+    thread::spawn(move || {
+        fs::write(trace_file, data.as_bytes()).unwrap();
+    });
+    Ok(())
+}
+
+#[tauri::command]
+pub fn read_trace() -> Result<Vec<String>, String> {
+    let trace_file = env::var(config::TRACE).unwrap();
+    let trace_file = Path::new(&trace_file);
+    match fs::read_to_string(&trace_file) {
+        Ok(data) => Ok(data
+            .split(NEW_LINE)
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>()),
+        Err(_) => Ok(vec![]),
     }
 }
 

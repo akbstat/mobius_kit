@@ -7,5 +7,6 @@ export const useScaffold = defineStore("scaffold", {
         chosenProject: {} as ChosenProject,
         openedTab: "builder",
         projectKind: ProjectKind.SDTM,
+        trace: [] as string[]
     }),
 });

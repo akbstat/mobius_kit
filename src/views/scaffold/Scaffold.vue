@@ -4,7 +4,7 @@ import { open } from '@tauri-apps/api/dialog';
 import { debounce } from "lodash";
 import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { createFromTemplate, FileResult } from "../../api/scaffold/create";
-import { getProjects, createProject, buildRootPath, openDirectory, listItems } from "../../api/scaffold/project";
+import { getProjects, createProject, buildRootPath, openDirectory, listItems, saveTrace, readTrace } from "../../api/scaffold/project";
 import { ElMessage, ElNotification, FormInstance, FormRules, TabPaneName } from 'element-plus';
 import { ErrorInfo } from "./errorInfo";
 import { inferChosenProject, CreateProjectForm, purposes, ProjectKind, Item } from "./scaffold";
@@ -27,11 +27,13 @@ const buttonStyle = {
     borderColor: "#2a598a",
     borderWidth: "1px"
 }
+// const trace: Ref<string[]> = ref([]);
 let store = useScaffold();
-let { chosenProject, openedTab, projectKind } = storeToRefs(store);
+let { chosenProject, openedTab, projectKind, trace } = storeToRefs(store);
 let newProject = ref<CreateProjectForm>({
     product: "", trail: "", purpose: "", from: "",
 });
+const currentMovement = ref("");
 const ruleFormRef = ref<FormInstance>();
 let showCreateProject = ref(false);
 let showErrorPanel = ref(false);
@@ -88,8 +90,44 @@ onMounted(async () => {
     if (chosenProject.value.purpose) {
         rootPath.value = await buildRootPath(chosenProject.value);
     }
+    trace.value = await readTrace();
     projectList.value = await getProjects();
 });
+
+function switchProject(project: ChosenProject) {
+    const key = movementKey(project);
+    let tracing = trace.value;
+    const index = tracing.indexOf(key);
+    if (index > -1) {
+        tracing = tracing.splice(0, index).concat(tracing.splice(1));
+    }
+    tracing.unshift(key);
+    trace.value = tracing;
+    chosenProject.value = project;
+    saveTrace(tracing);
+}
+
+function movementKey(movement: ChosenProject): string {
+    return `${movement.product}|${movement.trail}|${movement.purpose}`;
+}
+
+function movementLabel(movement: string): string {
+    const movements = movement.split("|");
+    return `${movements[0]}-${movements[1]}-${movements[2]}`;
+}
+
+function movementChange() {
+    const movements = currentMovement.value.split("|");
+    if (movements.length > 2) {
+        const project = {
+            product: movements[0],
+            trail: movements[1],
+            purpose: movements[2]
+        }
+        switchProject(project);
+    }
+    currentMovement.value = "";
+}
 
 function update() {
     fetchOfficalTemplate(projectKind.value).then(data => {
@@ -393,7 +431,7 @@ async function qcDestinationSelect() {
             <el-container>
                 <el-main style="padding: 0px;">
                     <ProjectList :projects="projectList"
-                        @project-change="(project: ChosenProject) => { chosenProject = project; }" />
+                        @project-change="(project: ChosenProject) => { switchProject(project); }" />
 
                 </el-main>
                 <el-footer style="padding: 5px 0px 0px 0px; height: auto;">
@@ -405,7 +443,7 @@ async function qcDestinationSelect() {
         <el-main style="padding: 0px;">
             <el-container>
                 <el-header style="padding: 15px 0px 9px 20px; height: 40px; ">
-                    <el-breadcrumb v-if="chosenProject.purpose" :separator-icon="ArrowRight">
+                    <el-breadcrumb style="float: left;" v-if="chosenProject.purpose" :separator-icon="ArrowRight">
                         <el-breadcrumb-item>
                             <span style="color: #409EFF;">{{ chosenProject.product }}</span>
                         </el-breadcrumb-item>
@@ -416,6 +454,12 @@ async function qcDestinationSelect() {
                             <span style=" color: #409EFF;">{{ chosenProject.purpose }}</span>
                         </el-breadcrumb-item>
                     </el-breadcrumb>
+
+                    <el-select @change="movementChange" v-model="currentMovement" placeholder="Movement Tracing"
+                        size="small" style="float: right; margin-right: 30px;">
+                        <el-option v-for="movement in trace" :key="movement" :label="movementLabel(movement)"
+                            :value="movement" />
+                    </el-select>
                 </el-header>
                 <el-main>
                     <el-radio-group v-model="projectKind" @change="update" style="margin-bottom: 30px;">

@@ -8,6 +8,7 @@ import Scaffold from "../views/scaffold/Scaffold.vue";
 import VoidProbe from "../views/voidprobe/VoidProbe.vue";
 import CodeFlow from "../views/codeflow/CodeFlow.vue";
 import Voyager from "../views/voyager/Voyager.vue";
+import Fusion from "../views/fusion/Fusion.vue";
 
 
 export const routes: RouteRecordRaw[] = [
@@ -16,11 +17,6 @@ export const routes: RouteRecordRaw[] = [
         name: "Home",
         component: Home,
     },
-    // {
-    //     path: "/combiner",
-    //     name: "combiner",
-    //     component: Combiner,
-    // },
     {
         path: "/divider",
         name: "Divider",
@@ -31,11 +27,6 @@ export const routes: RouteRecordRaw[] = [
         name: "Inspector",
         component: Inspector,
     },
-    // {
-    //     path: "/project",
-    //     name: "project",
-    //     component: Project,
-    // },
     {
         path: "/scaffold",
         name: "Scaffold",
@@ -55,6 +46,11 @@ export const routes: RouteRecordRaw[] = [
         path: "/voyager",
         name: "Voyager",
         component: Voyager,
+    },
+    {
+        path: "/fusion",
+        name: "Fusion",
+        component: Fusion,
     },
 ];
 

@@ -1,6 +1,6 @@
-use std::{path::Path, process::Command};
+use std::path::Path;
 
-use rtf_divider::{list_rtf, RTFDivider};
+use rtf_divider::RTFDivider;
 
 #[tauri::command]
 pub fn divide_rtf(files: Vec<String>, pagesize: usize, dest: String) {
@@ -19,24 +19,15 @@ pub fn divide_rtf(files: Vec<String>, pagesize: usize, dest: String) {
     }
 }
 
-#[tauri::command]
-pub fn list_rtfs(dir: String) -> Result<String, String> {
-    let rtf = list_rtf(Path::new(&dir));
-    match rtf {
-        Ok(data) => return Ok(data),
-        Err(e) => Err(e.to_string()),
-    }
-}
-
-#[tauri::command]
-pub fn open_directory(path: &str) {
-    Command::new("cmd")
-        .arg("/C")
-        .arg("start")
-        .arg(path)
-        .output()
-        .unwrap();
-}
+// #[tauri::command]
+// pub fn open_directory(path: &str) {
+//     Command::new("cmd")
+//         .arg("/C")
+//         .arg("start")
+//         .arg(path)
+//         .output()
+//         .unwrap();
+// }
 
 #[cfg(test)]
 mod divider_test {

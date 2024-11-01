@@ -26,6 +26,23 @@ pub fn hide_directory(path: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[tauri::command]
+pub fn open_directory(path: &str) -> Result<(), String> {
+    let p = Path::new(path);
+    if !p.exists() {
+        return Err("Error: Directory does not exist".into());
+    }
+    match Command::new("cmd")
+        .arg("/C")
+        .arg("start")
+        .arg(path)
+        .output()
+    {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
 #[cfg(test)]
 mod test_hide_directory {
     use super::*;

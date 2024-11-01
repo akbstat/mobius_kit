@@ -7,6 +7,7 @@ import { debounce } from "lodash";
 import { Rtf, rtfExtention } from "./rtf";
 import { invoke } from "@tauri-apps/api/tauri";
 import OutputTag from "../../components/OutputTag.vue";
+import { listRtfs } from "../../api/utils/rtf";
 
 
 const configPagesizePageVisible = ref(false);
@@ -76,8 +77,8 @@ async function updateRtfList(path: string) {
     }
     let rtfs: Rtf[] = [];
     try {
-        let data: string = await invoke("list_rtfs", { "dir": directory.value });
-        JSON.parse(data).forEach((item: any) => {
+        let data = await listRtfs(directory.value);
+        data.forEach((item: any) => {
             rtfs.push(new Rtf(item.name, path, item.kind, item.size));
         });
     } catch (e) {

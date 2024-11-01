@@ -5,11 +5,11 @@ import { Result } from './result';
 import { open } from '@tauri-apps/api/dialog';
 import OutputTag from "../../components/OutputTag.vue";
 import { debounce } from 'lodash';
-import { invoke } from '@tauri-apps/api/tauri';
 import { ElNotification } from 'element-plus';
 import { probe, getProgress, getProbeResult, openPDF, probeRunning } from "../../api/void_probe/probe";
 import { useVoidProbeStore } from "../../store/voidprobe";
 import { storeToRefs } from 'pinia';
+import { listRtfs, Rtf } from '../../api/utils/rtf';
 
 const store = useVoidProbeStore();
 const { directory, result } = storeToRefs(store);
@@ -170,8 +170,8 @@ async function list_rtfs() {
     }
     let result: File[] = [];
     try {
-        let data: string = await invoke("list_rtfs", { "dir": directory.value });
-        JSON.parse(data).forEach((item: any) => {
+        let data: Rtf[] = await listRtfs(directory.value);
+        data.forEach((item: any) => {
             result.push({ name: item.name, type: item.kind, size: bytesToMegaBytes(item.size), path: `${directory.value}\\${item.name}`, modifiedAt: timestampDisplay(item.modified_at) });
         });
     } catch (e) {

@@ -8,6 +8,7 @@ mod code_flow;
 mod combiner;
 mod config;
 mod divider;
+mod fusion;
 mod inspector;
 mod scaffold;
 mod user;
@@ -28,8 +29,8 @@ fn main() {
             combiner::get_target_file_path,
             utils::open_file,
             divider::divide_rtf,
-            divider::open_directory,
-            divider::list_rtfs,
+            utils::directory::open_directory,
+            utils::list_rtfs,
             scaffold::scaffold_generate,
             scaffold::get_projects,
             scaffold::skeleton_generate,
@@ -52,6 +53,8 @@ fn main() {
             template::list_templates,
             template::read_template,
             template::save_template,
+            fusion::config_infer,
+            fusion::top_info,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

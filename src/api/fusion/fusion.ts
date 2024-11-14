@@ -1,44 +1,31 @@
-import { invoke } from "@tauri-apps/api"
-import { listRtfs } from "../utils/rtf";
+import { invoke } from "@tauri-apps/api";
+import { FusionConfig } from "./config";
 
-export interface Config {
-    top: { filename: string, path: string }[],
-    output: string,
-    destination: string,
+export async function runFusionTask(param: FusionConfig) {
+    await invoke("run_fusion_task", { param })
 }
 
-export interface Top {
-    filename: string,
-    title: string,
-}
-
-export interface Rtf {
-    kind: string,
-    modified_at: number,
-    name: string,
-    size: number,
-    title: string,
-}
-
-
-export async function configInfer(dir: string): Promise<Config> {
-    const result: Config = await invoke("config_infer", { dir })
-    return result;
-}
-
-export async function listRtfsWithTitle(output: string, top: string): Promise<Rtf[]> {
-    if (output.length === 0 || top.length === 0) {
-        return [];
-    }
-    const topInfo: Top[] = await invoke("top_info", { filepath: top });
-    const topInfoMap = new Map();
-    topInfo.forEach(top => { topInfoMap.set(top.filename, top.title) });
-    const outputs = await listRtfs(output);
-    return outputs.map(output => {
-        let { kind, modified_at, name, size } = output;
-        return {
-            kind, modified_at, name, size,
-            title: topInfoMap.get(name),
+export async function fetchLog(): Promise<string[]> {
+    const logs: string[] = [];
+    let origin: string = await invoke("fetch_log", {});
+    let originSlice = origin && origin.length > 0 ? origin.split('\n') : [];
+    originSlice.forEach((log) => {
+        if (!(log.startsWith("[INFO") || log.startsWith("[WARN") || log.startsWith("[ERR"))) {
+            logs.push(`${logs.pop()}\n${log}`);
+        } else {
+            logs.push(log);
         }
     });
+    return logs;
+}
+
+export async function fetcProgress(previous: number): Promise<number> {
+    let progress: number = await invoke("fetch_progress", {});
+    progress = progress > 1 ? 100 : progress * 100;
+    return progress > previous ? progress > 100 ? 100 : progress : previous;
+}
+
+
+export async function clearFusionTask() {
+    await invoke("clean_fusion_task", {});
 }

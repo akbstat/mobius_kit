@@ -53,8 +53,16 @@ fn main() {
             template::list_templates,
             template::read_template,
             template::save_template,
-            fusion::config_infer,
-            fusion::top_info,
+            fusion::top::config_infer,
+            fusion::top::top_info,
+            fusion::config::list_configs,
+            fusion::config::find_config,
+            fusion::config::save_config,
+            fusion::config::remove_config,
+            fusion::fusion::run_fusion_task,
+            fusion::fusion::clean_fusion_task,
+            fusion::fusion::fetch_log,
+            fusion::fusion::fetch_progress,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,13 +1,9 @@
-export interface Config {
-    top: Top,
-    output: string,
+export interface GeneralConfig {
+    top: string,
+    source: string,
     destination: string,
 }
 
-export interface Top {
-    filename: string,
-    path: string
-}
 
 export interface Task {
     language: "EN" | "CN",

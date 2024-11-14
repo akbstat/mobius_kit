@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, Ref } from 'vue';
-import { listRtfsWithTitle, Rtf } from '../../api/fusion/fusion';
-import { Config } from './fusion';
-import { Task } from './fusion';
+import { listRtfsWithTitle, Rtf } from '../../api/fusion/top';
+import { GeneralConfig } from './fusion';
+import { Task } from '../../api/fusion/config';
 import { open } from '@tauri-apps/api/dialog';
 
-const { config } = defineProps<{ config: Config }>();
+const { config } = defineProps<{ config: GeneralConfig }>();
 const closeEvent = "close";
 const submitEvent = "submit";
 const emit = defineEmits<{ (e: "submit", task: Task): void; (e: "close"): void }>();
@@ -29,7 +29,7 @@ const selections = computed(() => {
 const panelDisplay = ref(0);
 
 onMounted(async () => {
-    allOutputs.value = await listRtfsWithTitle(config.output, config.top.path);
+    allOutputs.value = await listRtfsWithTitle(config.source, config.top);
 })
 
 function filterOutput(query: string, output: { label: string }) {
@@ -54,7 +54,8 @@ function submit() {
         return {
             filename: output.name,
             title: output.title,
-            path: `${config.output}\\${output.name}`
+            path: `${config.source}\\${output.name}`,
+            size: 0,
         }
     });
     // rtf mode then remove cover and language option
@@ -71,23 +72,15 @@ function submit() {
         <el-aside width="12%">
             <el-menu>
                 <el-menu-item @click="() => { panelDisplay = 0 }">
-                    File Select
+                    Configuration
                 </el-menu-item>
                 <el-menu-item @click="() => { panelDisplay = 1 }">
-                    Configuration
+                    File Select
                 </el-menu-item>
             </el-menu>
         </el-aside>
         <el-main style="padding-top: 0; ">
-            <div v-if="panelDisplay === 0" class="output-select">
-                <el-transfer filterable filter-placeholder="Search Outputs" v-model="selected"
-                    :titles="['Source', 'Target']" :data="selections" :filter-method="filterOutput">
-                    <template #default="{ option }">
-                        <span style="width: 200px;">{{ option.label }}</span>
-                    </template>
-                </el-transfer>
-            </div>
-            <div v-if="panelDisplay === 1">
+            <div v-if="panelDisplay === 0">
                 <el-form label-width="auto">
                     <el-form-item label="Filename">
                         <el-input style="width: 70%;" v-model="task.name" clearable />
@@ -122,6 +115,15 @@ function submit() {
                         </el-input>
                     </el-form-item>
                 </el-form>
+
+            </div>
+            <div v-if="panelDisplay === 1" class="output-select">
+                <el-transfer filterable filter-placeholder="Search Outputs" v-model="selected"
+                    :titles="['Source', 'Target']" :data="selections" :filter-method="filterOutput">
+                    <template #default="{ option }">
+                        <span style="width: 200px;">{{ option.label }}</span>
+                    </template>
+                </el-transfer>
             </div>
         </el-main>
     </el-container>

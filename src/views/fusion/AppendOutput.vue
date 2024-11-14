@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, Ref } from 'vue';
-import { listRtfsWithTitle, Rtf } from '../../api/fusion/fusion';
-import { File, Task } from './fusion';
-import { Config } from './fusion';
+import { listRtfsWithTitle, Rtf } from '../../api/fusion/top';
+import { File, Task } from '../../api/fusion/config';
+import { GeneralConfig } from './fusion';
 
 const submitEvent = "submit";
 const closeEvent = "close";
-const { task, config } = defineProps<{ task: Task, config: Config }>();
+const { task, config } = defineProps<{ task: Task, config: GeneralConfig }>();
 const emit = defineEmits<{
     (e: "submit", outputs: File[]): void;
     (e: "close"): void;
@@ -24,8 +24,9 @@ function submit() {
     const newOutputs = outputs.value.filter((_, index) => selected.value.includes(index)).map(output => {
         return {
             title: output.title,
-            path: `${config.output}\\${output.name}`,
+            path: `${config.source}\\${output.name}`,
             filename: output.name,
+            size: 0,
         }
     });
     emit(submitEvent, newOutputs);
@@ -36,7 +37,7 @@ function filterOutput(query: string, output: { label: string }) {
 }
 
 onMounted(async () => {
-    const allOutputs = await listRtfsWithTitle(config.output, config.top.path);
+    const allOutputs = await listRtfsWithTitle(config.source, config.top);
     outputs.value = allOutputs.filter(output => !excludedOutputs.includes(output.name));
 })
 </script>

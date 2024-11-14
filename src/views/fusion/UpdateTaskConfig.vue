@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { Task } from './fusion';
+import { Task } from '../../api/fusion/config';
 import { open } from '@tauri-apps/api/dialog';
 
 const closeEvent = "close";

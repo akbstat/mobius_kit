@@ -1,23 +1,24 @@
 <script lang="ts" setup>
-import { onMounted, reactive, Ref, ref, watch } from 'vue';
+import { onMounted, Ref, ref } from 'vue';
 import Config from "./Config.vue";
 import NewTask from './NewTask.vue';
-import { Config as Configuration } from "./fusion";
-import { debounce } from 'lodash';
-import { Rtf, listRtfsWithTitle } from '../../api/fusion/fusion';
-import { openDirectory } from '../../api/utils/directory';
-import { Task } from './fusion';
+import { Rtf, listRtfsWithTitle } from '../../api/fusion/top';
 import AppendOutput from './AppendOutput.vue';
 import UpdateTaskConfig from './UpdateTaskConfig.vue';
 import RemoveConfirm from './RemoveConfirm.vue';
+import FusionProgress from './FusionProgress.vue';
+// import { ElMessage } from 'element-plus';
+import { ConfigRecord, findConfig, FusionConfig, saveConfig, Task, File } from '../../api/fusion/config';
+import SaveConfig from './SaveConfig.vue';
 import { ElMessage } from 'element-plus';
+import { GeneralConfig } from './fusion';
+import { clearFusionTask, runFusionTask } from '../../api/fusion/fusion';
+import { openFile } from '../../api/utils/directory';
 
-
-
+const cleanAllTaskDisplay = ref(false);
+const saveConfigDisplay = ref(false);
 const configDrawerDisplay = ref(false);
-const config: Configuration = reactive({ top: { filename: "", path: "" }, output: "", destination: "" });
 const rtfs: Ref<Rtf[]> = ref([]);
-const tasks: Ref<Task[]> = ref([]);
 const newTaskDisplay = ref(false);
 const appendOutputDisplay = ref(false);
 const updateTaskConfigDisplay = ref(false);
@@ -27,68 +28,142 @@ const removeTaskConfirmMessage = ref("");
 const removeOutputConfirmMessage = ref("");
 const removeTaskConfirmDisplay = ref(false);
 const removeOutputConfirmDisplay = ref(false);
-
+const fusionProgressDisplay = ref(false);
+const config: Ref<{ id: string | null, name: string }> = ref({ id: null, name: "" });
+const fusionConfig: Ref<FusionConfig> = ref({
+    id: null,
+    source: "",
+    destination: "",
+    top: "",
+    tasks: [],
+});
 
 function showConfigDrawer() {
     configDrawerDisplay.value = true;
 }
 
 function move(index: number, up: boolean) {
-    const outputs = tasks.value[activeTaskIndex.value].files;
+    const outputs = fusionConfig.value.tasks[activeTaskIndex.value].files;
     if (up && index > 0) {
         [outputs[index], outputs[index - 1]] = [outputs[index - 1], outputs[index]]
     } else if (!up && index < outputs.length - 1) {
         [outputs[index], outputs[index + 1]] = [outputs[index + 1], outputs[index]]
     }
-    tasks.value[activeTaskIndex.value].files = outputs;
+    fusionConfig.value.tasks[activeTaskIndex.value].files = outputs;
 }
 
 function removeOutput(index: number) {
-    const outputs = tasks.value[activeTaskIndex.value].files;
+    const outputs = fusionConfig.value.tasks[activeTaskIndex.value].files;
     if (index > -1 && index < outputs.length) {
         outputs.splice(index, 1);
-        tasks.value[activeTaskIndex.value].files = outputs;
+        fusionConfig.value.tasks[activeTaskIndex.value].files = outputs;
     }
 }
 
 function createTask(task: Task) {
-    tasks.value.push(task);
-    activeTaskIndex.value = tasks.value.length - 1;
+    fusionConfig.value.tasks.push(task);
+    activeTaskIndex.value = fusionConfig.value.tasks.length - 1;
     newTaskDisplay.value = false;
 }
 
+function createTaskWithAllOutput() {
+    const task: Task = {
+        name: 'all outputs',
+        language: 'CN',
+        cover: null,
+        destination: fusionConfig.value.destination,
+        mode: 'PDF',
+        files: rtfs.value.map(output => {
+            let file: File = {
+                title: output.title,
+                path: `${fusionConfig.value.source}\\${output.name}`,
+                filename: output.name,
+                size: 0,
+            };
+            return file;
+        }),
+    };
+    fusionConfig.value.tasks.push(task);
+    activeTaskIndex.value = fusionConfig.value.tasks.length - 1;
+}
+
 function removeTask(index: number) {
-    if (index > -1 && index < tasks.value.length) {
-        tasks.value.splice(index, 1);
+    if (index > -1 && index < fusionConfig.value.tasks.length) {
+        fusionConfig.value.tasks.splice(index, 1);
     }
 }
 
-async function openDestination() {
-    const destination = config.destination;
-    if (destination.length === 0) {
-        return
+function removeAllTask(confirm: boolean) {
+    if (confirm) {
+        fusionConfig.value.tasks = [];
     }
-    try {
-        await openDirectory(config.destination)
-    } catch (error) {
-        ElMessage.error(`Failed to open destination: ${error}`)
-    }
+    cleanAllTaskDisplay.value = false;
 }
 
 async function submitAllTask() {
-    console.log(tasks.value);
+    fusionProgressDisplay.value = true;
+    await runFusionTask(fusionConfig.value);
 }
 
 async function submitOneTask(index: number) {
-    console.log(tasks.value[index]);
+    const { id, source, destination, top, tasks } = fusionConfig.value;
+    const config = { id, source, destination, top, tasks: [tasks[index]] };
+    fusionProgressDisplay.value = true;
+    console.log(config);
+    await runFusionTask(config);
 }
 
-watch(() => config.output, debounce(async () => {
-    rtfs.value = await listRtfsWithTitle(config.output, config.top.path);
-}, 100))
+async function saveFusionConfig(id: string | null, name: string, config: FusionConfig) {
+    try {
+        let return_id = await saveConfig(id, name, config);
+        fusionConfig.value.id = return_id;
+        ElMessage.success("Save configuration successfully");
+    } catch (error) {
+        ElMessage.error(`Failed to save configuration: ${error}`);
+    }
+}
+
+async function configSubmit(cfg: GeneralConfig, configRecord: ConfigRecord | null) {
+    let { source, destination, top } = cfg;
+    if (configRecord) {
+        let { id, name } = configRecord;
+        config.value.id = id;
+        config.value.name = name;
+        fusionConfig.value.id = id;
+        fusionConfig.value.tasks = (await findConfig(id)).tasks;
+    }
+    fusionConfig.value.source = source;
+    fusionConfig.value.destination = destination;
+    // update destinations
+    fusionConfig.value.tasks.forEach((task) => {
+        task.destination = destination;
+    });
+    fusionConfig.value.top = top;
+    configDrawerDisplay.value = false;
+    rtfs.value = await listRtfsWithTitle(source, top);
+}
+
+async function saveConfigSumit(saveAs: boolean, name: string) {
+    const id = saveAs ? null : config.value.id;
+    config.value.name = name;
+    await saveFusionConfig(id, name, fusionConfig.value);
+    saveConfigDisplay.value = false;
+}
+
+async function readCombineFile(task: Task) {
+    try {
+        const destination = `${task.destination}\\${task.name}.${task.mode.toLowerCase()}`;
+        await openFile(destination);
+    } catch (error) {
+        ElMessage.error(`Failed to open ${task.name}: ${error}`)
+    }
+}
 
 onMounted(async () => {
-    rtfs.value = await listRtfsWithTitle(config.output, config.top.path);
+    let { source, top } = fusionConfig.value;
+    if (source.length > 0 && top.length > 0) {
+        rtfs.value = await listRtfsWithTitle(source, top);
+    }
 })
 
 </script>
@@ -97,21 +172,31 @@ onMounted(async () => {
 <template>
     <el-container>
         <el-header style="padding: 5px 0 5px 5px; height: auto;">
-            <el-tag size="large" style="width: 557px; margin-right: 2px;">{{ tasks.length > 0
-                ? `Task: ${tasks[activeTaskIndex].name}` : "No Task" }}
+            <el-tag size="large" style="width: 557px; margin-right: 2px;">{{ fusionConfig.tasks.length > 0
+                ? `Task: ${fusionConfig.tasks[activeTaskIndex].name}` : "No Task" }}
             </el-tag>
             <el-tag size="large" style="width: 100px; margin-right: 5px;">
-                Output: {{ tasks.length > 0 ? tasks[activeTaskIndex].files.length : 0 }}
+                Output: {{ fusionConfig.tasks.length > 0 ? fusionConfig.tasks[activeTaskIndex].files.length : 0 }}
             </el-tag>
             <div style="float: right; margin-right: 5px;">
+                <el-button class="top-buttom" type="warning" plain @click="createTaskWithAllOutput">
+                    <el-icon>
+                        <FolderAdd />
+                    </el-icon>
+                </el-button>
+                <el-button class="top-buttom" type="danger" plain @click="() => { cleanAllTaskDisplay = true }">
+                    <el-icon>
+                        <Delete />
+                    </el-icon>
+                </el-button>
                 <el-button class="top-buttom" type="primary" plain @click="showConfigDrawer">
                     <el-icon>
                         <Setting />
                     </el-icon>
                 </el-button>
-                <el-button class="top-buttom" type="primary" plain @click="openDestination">
+                <el-button class="top-buttom" type="primary" plain @click="() => { saveConfigDisplay = true }">
                     <el-icon>
-                        <FolderOpened />
+                        <CollectionTag />
                     </el-icon>
                 </el-button>
                 <el-button class="top-buttom" type="primary" plain @click="submitAllTask">
@@ -124,12 +209,12 @@ onMounted(async () => {
         <el-container>
             <el-aside width="60%" style="padding-left: 5px;">
                 <el-table height="615" show-overflow-tooltip
-                    :data="tasks.length > 0 ? tasks[activeTaskIndex].files : []">
+                    :data="fusionConfig.tasks.length > 0 ? fusionConfig.tasks[activeTaskIndex].files : []">
                     <el-table-column width="265px" prop="filename" label="Filename" />
                     <el-table-column width="265px" prop="title" label="Title" />
                     <el-table-column width="130px">
                         <template #header>
-                            <el-button :disabled="tasks.length === 0" type="primary" size="small"
+                            <el-button :disabled="fusionConfig.tasks.length === 0" type="primary" size="small"
                                 style="float: right;width: 25px; margin-right: 7px;" text
                                 @click="() => { appendOutputDisplay = true; }">
                                 <el-icon size="18px">
@@ -173,8 +258,9 @@ onMounted(async () => {
                             </el-icon>
                         </template>
                     </el-tag>
-                    <el-tag :type="index === activeTaskIndex ? 'primary' : 'info'" class="task-tag"
-                        v-for="(task, index) in tasks" :key="index" @click="() => { activeTaskIndex = index }">
+                    <el-tag :type="index === activeTaskIndex ? '' : 'info'" class="task-tag"
+                        v-for="(task, index) in fusionConfig.tasks" :key="index"
+                        @click="() => { activeTaskIndex = index }">
                         <template #default>
                             <div style="width: 400px;">
                                 <el-row>
@@ -184,7 +270,8 @@ onMounted(async () => {
                                         </div>
                                     </el-col>
                                     <el-col :span="4">
-                                        <el-button class="task-button" plain size="small" type="success" text>
+                                        <el-button class="task-button" plain size="small" type="success" text
+                                            @click="readCombineFile(task)">
                                             <el-icon>
                                                 <Reading />
                                             </el-icon>
@@ -238,36 +325,35 @@ onMounted(async () => {
             </el-main>
         </el-container>
     </el-container>
-    <el-drawer size="50%" v-model="configDrawerDisplay" title="Configuration">
-        <Config @submit="(data) => {
-            config.output = data.output;
-            config.top = data.top;
-            config.destination = data.destination;
-            configDrawerDisplay = false;
-        }" @close="() => { configDrawerDisplay = false; }" />
+    <el-drawer destroy-on-close size="50%" v-model="configDrawerDisplay" title="Configuration">
+        <Config :source="fusionConfig.source" :destination="fusionConfig.destination" :top="fusionConfig.top"
+            @submit="configSubmit" @close="() => { configDrawerDisplay = false; }" />
     </el-drawer>
     <el-dialog draggable destroy-on-close width="95%" v-model="newTaskDisplay" title="Create Task">
-        <NewTask @submit="createTask" @close="() => { newTaskDisplay = false }" :config="config" />
+        <NewTask @submit="createTask" @close="() => { newTaskDisplay = false }"
+            :config="{ source: fusionConfig.source, destination: fusionConfig.destination, top: fusionConfig.top }" />
     </el-dialog>
     <el-dialog draggable destroy-on-close width="81%" v-model="appendOutputDisplay" title="Append Outputs">
-        <AppendOutput :task="tasks[activeTaskIndex]" :config="config" @submit="(outputs) => {
-            outputs.forEach(output => tasks[activeTaskIndex].files.push(output));
-            appendOutputDisplay = false;
-        }" @close="() => { appendOutputDisplay = false; }" />
+        <AppendOutput :task="fusionConfig.tasks[activeTaskIndex]"
+            :config="{ source: fusionConfig.source, destination: fusionConfig.destination, top: fusionConfig.top }"
+            @submit="(outputs) => {
+                outputs.forEach(output => fusionConfig.tasks[activeTaskIndex].files.push(output));
+                appendOutputDisplay = false;
+            }" @close="() => { appendOutputDisplay = false; }" />
     </el-dialog>
     <el-dialog draggable destroy-on-close width="60%" v-model="updateTaskConfigDisplay"
         title="Update Task Configuration">
-        <UpdateTaskConfig :task="tasks[activeTaskIndex]" @submit="task => {
+        <UpdateTaskConfig :task="fusionConfig.tasks[activeTaskIndex]" @submit="task => {
             const { name, language, mode, cover } = task;
-            tasks[activeTaskIndex].name = name;
-            tasks[activeTaskIndex].language = language;
-            tasks[activeTaskIndex].mode = mode;
-            tasks[activeTaskIndex].cover = cover;
+            fusionConfig.tasks[activeTaskIndex].name = name;
+            fusionConfig.tasks[activeTaskIndex].language = language;
+            fusionConfig.tasks[activeTaskIndex].mode = mode;
+            fusionConfig.tasks[activeTaskIndex].cover = cover;
             updateTaskConfigDisplay = false;
         }" @close="() => { updateTaskConfigDisplay = false; }" />
     </el-dialog>
     <el-dialog width="60%" draggable destroy-on-close v-model="removeTaskConfirmDisplay" title="Remove Task Confirm">
-        <RemoveConfirm :target="tasks.length > 0 ? tasks[activeTaskIndex].name : ''" @close="(confirm) => {
+        <RemoveConfirm :target="fusionConfig.tasks.length > 0 ? fusionConfig.tasks[activeTaskIndex].name : ''" @close="(confirm) => {
             if (confirm) {
                 removeTask(activeTaskIndex);
             }
@@ -278,7 +364,7 @@ onMounted(async () => {
     <el-dialog width="60%" draggable destroy-on-close v-model="removeOutputConfirmDisplay"
         title="Remove Output Confirm">
         <RemoveConfirm
-            :target="tasks.length > 0 && tasks[activeTaskIndex].files.length > 0 ? tasks[activeTaskIndex].files[activeOutputIndex].title : ''"
+            :target="fusionConfig.tasks.length > 0 && fusionConfig.tasks[activeTaskIndex].files.length > 0 ? fusionConfig.tasks[activeTaskIndex].files[activeOutputIndex].title : ''"
             @close="(confirm) => {
                 if (confirm) {
                     removeOutput(activeOutputIndex);
@@ -287,11 +373,31 @@ onMounted(async () => {
                 activeOutputIndex = 0;
             }" />
     </el-dialog>
+    <el-dialog title="Save Configuration" draggable destroy-on-close v-model="saveConfigDisplay">
+        <SaveConfig :name="config.name" @submit="saveConfigSumit" @close="() => saveConfigDisplay = false" />
+    </el-dialog>
+    <el-dialog v-model="cleanAllTaskDisplay" title="Remove All Tasks?">
+        <el-button type="primary" plain @click="() => { removeAllTask(true) }">
+            <el-icon>
+                <Select />
+            </el-icon>
+        </el-button>
+        <el-button type="danger" plain @click="() => { removeAllTask(false) }">
+            <el-icon>
+                <Close />
+            </el-icon>
+        </el-button>
+    </el-dialog>
+    <el-dialog @closed="clearFusionTask" top="5vh" title="Task Progress" v-model="fusionProgressDisplay" width="75%"
+        draggable destroy-on-close>
+        <FusionProgress @close="() => fusionProgressDisplay = false" />
+    </el-dialog>
 </template>
 
 <style scoped>
 .top-buttom {
     margin-left: 3px;
+    width: 50px;
 }
 
 .task-tag {

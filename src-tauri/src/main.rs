@@ -63,6 +63,7 @@ fn main() {
             fusion::fusion::clean_fusion_task,
             fusion::fusion::fetch_log,
             fusion::fusion::fetch_progress,
+            fusion::fusion::fetch_previous_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

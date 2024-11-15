@@ -68,41 +68,52 @@ pub fn run_fusion_task(mut param: FusionParam) -> Result<(), String> {
     };
     *(CONTROLLER.lock().unwrap()) = Some(controller);
 
-    thread::spawn(move || {
-        let pdf_config = &pdf_combine_config
-            .into_iter()
-            .map(|config| {
-                let name = config
-                    .destination
-                    .file_stem()
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_string();
-                let config = config.write_config(&config.workspace()).unwrap();
-                (name, config)
-            })
-            .collect::<Vec<(String, PathBuf)>>();
-        let rtf_config = &rtf_combine_config
-            .into_iter()
-            .map(|config| {
-                (
-                    config.destination,
-                    config.files.into_iter().map(|file| file.path).collect(),
-                )
-            })
-            .collect::<Vec<(PathBuf, Vec<PathBuf>)>>();
+    let pdf_config = pdf_combine_config
+        .into_iter()
+        .map(|config| {
+            let name = config
+                .destination
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+            let config = config.write_config(&config.workspace()).unwrap();
+            (name, config)
+        })
+        .collect::<Vec<(String, PathBuf)>>();
 
+    let rtf_config = rtf_combine_config
+        .into_iter()
+        .map(|config| {
+            (
+                config.destination,
+                config.files.into_iter().map(|file| file.path).collect(),
+            )
+        })
+        .collect::<Vec<(PathBuf, Vec<PathBuf>)>>();
+
+    let convert_task_number = convert_tasks.len();
+    let convert_logger = Arc::clone(&log_tx);
+    thread::spawn(move || {
         if let Some(c) = CONTROLLER.lock().unwrap().as_ref() {
-            c.convert(&convert_tasks, convert_tx, Arc::clone(&log_tx))
-                .ok();
-            let mut is_convert_complete = is_convert_complete.lock().unwrap();
-            while *is_convert_complete {
-                is_convert_complete = combine_stage_notifier.wait(is_convert_complete).unwrap();
-            }
-            c.combine(&pdf_config, &rtf_config, combine_tx, log_tx).ok();
+            c.convert(&convert_tasks, convert_tx, convert_logger).ok();
         }
     });
 
+    let combine_logger = Arc::clone(&log_tx);
+    thread::spawn(move || {
+        if convert_task_number.gt(&0) {
+            let mut is_convert_complete = is_convert_complete.lock().unwrap();
+            while !*is_convert_complete {
+                is_convert_complete = combine_stage_notifier.wait(is_convert_complete).unwrap();
+                *is_convert_complete = true;
+            }
+        }
+        if let Some(c) = CONTROLLER.lock().unwrap().as_ref() {
+            c.combine(&pdf_config, &rtf_config, combine_tx, combine_logger)
+                .ok();
+        }
+    });
     Ok(())
 }
 
@@ -126,14 +137,25 @@ pub fn fetch_log() -> Result<String, String> {
 }
 
 #[tauri::command]
+pub fn fetch_previous_log() -> Result<String, String> {
+    match LOGGER.lock().unwrap().as_ref() {
+        Some(logger) => match logger.read_all() {
+            Ok(content) => Ok(content),
+            Err(err) => Err(err.to_string()),
+        },
+        None => Ok("".into()),
+    }
+}
+
+#[tauri::command]
 pub fn clean_fusion_task() {
     clean();
 }
 
 fn clean() {
+    CONTROLLER.lock().unwrap().take();
     SHARE_STATE.lock().unwrap().take();
     LOGGER.lock().unwrap().take();
-    CONTROLLER.lock().unwrap().take();
 }
 
 fn init_log_directory(workspace: &Path) -> PathBuf {

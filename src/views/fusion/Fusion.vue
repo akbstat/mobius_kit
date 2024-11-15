@@ -1,19 +1,20 @@
 <script lang="ts" setup>
 import { onMounted, Ref, ref } from 'vue';
+import { Rtf, listRtfsWithTitle } from '../../api/fusion/top';
+import { ConfigRecord, findConfig, FusionConfig, saveConfig, Task, File } from '../../api/fusion/config';
+import { ElMessage } from 'element-plus';
+import { GeneralConfig } from './fusion';
+import { runFusionTask } from '../../api/fusion/fusion';
+import { openFile } from '../../api/utils/directory';
+import { useFusion } from '../../store/fusion';
 import Config from "./Config.vue";
 import NewTask from './NewTask.vue';
-import { Rtf, listRtfsWithTitle } from '../../api/fusion/top';
 import AppendOutput from './AppendOutput.vue';
 import UpdateTaskConfig from './UpdateTaskConfig.vue';
 import RemoveConfirm from './RemoveConfirm.vue';
 import FusionProgress from './FusionProgress.vue';
-// import { ElMessage } from 'element-plus';
-import { ConfigRecord, findConfig, FusionConfig, saveConfig, Task, File } from '../../api/fusion/config';
 import SaveConfig from './SaveConfig.vue';
-import { ElMessage } from 'element-plus';
-import { GeneralConfig } from './fusion';
-import { clearFusionTask, runFusionTask } from '../../api/fusion/fusion';
-import { openFile } from '../../api/utils/directory';
+import { storeToRefs } from 'pinia';
 
 const cleanAllTaskDisplay = ref(false);
 const saveConfigDisplay = ref(false);
@@ -30,13 +31,8 @@ const removeTaskConfirmDisplay = ref(false);
 const removeOutputConfirmDisplay = ref(false);
 const fusionProgressDisplay = ref(false);
 const config: Ref<{ id: string | null, name: string }> = ref({ id: null, name: "" });
-const fusionConfig: Ref<FusionConfig> = ref({
-    id: null,
-    source: "",
-    destination: "",
-    top: "",
-    tasks: [],
-});
+
+const { fusionConfig, previousTaskStartTime } = storeToRefs(useFusion());
 
 function showConfigDrawer() {
     configDrawerDisplay.value = true;
@@ -101,16 +97,23 @@ function removeAllTask(confirm: boolean) {
 }
 
 async function submitAllTask() {
-    fusionProgressDisplay.value = true;
-    await runFusionTask(fusionConfig.value);
+    await run(fusionConfig.value);
 }
 
 async function submitOneTask(index: number) {
     const { id, source, destination, top, tasks } = fusionConfig.value;
     const config = { id, source, destination, top, tasks: [tasks[index]] };
+    await run(config);
+}
+
+async function run(config: FusionConfig) {
+    if (previousTaskStartTime.value > 0) {
+        ElMessage.error("Legacy tasks are running, please wait or cancel them manually");
+    } else {
+        previousTaskStartTime.value = (new Date()).valueOf();
+        await runFusionTask(config);
+    }
     fusionProgressDisplay.value = true;
-    console.log(config);
-    await runFusionTask(config);
 }
 
 async function saveFusionConfig(id: string | null, name: string, config: FusionConfig) {
@@ -131,6 +134,14 @@ async function configSubmit(cfg: GeneralConfig, configRecord: ConfigRecord | nul
         config.value.name = name;
         fusionConfig.value.id = id;
         fusionConfig.value.tasks = (await findConfig(id)).tasks;
+    } else {
+        fusionConfig.value = {
+            id: null,
+            source: "",
+            destination: "",
+            top: "",
+            tasks: [],
+        };
     }
     fusionConfig.value.source = source;
     fusionConfig.value.destination = destination;
@@ -388,9 +399,16 @@ onMounted(async () => {
             </el-icon>
         </el-button>
     </el-dialog>
-    <el-dialog @closed="clearFusionTask" top="5vh" title="Task Progress" v-model="fusionProgressDisplay" width="75%"
-        draggable destroy-on-close>
-        <FusionProgress @close="() => fusionProgressDisplay = false" />
+    <el-dialog top="5vh" title="Task Progress" v-model="fusionProgressDisplay" width="75%" draggable destroy-on-close>
+        <FusionProgress :previous-task-start-time="previousTaskStartTime" @close="(isCancelled: boolean) => {
+            fusionProgressDisplay = false;
+            previousTaskStartTime = 0;
+            if (isCancelled) {
+                ElMessage.error('Execution has been cancelled');
+            } else {
+                ElMessage.success('Execution Completed');
+            }
+        }" />
     </el-dialog>
 </template>
 
@@ -407,9 +425,6 @@ onMounted(async () => {
     padding: 0;
 }
 
-/* .task-hint {
-    border: none;
-} */
 
 .task-button {
     width: 20px;

@@ -19,6 +19,20 @@ export async function fetchLog(): Promise<string[]> {
     return logs;
 }
 
+export async function fetchPreviousLog(): Promise<string[]> {
+    const logs: string[] = [];
+    let origin: string = await invoke("fetch_previous_log", {});
+    let originSlice = origin && origin.length > 0 ? origin.split('\n') : [];
+    originSlice.forEach((log) => {
+        if (!(log.startsWith("[INFO") || log.startsWith("[WARN") || log.startsWith("[ERR"))) {
+            logs.push(`${logs.pop()}\n${log}`);
+        } else {
+            logs.push(log);
+        }
+    });
+    return logs;
+}
+
 export async function fetcProgress(previous: number): Promise<number> {
     let progress: number = await invoke("fetch_progress", {});
     progress = progress > 1 ? 100 : progress * 100;

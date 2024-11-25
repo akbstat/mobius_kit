@@ -3,6 +3,7 @@ import { computed, onMounted, ref, Ref } from 'vue';
 import { listRtfsWithTitle, Rtf } from '../../api/fusion/top';
 import { File, Task } from '../../api/fusion/config';
 import { GeneralConfig } from './fusion';
+import { TransferDataItem } from 'element-plus';
 
 const submitEvent = "submit";
 const closeEvent = "close";
@@ -32,7 +33,7 @@ function submit() {
     emit(submitEvent, newOutputs);
 }
 
-function filterOutput(query: string, output: { label: string }) {
+function filterOutput(query: string, output: TransferDataItem) {
     return output.label.toLowerCase().includes(query.toLowerCase())
 }
 

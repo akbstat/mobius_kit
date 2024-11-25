@@ -39,17 +39,8 @@ function submit() {
         <el-form-item label="Filename">
             <el-input style="width: 100%;" v-model="task.name" clearable />
         </el-form-item>
-        <el-form-item label="Language">
-            <el-radio-group v-model="task.language" size="medium">
-                <el-radio-button v-for="lang in langs" :label="lang" :value="lang">
-                    <template #default>
-                        <div style="width: 30px;">{{ lang }}</div>
-                    </template>
-                </el-radio-button>
-            </el-radio-group>
-        </el-form-item>
         <el-form-item label="Mode">
-            <el-radio-group v-model="task.mode" size="medium">
+            <el-radio-group v-model="task.mode" size="default">
                 <el-radio-button v-for="mode in modes" :label="mode" :value="mode">
                     <template #default>
                         <div style="width: 30px;">{{ mode }}</div>
@@ -57,7 +48,26 @@ function submit() {
                 </el-radio-button>
             </el-radio-group>
         </el-form-item>
-        <el-form-item label="Cover">
+        <el-form-item v-if="task.mode === 'PDF'" label="Language">
+            <el-radio-group v-model="task.language" size="default">
+                <el-radio-button v-for="lang in langs" :label="lang" :value="lang">
+                    <template #default>
+                        <div style="width: 30px;">{{ lang }}</div>
+                    </template>
+                </el-radio-button>
+            </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="task.mode === 'PDF'" label="TOC Headers">
+            <el-input style="width: 49%; margin-bottom: 5px; margin-right: 9px;" v-model="task.tocHeaders[0]" clearable>
+            </el-input>
+            <el-input style="width: 49%; margin-bottom: 5px;" v-model="task.tocHeaders[1]" clearable>
+            </el-input>
+            <el-input style="width: 49%;  margin-right: 9px;" v-model="task.tocHeaders[2]" clearable>
+            </el-input>
+            <el-input style="width: 49%; " v-model="task.tocHeaders[3]" clearable>
+            </el-input>
+        </el-form-item>
+        <el-form-item v-if="task.mode === 'PDF'" label="Cover">
             <el-input style="width: 100%;" v-model="task.cover" clearable>
                 <template #append>
                     <el-button plain type="primary" @click="selectFile">

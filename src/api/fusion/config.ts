@@ -20,6 +20,7 @@ export interface Task {
     cover: string | null,
     destination: string,
     mode: "RTF" | "PDF",
+    tocHeaders: string[],
     files: File[],
 }
 
@@ -39,10 +40,22 @@ export async function listConfigs(): Promise<ConfigRecord[]> {
 
 export async function findConfig(id: string): Promise<FusionConfig> {
     let data: FusionConfig = await invoke("find_config", { id });
+    let tasks = data.tasks.map(t => {
+        // @ts-ignore
+        t.tocHeaders = t["toc_headers"];
+        return t;
+    });
+    data.tasks = tasks;
     return data;
 }
 
 export async function saveConfig(id: string | null, name: string, param: FusionConfig): Promise<string> {
+    let tasks = param.tasks.map(t => {
+        // @ts-ignore
+        t["toc_headers"] = t.tocHeaders;
+        return t;
+    });
+    param.tasks = tasks;
     let return_id: string = await invoke("save_config", { config: { id, name }, param });
     return return_id;
 }

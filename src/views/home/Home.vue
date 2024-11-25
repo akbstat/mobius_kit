@@ -21,6 +21,9 @@ const routeDescription = [
   {
     name: "Voyager", description: "Navigator for reading annotation information in aCRF",
   },
+  {
+    name: "Fusion", description: "Output combining platform",
+  },
 ];
 
 const routeMap = (() => {

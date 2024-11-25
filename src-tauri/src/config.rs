@@ -20,7 +20,7 @@ pub const TRACE: &str = "MK_TRACE";
 const TEMP_SCRIPT: &str = "MK_TEMP_SCRIPT";
 const WORD_WORKER: &str = "MK_WORD_WORKER";
 const FUSION: &str = "MK_FUSION";
-const COMBINER_BIN: &str = "MK_COMBINER_BIN";
+const COMBINE_BIN: &str = "MK_COMBINE_BIN";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -31,8 +31,7 @@ pub struct Config {
     pub skeleton_document: String,
     pub skeleton_stat: String,
     pub project_root: String,
-    pub fusion: String,
-    pub conbiner_bin: String,
+    pub combine_bin: String,
 }
 
 pub fn config_env_init() -> Result<(), Box<dyn Error>> {
@@ -55,8 +54,7 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     env::set_var(PROJECT_ROOT, config.project_root);
     env::set_var(SKELETON_DOCUMENT, config.skeleton_document);
     env::set_var(SKELETON_STAT, config.skeleton_stat);
-    env::set_var(FUSION, config.fusion);
-    env::set_var(COMBINER_BIN, config.conbiner_bin);
+    env::set_var(COMBINE_BIN, config.combine_bin);
 
     let user_temp_path = build_temp_script_path(&config.user_temp, &user_id);
     if !user_temp_path.exists() {
@@ -67,8 +65,14 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     if !script_path.exists() {
         fs::create_dir_all(&script_path)?;
     }
+    env::set_var(TEMP_SCRIPT, script_path);
 
-    env::set_var(TEMP_SCRIPT, script_path.to_string_lossy().to_string());
+    let fusion = user_temp_path.join(r"app\mobiuskit\fusion");
+    if !fusion.exists() {
+        fs::create_dir_all(&fusion)?;
+    }
+
+    env::set_var(FUSION, fusion);
 
     // init private template dir
     let private_template_root = user_temp_path.join(r"app\mobiuskit\scaffold");

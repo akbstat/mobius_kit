@@ -3,16 +3,17 @@ mod rtf;
 
 pub use directory::hide_directory;
 
-use std::{path::Path, process::Command};
+use std::{os::windows::process::CommandExt, path::Path, process::Command};
 
 #[tauri::command]
 pub fn open_file(path: &str) -> Result<(), String> {
     if !Path::new(path).exists() {
         return Err(format!("File {} does not exist", path));
     }
-
+    let mut cmd: Command = Command::new("powershell");
+    cmd.creation_flags(0x08000000);
     // use powershell instead of cmd to fix spaces issue in filename
-    match Command::new("powershell")
+    match cmd
         .arg("/C")
         .arg("start")
         .arg(format!("\"{}\"", path))

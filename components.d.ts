@@ -50,6 +50,7 @@ declare module 'vue' {
     ElText: typeof import('element-plus/es')['ElText']
     ElTimeline: typeof import('element-plus/es')['ElTimeline']
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElTransfer: typeof import('element-plus/es')['ElTransfer']
     InspectorGauge: typeof import('./src/components/InspectorGauge.vue')['default']
     InspectorItem: typeof import('./src/components/InspectorItem.vue')['default']

@@ -21,7 +21,6 @@ lazy_static! {
 #[tauri::command]
 pub fn run_fusion_task(mut param: FusionParam) -> Result<(), String> {
     param.fix().unwrap();
-
     // general
     let id = param.id.clone();
     let workspace = match workspace(id) {
@@ -32,7 +31,7 @@ pub fn run_fusion_task(mut param: FusionParam) -> Result<(), String> {
     let is_convert_complete = Arc::new(Mutex::new(false));
     let source = Source::new(&workspace).unwrap();
     let convert_tasks = source.filter_convert_tasks(&param.to_convert_task(&workspace).unwrap());
-    let (pdf_combine_config, rtf_combine_config) = param.to_combine_config(&workspace).unwrap();
+    let (pdf_combine_config, rtf_combine_config) = param.to_combine_param(&workspace).unwrap();
     source.update_source(&param.source).unwrap();
 
     // init channels
@@ -68,30 +67,6 @@ pub fn run_fusion_task(mut param: FusionParam) -> Result<(), String> {
     };
     *(CONTROLLER.lock().unwrap()) = Some(controller);
 
-    let pdf_config = pdf_combine_config
-        .into_iter()
-        .map(|config| {
-            let name = config
-                .destination
-                .file_stem()
-                .unwrap()
-                .to_string_lossy()
-                .to_string();
-            let config = config.write_config(&config.workspace()).unwrap();
-            (name, config)
-        })
-        .collect::<Vec<(String, PathBuf)>>();
-
-    let rtf_config = rtf_combine_config
-        .into_iter()
-        .map(|config| {
-            (
-                config.destination,
-                config.files.into_iter().map(|file| file.path).collect(),
-            )
-        })
-        .collect::<Vec<(PathBuf, Vec<PathBuf>)>>();
-
     let convert_task_number = convert_tasks.len();
     let convert_logger = Arc::clone(&log_tx);
     thread::spawn(move || {
@@ -110,8 +85,13 @@ pub fn run_fusion_task(mut param: FusionParam) -> Result<(), String> {
             }
         }
         if let Some(c) = CONTROLLER.lock().unwrap().as_ref() {
-            c.combine(&pdf_config, &rtf_config, combine_tx, combine_logger)
-                .ok();
+            c.combine(
+                &pdf_combine_config,
+                &rtf_combine_config,
+                combine_tx,
+                combine_logger,
+            )
+            .ok();
         }
     });
     Ok(())

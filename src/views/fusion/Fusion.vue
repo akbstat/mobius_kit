@@ -38,6 +38,14 @@ function showConfigDrawer() {
     configDrawerDisplay.value = true;
 }
 
+function isGeneralConfigNNotDone(): boolean {
+    const config = fusionConfig.value;
+    if (config.destination.length === 0 || config.source.length === 0 || config.top.length === 0) {
+        return true;
+    }
+    return false;
+}
+
 function move(index: number, up: boolean) {
     const outputs = fusionConfig.value.tasks[activeTaskIndex.value].files;
     if (up && index > 0) {
@@ -78,6 +86,7 @@ function createTaskWithAllOutput() {
             };
             return file;
         }),
+        tocHeaders: ["", "", "", ""],
     };
     fusionConfig.value.tasks.push(task);
     activeTaskIndex.value = fusionConfig.value.tasks.length - 1;
@@ -143,6 +152,7 @@ async function configSubmit(cfg: GeneralConfig, configRecord: ConfigRecord | nul
             tasks: [],
         };
     }
+    activeTaskIndex.value = 0;
     fusionConfig.value.source = source;
     fusionConfig.value.destination = destination;
     // update destinations
@@ -190,31 +200,45 @@ onMounted(async () => {
                 Output: {{ fusionConfig.tasks.length > 0 ? fusionConfig.tasks[activeTaskIndex].files.length : 0 }}
             </el-tag>
             <div style="float: right; margin-right: 5px;">
-                <el-button class="top-buttom" type="warning" plain @click="createTaskWithAllOutput">
-                    <el-icon>
-                        <FolderAdd />
-                    </el-icon>
-                </el-button>
-                <el-button class="top-buttom" type="danger" plain @click="() => { cleanAllTaskDisplay = true }">
-                    <el-icon>
-                        <Delete />
-                    </el-icon>
-                </el-button>
-                <el-button class="top-buttom" type="primary" plain @click="showConfigDrawer">
-                    <el-icon>
-                        <Setting />
-                    </el-icon>
-                </el-button>
-                <el-button class="top-buttom" type="primary" plain @click="() => { saveConfigDisplay = true }">
-                    <el-icon>
-                        <CollectionTag />
-                    </el-icon>
-                </el-button>
-                <el-button class="top-buttom" type="primary" plain @click="submitAllTask">
-                    <el-icon>
-                        <CaretRight />
-                    </el-icon>
-                </el-button>
+                <el-tooltip content="Quick Creation">
+                    <el-button :disabled="isGeneralConfigNNotDone()" class="top-buttom" type="warning" plain
+                        @click="createTaskWithAllOutput">
+                        <el-icon>
+                            <FolderAdd />
+                        </el-icon>
+                    </el-button>
+                </el-tooltip>
+                <el-tooltip content="Remove All Task">
+                    <el-button :disabled="isGeneralConfigNNotDone()" class="top-buttom" type="danger" plain
+                        @click="() => { cleanAllTaskDisplay = true }">
+                        <el-icon>
+                            <Delete />
+                        </el-icon>
+                    </el-button>
+                </el-tooltip>
+                <el-tooltip content="Environment Configuration">
+                    <el-button class="top-buttom" type="primary" plain @click="showConfigDrawer">
+                        <el-icon>
+                            <Setting />
+                        </el-icon>
+                    </el-button>
+                </el-tooltip>
+                <el-tooltip content="Save Task Configuration">
+                    <el-button :disabled="isGeneralConfigNNotDone()" class="top-buttom" type="primary" plain
+                        @click="() => { saveConfigDisplay = true }">
+                        <el-icon>
+                            <CollectionTag />
+                        </el-icon>
+                    </el-button>
+                </el-tooltip>
+                <el-tooltip content="Run All Tasks">
+                    <el-button :disabled="isGeneralConfigNNotDone()" class="top-buttom" type="primary" plain
+                        @click="submitAllTask">
+                        <el-icon>
+                            <CaretRight />
+                        </el-icon>
+                    </el-button>
+                </el-tooltip>
             </div>
         </el-header>
         <el-container>
@@ -225,50 +249,60 @@ onMounted(async () => {
                     <el-table-column width="265px" prop="title" label="Title" />
                     <el-table-column width="130px">
                         <template #header>
-                            <el-button :disabled="fusionConfig.tasks.length === 0" type="primary" size="small"
-                                style="float: right;width: 25px; margin-right: 7px;" text
-                                @click="() => { appendOutputDisplay = true; }">
-                                <el-icon size="18px">
-                                    <DocumentAdd />
-                                </el-icon>
-                            </el-button>
+                            <el-tooltip content="Append Output to Task">
+                                <el-button :disabled="fusionConfig.tasks.length === 0" type="primary" size="small"
+                                    style="float: right;width: 25px; margin-right: 7px;" text
+                                    @click="() => { appendOutputDisplay = true; }">
+                                    <el-icon size="18px">
+                                        <DocumentAdd />
+                                    </el-icon>
+                                </el-button>
+                            </el-tooltip>
                         </template>
                         <template #default="scope">
-                            <el-button style="width: 25px;" size="small" text
-                                @click="() => { move(scope.$index, true) }">
-                                <el-icon>
-                                    <CaretTop />
-                                </el-icon>
-                            </el-button>
-                            <el-button style="width: 25px;" size="small" text
-                                @click="() => { move(scope.$index, false) }">
-                                <el-icon>
-                                    <CaretBottom />
-                                </el-icon>
-                            </el-button>
-                            <el-button type="danger" style="width: 25px;" size="small" text @click="() => {
-                                activeOutputIndex = scope.$index;
-                                removeOutputConfirmMessage = `Remove ${scope.row.title}?`;
-                                removeOutputConfirmDisplay = true;
-                            }">
-                                <el-icon>
-                                    <Delete />
-                                </el-icon>
-                            </el-button>
+                            <el-tooltip content="Move Output Up">
+                                <el-button style="width: 25px;" size="small" text
+                                    @click="() => { move(scope.$index, true) }">
+                                    <el-icon>
+                                        <CaretTop />
+                                    </el-icon>
+                                </el-button>
+                            </el-tooltip>
+                            <el-tooltip content="Move Output Down">
+                                <el-button style="width: 25px;" size="small" text
+                                    @click="() => { move(scope.$index, false) }">
+                                    <el-icon>
+                                        <CaretBottom />
+                                    </el-icon>
+                                </el-button>
+                            </el-tooltip>
+                            <el-tooltip content="Remove Output From Task">
+                                <el-button type="danger" style="width: 25px;" size="small" text @click="() => {
+                                    activeOutputIndex = scope.$index;
+                                    removeOutputConfirmMessage = `Remove ${scope.row.title}?`;
+                                    removeOutputConfirmDisplay = true;
+                                }">
+                                    <el-icon>
+                                        <Delete />
+                                    </el-icon>
+                                </el-button>
+                            </el-tooltip>
                         </template>
                     </el-table-column>
                 </el-table>
             </el-aside>
             <el-main style="padding: 0 5px 5px 5px;">
                 <el-scrollbar height="613px" max-height="613px">
-                    <el-tag type="warning" style="width: 100%; height: 40px; margin-bottom: 2px;"
-                        @click="newTaskDisplay = true">
-                        <template #default>
-                            <el-icon>
-                                <Plus />
-                            </el-icon>
-                        </template>
-                    </el-tag>
+                    <el-tooltip content="Build Custom Task">
+                        <el-button :disabled="isGeneralConfigNNotDone()" type="warning"
+                            style="width: 100%; height: 40px; margin-bottom: 2px;" @click="newTaskDisplay = true" plain>
+                            <template #default>
+                                <el-icon>
+                                    <Plus />
+                                </el-icon>
+                            </template>
+                        </el-button>
+                    </el-tooltip>
                     <el-tag :type="index === activeTaskIndex ? '' : 'info'" class="task-tag"
                         v-for="(task, index) in fusionConfig.tasks" :key="index"
                         @click="() => { activeTaskIndex = index }">
@@ -281,20 +315,24 @@ onMounted(async () => {
                                         </div>
                                     </el-col>
                                     <el-col :span="4">
-                                        <el-button class="task-button" plain size="small" type="success" text
-                                            @click="readCombineFile(task)">
-                                            <el-icon>
-                                                <Reading />
-                                            </el-icon>
-                                        </el-button>
-                                        <el-button type="info" class="task-button" plain size="small" text @click="() => {
-                                            activeTaskIndex = index;
-                                            updateTaskConfigDisplay = true;
-                                        }">
-                                            <el-icon>
-                                                <Setting />
-                                            </el-icon>
-                                        </el-button>
+                                        <el-tooltip content="Open Combined File">
+                                            <el-button class="task-button" plain size="small" type="success" text
+                                                @click="readCombineFile(task)">
+                                                <el-icon>
+                                                    <Reading />
+                                                </el-icon>
+                                            </el-button>
+                                        </el-tooltip>
+                                        <el-tooltip content="Update Task Configuration">
+                                            <el-button type="info" class="task-button" plain size="small" text @click="() => {
+                                                activeTaskIndex = index;
+                                                updateTaskConfigDisplay = true;
+                                            }">
+                                                <el-icon>
+                                                    <Setting />
+                                                </el-icon>
+                                            </el-button>
+                                        </el-tooltip>
                                     </el-col>
                                 </el-row>
                             </div>
@@ -312,21 +350,25 @@ onMounted(async () => {
                                         </el-tag>
                                     </el-col>
                                     <el-col :span="4">
-                                        <el-button class="task-button" plain size="small" type="primary" text
-                                            @click="() => submitOneTask(index)">
-                                            <el-icon>
-                                                <VideoPlay />
-                                            </el-icon>
-                                        </el-button>
-                                        <el-button class="task-button" plain size="small" type="danger" text @click="() => {
-                                            activeTaskIndex = index;
-                                            removeTaskConfirmDisplay = true;
-                                            removeTaskConfirmMessage = `Remove Task ${task.name}?`
-                                        }">
-                                            <el-icon>
-                                                <Delete />
-                                            </el-icon>
-                                        </el-button>
+                                        <el-tooltip content="Run Task">
+                                            <el-button class="task-button" plain size="small" type="primary" text
+                                                @click="() => submitOneTask(index)">
+                                                <el-icon>
+                                                    <VideoPlay />
+                                                </el-icon>
+                                            </el-button>
+                                        </el-tooltip>
+                                        <el-tooltip content="Remove Task">
+                                            <el-button class="task-button" plain size="small" type="danger" text @click="() => {
+                                                activeTaskIndex = index;
+                                                removeTaskConfirmDisplay = true;
+                                                removeTaskConfirmMessage = `Remove Task ${task.name}?`
+                                            }">
+                                                <el-icon>
+                                                    <Delete />
+                                                </el-icon>
+                                            </el-button>
+                                        </el-tooltip>
                                     </el-col>
                                 </el-row>
                             </div>

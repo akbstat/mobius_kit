@@ -2,6 +2,13 @@ import { invoke } from "@tauri-apps/api";
 import { FusionConfig } from "./config";
 
 export async function runFusionTask(param: FusionConfig) {
+    let tasks = param.tasks.map(t => {
+        // @ts-ignore
+        t["toc_headers"] = t.tocHeaders;
+        return t;
+    });
+    param.tasks = tasks;
+    console.log(param);
     await invoke("run_fusion_task", { param })
 }
 

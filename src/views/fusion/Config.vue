@@ -21,7 +21,7 @@ const config = reactive({
 
 const configRecords: Ref<ConfigRecord[]> = ref([]);
 const configRecord: Ref<ConfigRecord | null> = ref(null);
-
+const selectedConfigRecordId: Ref<string> = ref("");
 
 function submit() {
     emit("submit", config, configRecord.value);
@@ -66,14 +66,18 @@ watch(() => config.source, debounce(async () => {
     await outputChange(config.source)
 }, 100))
 
-watch(configRecord, debounce(async () => {
-    if (configRecord.value !== null) {
-        let id = configRecord.value.id;
+watch(selectedConfigRecordId, debounce(async () => {
+    const id = selectedConfigRecordId.value;
+    if (id.length > 0) {
         let data = await findConfig(id);
         let { source, destination, top } = data;
         config.top = top;
         config.destination = destination;
         config.source = source;
+        const c = configRecords.value.filter((c) => c.id === id);
+        if (c.length > 0) {
+            configRecord.value = c[0]
+        }
     }
 }, 100))
 
@@ -85,9 +89,9 @@ onMounted(async () => {
 <template>
     <el-form label-width="auto">
         <el-form-item label="From Config">
-            <el-select value-key="id" clearable filterable placeholder="Previous Configuration" v-model="configRecord"
-                style="width: 100%;">
-                <el-option v-for="config in configRecords" :key="config.id" :label="config.name" :value="config" />
+            <el-select value-key="id" clearable filterable placeholder="Previous Configuration"
+                v-model="selectedConfigRecordId" style="width: 100%;">
+                <el-option v-for="config in configRecords" :key="config.id" :label="config.name" :value="config.id" />
             </el-select>
         </el-form-item>
         <el-form-item label="Source">

@@ -2,6 +2,7 @@
 import { ElScrollbar } from 'element-plus';
 import { computed, onMounted, Ref, ref } from 'vue';
 import { clearFusionTask, fetchLog, fetcProgress, fetchPreviousLog } from '../../api/fusion/fusion';
+import { EpPropMergeType } from 'element-plus/es/utils/index.mjs';
 
 const { previousTaskStartTime } = defineProps<{ previousTaskStartTime: number }>();
 const emit = defineEmits<{ (e: "close", isCancelled: boolean): void }>();
@@ -68,7 +69,7 @@ function fusionCancel() {
     emit("close", true);
 }
 
-function logTextType(log: string): string {
+function logTextType(log: string): EpPropMergeType<StringConstructor, "" | "info" | "success" | "warning" | "danger" | "primary", unknown> | undefined {
     if (log.startsWith("[ERROR")) {
         return "danger";
     } else if (log.startsWith("[WARNING")) {
@@ -87,7 +88,7 @@ onMounted(async () => {
 <template>
     <div>
         <el-progress :duration="10" striped-flow striped :status="status" :text-inside="true" :stroke-width="26"
-            :percentage="progress.toFixed(2)" />
+            :percentage="parseFloat(progress.toFixed(2))" />
     </div>
     <div
         style="background-color: rgb(24.4, 33.8, 43.5);margin: 10px 3px 10px 3px ; border: 3px groove rgb(42, 89, 137.5) ; ">

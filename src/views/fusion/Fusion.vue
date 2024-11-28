@@ -310,7 +310,7 @@ onMounted(async () => {
                             <div style="width: 400px;">
                                 <el-row>
                                     <el-col :span="20">
-                                        <div style="color: #ffffff;padding-left: 1%; padding-top: 2%;">
+                                        <div style="padding-left: 1%; padding-top: 2%;">
                                             <span>{{ task.name }}</span>
                                         </div>
                                     </el-col>

@@ -7,48 +7,59 @@ import { currentUser } from "./api/mobiuskit/user";
 import { onMounted, ref } from 'vue';
 import { routes } from "./router";
 import "element-plus/theme-chalk/el-message.css";
-
+import { useDark, useToggle } from '@vueuse/core';
+import { Sunny, Moon } from '@element-plus/icons-vue';
 // import 'element-plus/packages/menu-item/src/menu-item.css';
 
 const user = ref("")
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
+const backgroundColor = ref("");
 
 
-
-onMounted(async () => { user.value = await currentUser(); })
+onMounted(async () => { user.value = await currentUser(); isDark.value = true })
 </script>
 
 <template>
-  <el-container class="layout-container">
-    <el-header style="text-align: right; padding: 0px 0px 0px 0px">
-      <el-container style="height: 100%; color: #409EFF; background-color: #18222c;">
-        <el-aside width="15%"
-          style="font-size: 20px; text-align: center; height: 100%; padding-top: 15px; color: #409EFF; background-color: #18222c;">AkesoBio
-          - Möbius</el-aside>
-        <el-main style="padding: 15px;">
-          <div class="toolbar">
-            <el-icon style="margin-right: 8px; margin-top: 1px">
-              <ElementPlus />
-            </el-icon>
-            <span>{{ user }}</span>
-          </div>
+  <div :style="{ backgroundColor }">
+    <el-container class="layout-container">
+      <el-header style="text-align: right; padding: 0px 0px 0px 0px">
+        <el-container style="height: 100%; color: #409EFF; background-color: #18222c;">
+          <el-aside width="15%"
+            style="font-size: 20px; text-align: center; height: 100%; padding-top: 15px; color: #409EFF; background-color: #18222c;">AkesoBio
+            - Möbius</el-aside>
+          <el-main style="padding: 15px;">
+            <div class="toolbar">
+              <el-icon style="margin-right: 8px; margin-top: 1px">
+                <ElementPlus />
+              </el-icon>
+              <span>{{ user }}</span>
+              <el-switch inline-prompt :active-icon="Moon" :inactive-icon="Sunny" style="margin-left: 10px;"
+                v-model="isDark" @change="(value: string | number | boolean) => {
+                  backgroundColor = value ? '' : 'white';
+                  toggleDark(value as boolean);
+                }" />
+            </div>
+          </el-main>
+        </el-container>
+      </el-header>
+      <el-container>
+        <el-aside width="15%" height="100%">
+          <el-scrollbar>
+            <el-menu router>
+              <el-menu-item v-for="route in routes" :index="route.path"> {{ route.name }}</el-menu-item>
+            </el-menu>
+          </el-scrollbar>
+        </el-aside>
+        <el-main>
+          <el-scrollbar style="margin: 0;">
+            <RouterView />
+          </el-scrollbar>
         </el-main>
       </el-container>
-    </el-header>
-    <el-container>
-      <el-aside width="15%" height="100%">
-        <el-scrollbar>
-          <el-menu router>
-            <el-menu-item v-for="route in routes" :index="route.path"> {{ route.name }}</el-menu-item>
-          </el-menu>
-        </el-scrollbar>
-      </el-aside>
-      <el-main>
-        <el-scrollbar style="margin: 0;">
-          <RouterView />
-        </el-scrollbar>
-      </el-main>
     </el-container>
-  </el-container>
+  </div>
+
 </template>
 
 <style scoped>

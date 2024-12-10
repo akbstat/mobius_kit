@@ -9,6 +9,7 @@ import VoidProbe from "../views/voidprobe/VoidProbe.vue";
 import CodeFlow from "../views/codeflow/CodeFlow.vue";
 import Voyager from "../views/voyager/Voyager.vue";
 import Fusion from "../views/fusion/Fusion.vue";
+import Reflector from "../views/reflector/Reflector.vue";
 
 
 export const routes: RouteRecordRaw[] = [
@@ -51,6 +52,11 @@ export const routes: RouteRecordRaw[] = [
         path: "/fusion",
         name: "Fusion",
         component: Fusion,
+    },
+    {
+        path: "/reflector",
+        name: "Reflector",
+        component: Reflector,
     },
 ];
 

@@ -24,6 +24,9 @@ const routeDescription = [
   {
     name: "Fusion", description: "Output combining platform",
   },
+  {
+    name: "Reflector", description: "Build TOC and bookmarks for aCRF",
+  },
 ];
 
 const routeMap = (() => {

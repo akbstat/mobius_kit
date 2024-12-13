@@ -1,79 +1,81 @@
 <script lang="ts" setup>
-import { Ref, ref } from 'vue';
+import { computed, onMounted, Ref, ref } from 'vue';
+import { useReflector } from '../../store/reflector.ts';
+import { storeToRefs } from 'pinia';
 
-const data = ref([
-    { item: "访视日期", v0: true, v1: false, v2: false, v3: false, v4: false },
-    { item: "知情同意书", v0: true, v1: false, v2: false, v3: false, v4: false },
-    { item: "人口统计学资料", v0: true, v1: false, v2: true, v3: false, v4: false },
-    { item: "湿疹面积和严重程度指数（EASI）评估", v0: true, v1: true, v2: true, v3: false, v4: true },
-    { item: "知情同意书", v0: false, v1: false, v2: false, v3: true, v4: false },
-    { item: "人口统计学资料", v0: false, v1: false, v2: true, v3: false, v4: false },
-    { item: "访视日期", v0: true, v1: true, v2: false, v3: false, v4: false },
-    { item: "知情同意书", v0: false, v1: false, v2: true, v3: false, v4: false },
-    { item: "人口统计学资料", v0: true, v1: false, v2: false, v3: true, v4: false },
-    { item: "湿疹面积和严重程度指数（EASI）评估", v0: true, v1: false, v2: false, v3: false, v4: false },
-    { item: "知情同意书", v0: true, v1: false, v2: false, v3: false, v4: false },
-    { item: "人口统计学资料", v0: true, v1: false, v2: true, v3: false, v4: false },
-    { item: "访视日期", v0: false, v1: true, v2: true, v3: false, v4: true },
-    { item: "湿疹面积和严重程度指数（EASI）评估", v0: true, v1: false, v2: false, v3: true, v4: false },
-    { item: "人口统计学资料", v0: false, v1: false, v2: true, v3: false, v4: false },
-    { item: "访视日期", v0: true, v1: true, v2: false, v3: false, v4: false },
-    { item: "知情同意书", v0: false, v1: false, v2: true, v3: false, v4: false },
-    { item: "人口统计学资料", v0: true, v1: false, v2: false, v3: true, v4: false },
-]);
+let { event } = storeToRefs(useReflector());
 
-const visit = ref([
-    { name: "v0", label: "V1筛选期（D-35 ~D-1）" },
-    { name: "v1", label: "V2第0周（D1）" },
-    { name: "v2", label: "V3第2周（D15）" },
-    { name: "v3", label: "V4第4周（D29）" },
-    { name: "v4", label: "V4第6周（D43）" },
-]);
+const allRows: Ref<{
+    id: number,
+    label: string,
+    [key: string]: any,
+}[]> = ref([]);
 
-const form = ref([
-    { name: "f0", label: "访视日期" },
-    { name: "f1", label: "知情同意书" },
-    { name: "f2", label: "人口统计学资料" },
-    { name: "f3", label: "湿疹面积和严重程度指数（EASI）评估" },
-]);
+const allHeaders: Ref<{
+    id: number;
+    field: string;
+    label: string;
+}[]> = ref([]);
 
-const visitSelected: Ref<null | string[]> = ref(null);
-const formSeleted: Ref<null | string[]> = ref(null);
+const rows = computed(() => {
+    return formSeleted.value.length === 0 ? allRows.value : allRows.value.filter(r => formSeleted.value.includes(r.id));
+});
+const headers = computed(() => {
+    return visitSelected.value.length === 0 ? allHeaders.value : allHeaders.value.filter(h => visitSelected.value.includes(h.id));
+});
 
+const formOptions: Ref<{ id: number, label: string }[]> = ref([]);
+const visitOptions: Ref<{ id: number, label: string }[]> = ref([]);
+
+const visitSelected: Ref<number[]> = ref([]);
+const formSeleted: Ref<number[]> = ref([]);
+onMounted(() => {
+    const { headers: h, rows: r } = event.value.preview();
+    allHeaders.value = h;
+    allRows.value = r;
+    formOptions.value = r.map(row => {
+        const { id, label } = row;
+        return { id, label };
+    });
+    visitOptions.value = h.map(header => {
+        const { id, label } = header;
+        return { id, label };
+    });
+});
 </script>
 
 <template>
     <div class="selection-area">
         <el-select class="selection" multiple v-model="formSeleted" clearable collapse-tags filterable
             placeholder="Select Form">
-            <el-option v-for="f in form" :key="f.name" :value="f.name" :label="f.label" />
+            <el-option v-for="f in formOptions" :key="f.id" :value="f.id" :label="f.label" />
         </el-select>
         <el-select class="selection tail" multiple v-model="visitSelected" clearable collapse-tags filterable
             placeholder="Select Visit">
-            <el-option v-for="v in visit" :key="v.name" :value="v.name" :label="v.label" />
+            <el-option v-for="v in visitOptions" :key="v.id" :value="v.id" :label="v.label" />
         </el-select>
     </div>
-    <el-table class="event-table" :data="data" height="622px">
+    <el-table class="event-table" :data="rows" height="622px">
         <el-table-column fixed label="Form / Visit" prop="item" width="200">
             <template #default="scope">
-                <el-tooltip effect="dark" placement="right" :content="scope.row.item">
+                <el-tooltip effect="dark" placement="right" :content="scope.row.label">
                     <el-tag class="form" type="">
-                        {{ scope.row.item }}
+                        {{ scope.row.label }}
                     </el-tag>
                 </el-tooltip>
             </template>
         </el-table-column>
-        <el-table-column v-for="v in visit" width="115">
+        <el-table-column v-for="header in headers" width="130">
             <template #header>
-                <el-tooltip effect="dark" placement="top" :content="v.label">
+                <el-tooltip effect="dark" placement="top" :content="header.label">
                     <el-tag class="visit" type="">
-                        {{ v.label }}
+                        {{ header.label }}
                     </el-tag>
                 </el-tooltip>
             </template>
             <template #default="scopes">
                 <div class="check">
-                    <el-icon v-if="scopes.row[v.name]">
+                    <el-icon v-if="scopes.row[header.field]">
                         <StarFilled />
                     </el-icon>
                 </div>
@@ -91,7 +93,7 @@ const formSeleted: Ref<null | string[]> = ref(null);
 }
 
 .visit {
-    width: 91px;
+    width: 105px;
     overflow: hidden;
     text-overflow: ellipsis;
     justify-content: left;

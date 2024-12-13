@@ -2,7 +2,7 @@
 import { Ref, ref } from 'vue';
 
 const name = ref("");
-const page: Ref<number | null> = ref(null);
+const page: Ref<number> = ref(0);
 </script>
 
 <template>

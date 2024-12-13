@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { computed, Ref, ref } from 'vue';
+import { computed, onMounted, Ref, ref } from 'vue';
+import { Event, EventMode } from "./entity/reflector.ts";
 import Preview from './Preview.vue';
 import Config from './Config.vue';
 import AddVisit from './AddVisit.vue';
@@ -8,16 +9,18 @@ import ModifyForm from './ModifyForm.vue';
 import ModifyVisit from './ModifyVisit.vue';
 import Complete from './Complete.vue';
 import SaveConfig from './SaveConfig.vue';
+import { listEvents } from '../../api/reflector/reflector';
+import { useReflector } from '../../store/reflector.ts';
+import { storeToRefs } from 'pinia';
 
-const kindLabel: Ref<"Visit" | "Form"> = ref("Visit");
+let { event } = storeToRefs(useReflector());
+const eventMode: Ref<EventMode> = ref(EventMode.FORM);
 const data = computed(() => {
-    if (kindLabel.value === "Visit") {
-        return visits.value;
+    if (!event) {
+        return [];
     }
-    return forms.value;
+    return event.value.listItem();
 });
-const forms = ref([{ "item": "访视日期" }, { "item": "知情同意书" }, { "item": "人口统计学资料" }, { "item": "人口统计学资料-湿疹面积和严重程度指数（EASI）评估" }, { "item": "知情同意书" }, { "item": "人口统计学资料" }, { "item": "访视日期" }, { "item": "湿疹面积和严重程度指数（EASI）评估" }, { "item": "人口统计学资料" }, { "item": "访视日期" }, { "item": "知情同意书" }, { "item": "人口统计学资料" }, { "item": "访视日期" }, { "item": "知情同意书" }, { "item": "人口统计学资料" }, { "item": "访视日期" }, { "item": "知情同意书" }, { "item": "人口统计学资料" }, { "item": "湿疹面积和严重程度指数（EASI）评估" }, { "item": "知情同意书" }, { "item": "人口统计学资料" }])
-const visits = ref([{ "item": "V1筛选期（D-35 ~D-1）" }, { "item": "V2第0周（D1）" }, { "item": "V3第2周（D15）" }, { "item": "V4第4周（D29）" }, { "item": "V4第6周（D43）" }, { "item": "V1筛选期（D-35 ~D-1）" }, { "item": "V2第0周（D1）" }, { "item": "V3第2周（D15）" }, { "item": "V4第4周（D29）" }, { "item": "V4第6周（D43）" }, { "item": "V1筛选期（D-35 ~D-1）" }, { "item": "V2第0周（D1）" }, { "item": "V3第2周（D15）" }, { "item": "V4第4周（D29）" }, { "item": "V4第6周（D43）" },])
 
 const configDisplay = ref(false);
 const addFormDisplay = ref(false);
@@ -28,9 +31,14 @@ const completeDisplay = ref(false);
 const saveConfigDisplay = ref(false);
 const removeItemDisplay = ref(false);
 const removeTarget = ref("");
+const activeId = ref(0);
+const previewRenderKey = ref(0);
+const removeItemId: Ref<number[]> = ref([]);
 
 function switchKind() {
-    kindLabel.value = kindLabel.value === "Visit" ? "Form" : "Visit";
+    eventMode.value = eventMode.value === EventMode.VISIT ? EventMode.FORM : EventMode.VISIT;
+    event.value.switchBindingMode();
+    activeId.value = 0;
 }
 
 function showConfig() {
@@ -38,19 +46,25 @@ function showConfig() {
 }
 
 function showAddItem() {
-    if (kindLabel.value === "Visit") {
+    if (eventMode.value === "Visit") {
         addVisitDisplay.value = true;
         return;
     }
     addFormDisplay.value = true;
 }
 
-function showModifyItem() {
-    if (kindLabel.value === "Visit") {
+function showModifyItem(id: number) {
+    activeId.value = id;
+    if (eventMode.value === "Visit") {
         modifyVisitDisplay.value = true;
         return;
     }
     modifyFormDisplay.value = true;
+}
+
+function closeModifyForm() {
+    previewRenderKey.value++;
+    modifyFormDisplay.value = false;
 }
 
 function run() {
@@ -61,27 +75,69 @@ function saveConfig() {
     saveConfigDisplay.value = true;
 }
 
-function removeItem(target: string) {
-    if (target.length === 0) {
-        removeTarget.value = `All ${kindLabel.value}`;
+function removeItemConfirm(target: number | undefined) {
+    if (target === undefined) {
+        removeTarget.value = `All ${eventMode.value}`;
+        removeItemId.value = data.value.map(item => item.id);
     } else {
-        removeTarget.value = target;
+        removeTarget.value = event.value.itemName(target);
+        removeItemId.value = [target];
     }
     removeItemDisplay.value = true;
 }
+
+function removeItem() {
+    removeItemId.value.forEach(id => {
+        event.value.removeItem(id);
+    });
+    previewRenderKey.value++;
+    removeItemDisplay.value = false;
+}
+
+function removeItemCancel() {
+    removeItemId.value = [];
+    removeItemDisplay.value = false;
+}
+
+function moveUp(row: number) {
+    if (row < 1) {
+        return;
+    }
+    const front = data.value[row - 1];
+    const back = data.value[row];
+    event.value.swapItem(front.id, back.id);
+    previewRenderKey.value++;
+}
+
+function moveDown(row: number) {
+    if (row > data.value.length - 1) {
+        return;
+    }
+    const front = data.value[row];
+    const back = data.value[row + 1];
+    event.value.swapItem(front.id, back.id);
+    previewRenderKey.value++;
+}
+
+onMounted(async () => {
+    const { form, visit, binding } = await listEvents();
+    event.value = new Event(form, visit, binding, eventMode.value);
+    previewRenderKey.value++;
+});
+
 </script>
 
 <template>
     <el-container>
         <el-aside class="preview-module">
-            <Preview />
+            <Preview :key="previewRenderKey" />
         </el-aside>
         <el-main class="item-module">
             <el-container>
                 <el-header class="item-module-header ">
                     <div class="config-bar">
                         <el-button @click="switchKind" type="primary" class="kind" plain>
-                            {{ kindLabel }}
+                            {{ event.mode }}
                         </el-button>
                         <el-button @click="saveConfig" class="config" type="primary" plain>
                             <el-icon>
@@ -98,7 +154,7 @@ function removeItem(target: string) {
                                 <VideoPlay />
                             </el-icon>
                         </el-button>
-                        <el-button @click="() => { removeItem('') }" class="config" type="danger" plain>
+                        <el-button @click="() => { removeItemConfirm(undefined) }" class="config" type="danger" plain>
                             <el-icon>
                                 <Delete />
                             </el-icon>
@@ -123,22 +179,24 @@ function removeItem(target: string) {
                                 </el-button>
                             </template>
                             <template #default="scope">
-                                <el-button class="item-button" type="info" link>
+                                <el-button @click="() => { moveUp(scope.$index) }" class="item-button" type="info" link>
                                     <el-icon>
                                         <CaretTop />
                                     </el-icon>
                                 </el-button>
-                                <el-button class="item-button" type="info" link>
+                                <el-button @click="() => { moveDown(scope.$index) }" class="item-button" type="info"
+                                    link>
                                     <el-icon>
                                         <CaretBottom />
                                     </el-icon>
                                 </el-button>
-                                <el-button @click="showModifyItem" class="item-button" type="primary" link>
+                                <el-button @click="() => { showModifyItem(scope.row.id) }" class="item-button"
+                                    type="primary" link>
                                     <el-icon>
                                         <Edit />
                                     </el-icon>
                                 </el-button>
-                                <el-button @click="() => { removeItem(scope.row.item) }" class="item-button"
+                                <el-button @click="() => { removeItemConfirm(scope.row.id) }" class="item-button"
                                     type="danger" link>
                                     <el-icon>
                                         <Delete />
@@ -160,11 +218,11 @@ function removeItem(target: string) {
     <el-dialog v-model="addFormDisplay" title="Create New Form" draggable>
         <AddForm />
     </el-dialog>
-    <el-drawer direction="ltr" size="69.5%" v-model="modifyFormDisplay" title="Modify Form">
-        <ModifyForm />
+    <el-drawer direction="ltr" size="69.5%" v-model="modifyFormDisplay" title="Modify Form" destroy-on-close>
+        <ModifyForm :id="activeId" @close="closeModifyForm" />
     </el-drawer>
-    <el-drawer direction="ltr" size="69.5%" v-model="modifyVisitDisplay" title="Modify Visit">
-        <ModifyVisit />
+    <el-drawer direction="ltr" size="69.5%" v-model="modifyVisitDisplay" title="Modify Visit" destroy-on-close>
+        <ModifyVisit :id="activeId" />
     </el-drawer>
     <el-dialog v-model="completeDisplay" draggable title="Complete">
         <Complete />
@@ -172,19 +230,19 @@ function removeItem(target: string) {
     <el-dialog v-model="saveConfigDisplay" draggable title="Save Configuration">
         <SaveConfig />
     </el-dialog>
-    <el-dialog v-model="removeItemDisplay" draggable :title="`Remove ${kindLabel}`">
+    <el-dialog v-model="removeItemDisplay" draggable :title="`Remove ${eventMode}`">
         <el-text>
             Remove
             <el-text type="danger">{{ removeTarget }}</el-text>
             ?
         </el-text>
         <div style="margin-top: 30px;">
-            <el-button type="primary" plain>
+            <el-button @click="removeItem" type="primary" plain>
                 <el-icon>
                     <Check />
                 </el-icon>
             </el-button>
-            <el-button type="danger" plain>
+            <el-button @click="removeItemCancel" type="danger" plain>
                 <el-icon>
                     <Close />
                 </el-icon>

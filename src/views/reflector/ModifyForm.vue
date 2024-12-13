@@ -1,20 +1,83 @@
 <script lang="ts" setup>
-import { Ref, ref } from 'vue';
-const name = ref("人口统计学资料")
-const page = ref(1);
-const data = ref([{ name: "V1筛选期（D-35 ~D-1）" }, { name: "V2第0周（D1）" }, { name: "V3第2周（D15）" }, { name: "V4第4周（D29）" }, { name: "V4第6周（D43）" }, { name: "V2第0周（D1）" }, { name: "V3第2周（D15）" }, { name: "V4第4周（D29）" }, { name: "V4第6周（D43）" }]);
-const options = ref([{ id: "v1", name: "V1筛选期（D-35 ~D-1）" }, { id: "v2", name: "V2第0周（D1）" }, { id: "v3", name: "V3第2周（D15）" }, { id: "v4", name: "V4第4周（D29）" }, { id: "v5", name: "V4第6周（D43）" }]);
+import { computed, onMounted, Ref, ref } from 'vue';
+import { useReflector } from '../../store/reflector.ts';
+import { storeToRefs } from 'pinia';
+import { Visit } from "../../api/reflector/reflector";
+const emit = defineEmits<{ (e: "close"): void }>();
+const { id } = defineProps<{ id: number }>();
+const { event } = storeToRefs(useReflector());
+const name = ref("");
+const page = ref(0);
+const visit: Ref<Visit[]> = ref([]);
+const visitId = computed(() => {
+    return visit.value.map(v => v.id);
+});
+const options = computed(() => {
+    return allOptions.value.filter(o => !visitId.value.includes(o.id));
+});
+const allOptions: Ref<{ id: number, label: string }[]> = ref([]);
 const selected: Ref<number[]> = ref([]);
 const removeDialogDisplay = ref(false);
 const removeTarget = ref("");
-function removeVisit(target: string) {
-    if (target.length > 0) {
-        removeTarget.value = target;
+const removeId: Ref<number[]> = ref([]);
+
+function removeVisitConfirm(target: number | undefined) {
+    if (target !== undefined) {
+        const visitName = event.value.visit.get(target);
+        removeTarget.value = visitName ? visitName.name : "";
+        removeId.value = [target];
     } else {
         removeTarget.value = "All Visit";
+        removeId.value = visitId.value;
     }
     removeDialogDisplay.value = true;
 }
+
+function removeVisit() {
+    visit.value = visit.value.filter(v => !removeId.value.includes(v.id));
+    removeId.value = [];
+    removeDialogDisplay.value = false;
+}
+
+function removeCancel() {
+    removeId.value = [];
+    removeDialogDisplay.value = false;
+}
+
+function addVisit() {
+    selected.value.forEach(id => {
+        const newVisit = event.value.visit.get(id);
+        if (newVisit) {
+            visit.value.push(newVisit);
+            visit.value.sort((x, y) => x.id - y.id)
+        }
+    });
+    allOptions.value = allOptions.value.filter(o => !selected.value.includes(o.id));
+    selected.value = [];
+}
+
+function updateForm() {
+    event.value.updateForm({ id, name: name.value, page: page.value });
+    event.value.bind(id, visitId.value);
+    emit("close");
+}
+
+function close() {
+    emit("close");
+}
+
+onMounted(() => {
+    const data = event.value.formDetail(id);
+    if (data) {
+        visit.value = data.visit;
+        name.value = data.name;
+        page.value = data.page;
+    }
+    allOptions.value = event.value.listVisit().map(v => {
+        const { id, item } = v;
+        return { id, label: item };
+    });
+});
 </script>
 
 <template>
@@ -26,7 +89,7 @@ function removeVisit(target: string) {
             <el-input-number v-model="page" size="small" />
         </el-form-item>
     </el-form>
-    <el-table :data="data" max-height="365">
+    <el-table :data="visit" max-height="365">
         <el-table-column label="Visit" width="610">
             <template #default="scope">
                 <el-tag class="item">
@@ -37,7 +100,7 @@ function removeVisit(target: string) {
         <el-table-column>
             <template #header>
                 <div class="operation">
-                    <el-button @click="() => { removeVisit('') }" class="item-button" type="danger" link>
+                    <el-button @click="() => { removeVisitConfirm(undefined) }" class="item-button" type="danger" link>
                         <el-icon>
                             <Delete />
                         </el-icon>
@@ -46,7 +109,8 @@ function removeVisit(target: string) {
             </template>
             <template #default="scope">
                 <div class="operation">
-                    <el-button @click="() => { removeVisit(scope.row.name) }" class="item-button" type="danger" link>
+                    <el-button @click="() => { removeVisitConfirm(scope.row.id) }" class="item-button" type="danger"
+                        link>
                         <el-icon>
                             <Delete />
                         </el-icon>
@@ -57,21 +121,21 @@ function removeVisit(target: string) {
     </el-table>
     <div class="new-item">
         <el-select multiple v-model="selected" class="selection" collapse-tags placeholder="Select Visit" clearable>
-            <el-option v-for="option in options" :key="option.id" :value="option.id" :label="option.name" />
+            <el-option v-for="option in options" :key="option.id" :value="option.id" :label="option.label" />
         </el-select>
-        <el-button class="add-buttom" type="primary" plain>
+        <el-button @click="addVisit" class="add-buttom" type="primary" plain>
             <el-icon>
                 <Plus />
             </el-icon>
         </el-button>
     </div>
     <div class="close">
-        <el-button type="primary" plain>
+        <el-button @click="updateForm" type="primary" plain>
             <el-icon>
                 <Check />
             </el-icon>
         </el-button>
-        <el-button type="danger" plain>
+        <el-button @click="close" type="danger" plain>
             <el-icon>
                 <Close />
             </el-icon>
@@ -91,12 +155,12 @@ function removeVisit(target: string) {
             </el-text>
         </div>
         <div class="close">
-            <el-button type="primary" plain>
+            <el-button @click="removeVisit" type="primary" plain>
                 <el-icon>
                     <Check />
                 </el-icon>
             </el-button>
-            <el-button type="danger" plain>
+            <el-button @click="removeCancel" type="danger" plain>
                 <el-icon>
                     <Close />
                 </el-icon>

@@ -10,7 +10,7 @@ const historyConfig: Ref<{ id: string, name: string }[]> = ref([{ id: "0", name:
     <el-form label-width="auto">
         <el-form-item label="From Config">
             <el-select v-model="selectedHistoryConfig" clearable>
-                <el-option v-for="config in historyConfig" :key="config.id" :label="config.name" />
+                <el-option v-for="config in historyConfig" :key="config.id" :label="config.name" :value="config.id" />
             </el-select>
         </el-form-item>
         <el-form-item label="Source aCRF">

@@ -1,7 +1,12 @@
 <script lang="ts" setup>
-import { Ref, ref } from 'vue';
-const name = ref("V1筛选期（D-35 ~D-1）");
-const data = ref([{ name: "人口统计学资料" }, { name: "知情同意书" }, { name: "湿疹面积和严重程度指数（EASI）评估" }, { name: "访视日期" }, { name: "人口统计学资料" }, { name: "人口统计学资料" }, { name: "知情同意书" }, { name: "湿疹面积和严重程度指数（EASI）评估" }, { name: "访视日期" }, { name: "人口统计学资料" }]);
+import { onMounted, Ref, ref } from 'vue'; import { useReflector } from '../../store/reflector.ts';
+import { storeToRefs } from 'pinia';
+import { Form } from "../../api/reflector/reflector";
+
+let { event } = storeToRefs(useReflector());
+const { id } = defineProps<{ id: number }>();
+const name = ref("");
+const form: Ref<Form[]> = ref([]);
 const options = ref([{ id: "v1", name: "人口统计学资料" }, { id: "v2", name: "知情同意书" }, { id: "v3", name: "湿疹面积和严重程度指数（EASI）评估" }, { id: "v4", name: "访视日期" }, { id: "v5", name: "人口统计学资料" }, { id: "v6", name: "人口统计学资料-湿疹面积和严重程度指数（EASI）评估" }]);
 const selected: Ref<number[]> = ref([]);
 const removeDialogDisplay = ref(false);
@@ -20,6 +25,14 @@ function removeForm(target: string) {
 function moveToRunningRecords() {
     runningRecordDisplay.value = true;
 }
+
+onMounted(() => {
+    const data = event.value.visitDetail(id);
+    if (data) {
+        form.value = data.form;
+        name.value = data.name;
+    }
+});
 </script>
 
 <template>
@@ -33,7 +46,7 @@ function moveToRunningRecords() {
             </el-button>
         </el-form-item>
     </el-form>
-    <el-table :data="data" max-height="365">
+    <el-table :data="form" max-height="365">
         <el-table-column label="Form" width="610">
             <template #default="scope">
                 <el-tag class="item">
@@ -113,7 +126,7 @@ function moveToRunningRecords() {
     <el-dialog v-model="runningRecordDisplay" title="Move to Running Records" draggable>
         Following forms will be move to <el-text type="primary">Running Records</el-text>, continue?
         <el-scrollbar height="300px">
-            <el-tag class="item" v-for="d in data" type="primary">{{ d.name }}</el-tag>
+            <el-tag class="item" v-for="d in form" type="">{{ d.name }}</el-tag>
         </el-scrollbar>
         <div class="close">
             <el-button type="primary" plain>

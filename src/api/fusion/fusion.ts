@@ -8,7 +8,6 @@ export async function runFusionTask(param: FusionConfig) {
         return t;
     });
     param.tasks = tasks;
-    console.log(param);
     await invoke("run_fusion_task", { param })
 }
 

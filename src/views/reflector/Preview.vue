@@ -29,6 +29,14 @@ const visitOptions: Ref<{ id: number, label: string }[]> = ref([]);
 
 const visitSelected: Ref<number[]> = ref([]);
 const formSeleted: Ref<number[]> = ref([]);
+
+function itemTagType(id: number): string {
+    if (id === event.value.runningId) {
+        return "warning";
+    }
+    return "primary";
+}
+
 onMounted(() => {
     const { headers: h, rows: r } = event.value.preview();
     allHeaders.value = h;
@@ -55,7 +63,7 @@ onMounted(() => {
             <el-option v-for="v in visitOptions" :key="v.id" :value="v.id" :label="v.label" />
         </el-select>
     </div>
-    <el-table class="event-table" :data="rows" height="622px">
+    <el-table v-if="allHeaders.length > 0" class="event-table" :data="rows" height="622px">
         <el-table-column fixed label="Form / Visit" prop="item" width="200">
             <template #default="scope">
                 <el-tooltip effect="dark" placement="right" :content="scope.row.label">
@@ -68,7 +76,7 @@ onMounted(() => {
         <el-table-column v-for="header in headers" width="130">
             <template #header>
                 <el-tooltip effect="dark" placement="top" :content="header.label">
-                    <el-tag class="visit" type="">
+                    <el-tag :type="itemTagType(header.id)" class="visit">
                         {{ header.label }}
                     </el-tag>
                 </el-tooltip>

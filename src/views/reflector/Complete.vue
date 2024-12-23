@@ -1,7 +1,12 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
-
-const filename = ref("aCRF");
+const { filename } = defineProps<{ filename: string }>();
+const emit = defineEmits<{ (e: "close", open: boolean): void }>();
+function open() {
+    emit("close", true);
+}
+function close() {
+    emit("close", false);
+}
 </script>
 
 <template>
@@ -11,12 +16,12 @@ const filename = ref("aCRF");
         </el-text>
     </div>
     <div class="close">
-        <el-button type="primary" plain>
+        <el-button @click="open" type="primary" plain>
             <el-icon>
                 <Reading />
             </el-icon>
         </el-button>
-        <el-button type="danger" plain>
+        <el-button @click="close" type="danger" plain>
             <el-icon>
                 <Close />
             </el-icon>

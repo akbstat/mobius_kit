@@ -21,6 +21,7 @@ const TEMP_SCRIPT: &str = "MK_TEMP_SCRIPT";
 const WORD_WORKER: &str = "MK_WORD_WORKER";
 const FUSION: &str = "MK_FUSION";
 const COMBINE_BIN: &str = "MK_COMBINE_BIN";
+const ACRF_OUTLINTE_BIN: &str = "MK_ACRF_OUTLINTE_BIN";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -32,6 +33,7 @@ pub struct Config {
     pub skeleton_stat: String,
     pub project_root: String,
     pub combine_bin: String,
+    pub acrf_outline_bin: String,
 }
 
 pub fn config_env_init() -> Result<(), Box<dyn Error>> {
@@ -55,6 +57,7 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     env::set_var(SKELETON_DOCUMENT, config.skeleton_document);
     env::set_var(SKELETON_STAT, config.skeleton_stat);
     env::set_var(COMBINE_BIN, config.combine_bin);
+    env::set_var(ACRF_OUTLINTE_BIN, config.acrf_outline_bin);
 
     let user_temp_path = build_temp_script_path(&config.user_temp, &user_id);
     if !user_temp_path.exists() {

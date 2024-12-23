@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, Ref, ref } from 'vue';
+import { computed, Ref, ref } from 'vue';
 import { Event, EventMode } from "./entity/reflector.ts";
 import Preview from './Preview.vue';
 import Config from './Config.vue';
@@ -9,9 +9,11 @@ import ModifyForm from './ModifyForm.vue';
 import ModifyVisit from './ModifyVisit.vue';
 import Complete from './Complete.vue';
 import SaveConfig from './SaveConfig.vue';
-import { listEvents } from '../../api/reflector/reflector';
 import { useReflector } from '../../store/reflector.ts';
 import { storeToRefs } from 'pinia';
+import { AcrfConfig } from './entity/config.ts';
+import { listEvents, renderAcrf } from '../../api/reflector/reflector.ts';
+import { openFile } from '../../api/utils/directory';
 
 let { event } = storeToRefs(useReflector());
 const eventMode: Ref<EventMode> = ref(EventMode.FORM);
@@ -34,6 +36,23 @@ const removeTarget = ref("");
 const activeId = ref(0);
 const previewRenderKey = ref(0);
 const removeItemId: Ref<number[]> = ref([]);
+const config: Ref<AcrfConfig> = ref({ source: "", destination: "", filename: "acrf", ecrf: "", db: "" });
+const loading = ref(false);
+const runnable = computed(() => {
+    const { destination, source } = config.value;
+    const runnable = destination.length > 0 && source.length > 0;
+    return !runnable;
+});
+
+function itemTagType(id: number): string {
+    if (event.value.mode === EventMode.FORM) {
+        return "primary";
+    }
+    if (id === event.value.runningId) {
+        return "warning";
+    }
+    return "primary";
+}
 
 function switchKind() {
     eventMode.value = eventMode.value === EventMode.VISIT ? EventMode.FORM : EventMode.VISIT;
@@ -67,12 +86,57 @@ function closeModifyForm() {
     modifyFormDisplay.value = false;
 }
 
-function run() {
+function closeModifyVisit() {
+    previewRenderKey.value++;
+    modifyVisitDisplay.value = false;
+}
+
+function closeAddForm() {
+    previewRenderKey.value++;
+    addFormDisplay.value = false;
+}
+
+function closeAddVisit() {
+    previewRenderKey.value++;
+    addVisitDisplay.value = false;
+}
+
+function closeConfig() {
+    previewRenderKey.value++;
+    configDisplay.value = false;
+}
+
+async function updateConfig(cfg: AcrfConfig) {
+    config.value = cfg;
+    loading.value = true;
+    const { form, visit, binding } = await listEvents({ ecrf: cfg.ecrf, db: cfg.db });
+    event.value = new Event(form, visit, binding, eventMode.value);
+    loading.value = false;
+    previewRenderKey.value++;
+    configDisplay.value = false;
+}
+
+async function run() {
+    loading.value = true;
+    await renderAcrf({
+        event: event.value.toRenderData(),
+        source: config.value.source,
+        destination: `${config.value.destination}\\${config.value.filename}.pdf`,
+    });
+    loading.value = false;
     completeDisplay.value = true;
 }
 
-function saveConfig() {
-    saveConfigDisplay.value = true;
+async function completeDialogClose(open: boolean) {
+    if (open) {
+        await openFile(`${config.value.destination}\\${config.value.filename}.pdf`);
+    }
+    completeDisplay.value = false;
+}
+
+function sortByPage() {
+    event.value.sortFormByPage();
+    previewRenderKey.value++;
 }
 
 function removeItemConfirm(target: number | undefined) {
@@ -118,17 +182,10 @@ function moveDown(row: number) {
     event.value.swapItem(front.id, back.id);
     previewRenderKey.value++;
 }
-
-onMounted(async () => {
-    const { form, visit, binding } = await listEvents();
-    event.value = new Event(form, visit, binding, eventMode.value);
-    previewRenderKey.value++;
-});
-
 </script>
 
 <template>
-    <el-container>
+    <el-container v-loading.fullscreen.lock="loading">
         <el-aside class="preview-module">
             <Preview :key="previewRenderKey" />
         </el-aside>
@@ -139,9 +196,9 @@ onMounted(async () => {
                         <el-button @click="switchKind" type="primary" class="kind" plain>
                             {{ event.mode }}
                         </el-button>
-                        <el-button @click="saveConfig" class="config" type="primary" plain>
+                        <el-button :disabled="runnable" @click="sortByPage" class="config" type="primary" plain>
                             <el-icon>
-                                <CollectionTag />
+                                <Sort />
                             </el-icon>
                         </el-button>
                         <el-button @click="showConfig" class="config" type="primary" plain>
@@ -149,7 +206,7 @@ onMounted(async () => {
                                 <Setting />
                             </el-icon>
                         </el-button>
-                        <el-button @click="run" class="config" type="primary" plain>
+                        <el-button :disabled="runnable" @click="run" class="config" type="primary" plain>
                             <el-icon>
                                 <VideoPlay />
                             </el-icon>
@@ -166,13 +223,16 @@ onMounted(async () => {
                         <el-table-column label="Item" width="264">
                             <template #default="scope">
                                 <el-tooltip effect="dark" placement="left" :content="scope.row.item">
-                                    <el-tag class="item-tag">{{ scope.row.item }}</el-tag>
+                                    <el-tag :type="itemTagType(scope.row.id)" class="item-tag">
+                                        {{ scope.row.item }}
+                                    </el-tag>
                                 </el-tooltip>
                             </template>
                         </el-table-column>
-                        <el-table-column label="">
+                        <el-table-column width="120">
                             <template #header>
-                                <el-button @click="showAddItem" class="item-button header" type="primary" link>
+                                <el-button :disabled="runnable" @click="showAddItem" class="item-button header"
+                                    type="primary" link>
                                     <el-icon>
                                         <DocumentAdd />
                                     </el-icon>
@@ -209,23 +269,23 @@ onMounted(async () => {
             </el-container>
         </el-main>
     </el-container>
-    <el-drawer size="50%" v-model="configDisplay" title="Configuration">
-        <Config />
+    <el-drawer size="60%" v-model="configDisplay" title="Configuration">
+        <Config @close="closeConfig" @update="updateConfig" />
     </el-drawer>
-    <el-dialog v-model="addVisitDisplay" title="Create New Visit" draggable>
-        <AddVisit />
+    <el-dialog v-model="addVisitDisplay" title="Create New Visit" draggable destroy-on-close>
+        <AddVisit @close="closeAddVisit" />
     </el-dialog>
-    <el-dialog v-model="addFormDisplay" title="Create New Form" draggable>
-        <AddForm />
+    <el-dialog v-model="addFormDisplay" title="Create New Form" draggable destroy-on-close>
+        <AddForm @close="closeAddForm" />
     </el-dialog>
     <el-drawer direction="ltr" size="69.5%" v-model="modifyFormDisplay" title="Modify Form" destroy-on-close>
         <ModifyForm :id="activeId" @close="closeModifyForm" />
     </el-drawer>
     <el-drawer direction="ltr" size="69.5%" v-model="modifyVisitDisplay" title="Modify Visit" destroy-on-close>
-        <ModifyVisit :id="activeId" />
+        <ModifyVisit :id="activeId" @close="closeModifyVisit" />
     </el-drawer>
     <el-dialog v-model="completeDisplay" draggable title="Complete">
-        <Complete />
+        <Complete :filename="config.filename" @close="completeDialogClose" />
     </el-dialog>
     <el-dialog v-model="saveConfigDisplay" draggable title="Save Configuration">
         <SaveConfig />

@@ -1,37 +1,93 @@
 <script lang="ts" setup>
-import { onMounted, Ref, ref } from 'vue'; import { useReflector } from '../../store/reflector.ts';
+import { computed, onMounted, Ref, ref } from 'vue'; import { useReflector } from '../../store/reflector.ts';
 import { storeToRefs } from 'pinia';
 import { Form } from "../../api/reflector/reflector";
-
+const emit = defineEmits<{ (e: "close"): void }>();
 let { event } = storeToRefs(useReflector());
 const { id } = defineProps<{ id: number }>();
 const name = ref("");
+const order = ref(0);
 const form: Ref<Form[]> = ref([]);
-const options = ref([{ id: "v1", name: "人口统计学资料" }, { id: "v2", name: "知情同意书" }, { id: "v3", name: "湿疹面积和严重程度指数（EASI）评估" }, { id: "v4", name: "访视日期" }, { id: "v5", name: "人口统计学资料" }, { id: "v6", name: "人口统计学资料-湿疹面积和严重程度指数（EASI）评估" }]);
+const formId = computed(() => {
+    return form.value.map(f => f.id);
+});
+const options = computed(() => {
+    return allOptions.value.filter(o => !formId.value.includes(o.id));
+});
+const isRunning = computed(() => {
+    return id === event.value.runningId;
+});
+const allOptions: Ref<{ id: number, label: string }[]> = ref([]);
 const selected: Ref<number[]> = ref([]);
 const removeDialogDisplay = ref(false);
 const runningRecordDisplay = ref(false);
 const removeTarget = ref("");
+const removeId: Ref<number[]> = ref([]);
 
-function removeForm(target: string) {
-    if (target.length > 0) {
-        removeTarget.value = target;
+
+function removeFormConfirm(target: number | undefined) {
+    if (target !== undefined) {
+        const visitName = event.value.form.get(target);
+        removeTarget.value = visitName ? visitName.name : "";
+        removeId.value = [target];
     } else {
         removeTarget.value = "All Form";
+        removeId.value = formId.value;
     }
     removeDialogDisplay.value = true;
 }
 
-function moveToRunningRecords() {
+function removeForm() {
+    form.value = form.value.filter(f => !removeId.value.includes(f.id));
+    removeId.value = [];
+    removeDialogDisplay.value = false;
+}
+
+function moveToRunningRecordsConfirm() {
     runningRecordDisplay.value = true;
 }
+
+function moveToRunningRecords() {
+    event.value.moveVisitToRunning(id);
+    runningRecordDisplay.value = false;
+    emit("close");
+}
+
+function removeCancel() {
+    removeId.value = [];
+    removeDialogDisplay.value = false;
+}
+
+function addForm() {
+    selected.value.forEach(id => {
+        const newForm = event.value.form.get(id);
+        if (newForm) {
+            form.value.push(newForm);
+            form.value.sort((x, y) => x.order - y.order)
+        }
+    });
+    selected.value = [];
+}
+
+function updateVisit() {
+    event.value.updateVisit({ id, name: name.value, order: order.value });
+    event.value.bind(id, formId.value);
+    emit("close");
+}
+
 
 onMounted(() => {
     const data = event.value.visitDetail(id);
     if (data) {
         form.value = data.form;
+        form.value = data.form;
         name.value = data.name;
+        order.value = data.order;
     }
+    allOptions.value = event.value.listForm().map(f => {
+        const { id, item } = f;
+        return { id, label: item };
+    });
 });
 </script>
 
@@ -41,7 +97,8 @@ onMounted(() => {
             <el-input v-model="name" clearable />
         </el-form-item>
         <el-form-item label=" ">
-            <el-button @click="moveToRunningRecords" class="running-record" plain type="primary" link>
+            <el-button v-if="!isRunning" @click="moveToRunningRecordsConfirm" class="running-record" plain
+                type="primary" link>
                 Move to Running Records
             </el-button>
         </el-form-item>
@@ -57,7 +114,7 @@ onMounted(() => {
         <el-table-column>
             <template #header>
                 <div class="operation">
-                    <el-button @click="() => { removeForm('') }" class="item-button" type="danger" link>
+                    <el-button @click="() => { removeFormConfirm(undefined) }" class="item-button" type="danger" link>
                         <el-icon>
                             <Delete />
                         </el-icon>
@@ -66,7 +123,8 @@ onMounted(() => {
             </template>
             <template #default="scope">
                 <div class="operation">
-                    <el-button @click="() => { removeForm(scope.row.name) }" class="item-button" type="danger" link>
+                    <el-button @click="() => { removeFormConfirm(scope.row.id) }" class="item-button" type="danger"
+                        link>
                         <el-icon>
                             <Delete />
                         </el-icon>
@@ -76,17 +134,18 @@ onMounted(() => {
         </el-table-column>
     </el-table>
     <div class="new-item">
-        <el-select multiple v-model="selected" class="selection" collapse-tags placeholder="Select Form" clearable>
-            <el-option v-for="option in options" :key="option.id" :value="option.id" :label="option.name" />
+        <el-select filterable multiple v-model="selected" class="selection" collapse-tags placeholder="Select Form"
+            clearable>
+            <el-option v-for="option in options" :key="option.id" :value="option.id" :label="option.label" />
         </el-select>
-        <el-button class="add-buttom" type="primary" plain>
+        <el-button @click="addForm" class="add-buttom" type="primary" plain>
             <el-icon>
                 <Plus />
             </el-icon>
         </el-button>
     </div>
     <div class="close">
-        <el-button type="primary" plain>
+        <el-button @click="updateVisit" type="primary" plain>
             <el-icon>
                 <Check />
             </el-icon>
@@ -111,12 +170,12 @@ onMounted(() => {
             </el-text>
         </div>
         <div class="close">
-            <el-button type="primary" plain>
+            <el-button @click="removeForm" type="primary" plain>
                 <el-icon>
                     <Check />
                 </el-icon>
             </el-button>
-            <el-button type="danger" plain>
+            <el-button @click="removeCancel" type="danger" plain>
                 <el-icon>
                     <Close />
                 </el-icon>
@@ -129,7 +188,7 @@ onMounted(() => {
             <el-tag class="item" v-for="d in form" type="">{{ d.name }}</el-tag>
         </el-scrollbar>
         <div class="close">
-            <el-button type="primary" plain>
+            <el-button @click="moveToRunningRecords" type="primary" plain>
                 <el-icon>
                     <Check />
                 </el-icon>

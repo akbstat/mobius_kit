@@ -10,6 +10,7 @@ mod config;
 mod divider;
 mod fusion;
 mod inspector;
+mod reflector;
 mod scaffold;
 mod user;
 mod utils;
@@ -64,6 +65,8 @@ fn main() {
             fusion::fusion::fetch_log,
             fusion::fusion::fetch_progress,
             fusion::fusion::fetch_previous_log,
+            reflector::read_db,
+            reflector::render_acrf,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

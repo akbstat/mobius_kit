@@ -1,26 +1,65 @@
 <script lang="ts" setup>
-import { Ref, ref } from 'vue';
+import { reactive, ref } from 'vue';
+import { useReflector } from '../../store/reflector.ts';
+import { storeToRefs } from 'pinia';
+import type { FormInstance, FormRules } from "element-plus";
 
-const name = ref("");
-const page: Ref<number> = ref(0);
+const { event } = storeToRefs(useReflector());
+const emit = defineEmits<{ (e: 'close'): void }>();
+const ruleFormRef = ref<FormInstance>();
+const form = reactive({
+    name: "",
+    page: 1,
+});
+
+function cancelAddForm() {
+    emit("close");
+}
+
+function addForm() {
+    event.value.addForm({ name: form.name, page: form.page });
+    emit("close");
+}
+
+function submitForm(formEl: FormInstance | undefined) {
+    if (!formEl) return;
+    formEl.validate((valid) => {
+        if (valid) {
+            addForm();
+        }
+    });
+}
+
+function checkFormName(_: any, value: string, callback: any) {
+    if (!value || value.length === 0) {
+        return callback(new Error("Form name can not be empty."))
+    }
+    callback();
+}
+
+const rules = reactive<FormRules<typeof form>>({
+    name: [{ validator: checkFormName, trigger: 'blur' }],
+})
+
+
 </script>
 
 <template>
-    <el-form label-width="auto">
-        <el-form-item label="Form Name">
-            <el-input v-model="name" clearable />
+    <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="auto">
+        <el-form-item prop="name" label="Form Name">
+            <el-input v-model="form.name" clearable />
         </el-form-item>
-        <el-form-item label="Page">
-            <el-input-number v-model="page" />
+        <el-form-item prop="page" label="Page">
+            <el-input-number v-model="form.page" />
         </el-form-item>
         <el-form-item>
             <div class="buttom-area">
-                <el-button type="primary" plain>
+                <el-button @click="() => { submitForm(ruleFormRef) }" type="primary" plain>
                     <el-icon>
                         <Check />
                     </el-icon>
                 </el-button>
-                <el-button type="danger" plain>
+                <el-button @click="cancelAddForm" type="danger" plain>
                     <el-icon>
                         <Close />
                     </el-icon>

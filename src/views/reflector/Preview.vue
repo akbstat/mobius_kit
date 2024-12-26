@@ -64,7 +64,7 @@ onMounted(() => {
         </el-select>
     </div>
     <el-table v-if="allHeaders.length > 0" class="event-table" :data="rows" height="622px">
-        <el-table-column fixed label="Form / Visit" prop="item" width="200">
+        <el-table-column fixed label="Form / Visit" width="200">
             <template #default="scope">
                 <el-tooltip effect="dark" placement="right" :content="scope.row.label">
                     <el-tag class="form" type="">

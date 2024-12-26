@@ -12,10 +12,11 @@ import SaveConfig from './SaveConfig.vue';
 import { useReflector } from '../../store/reflector.ts';
 import { storeToRefs } from 'pinia';
 import { AcrfConfig } from './entity/config.ts';
-import { listEvents, renderAcrf } from '../../api/reflector/reflector.ts';
+import { listEvents, listPreviousEvents, renderAcrf, saveConfig } from '../../api/reflector/reflector.ts';
 import { openFile } from '../../api/utils/directory';
+import { ElMessage } from 'element-plus';
 
-let { event } = storeToRefs(useReflector());
+let { event, config } = storeToRefs(useReflector());
 const eventMode: Ref<EventMode> = ref(EventMode.FORM);
 const data = computed(() => {
     if (!event) {
@@ -36,7 +37,7 @@ const removeTarget = ref("");
 const activeId = ref(0);
 const previewRenderKey = ref(0);
 const removeItemId: Ref<number[]> = ref([]);
-const config: Ref<AcrfConfig> = ref({ source: "", destination: "", filename: "acrf", ecrf: "", db: "" });
+// const config: Ref<AcrfConfig> = ref({ source: "", destination: "", filename: "acrf", ecrf: "", db: "", historyConfigId: "", historyConfigName: "" });
 const loading = ref(false);
 const runnable = computed(() => {
     const { destination, source } = config.value;
@@ -108,9 +109,20 @@ function closeConfig() {
 
 async function updateConfig(cfg: AcrfConfig) {
     config.value = cfg;
+    await updateEvent();
+}
+
+async function updateEvent() {
     loading.value = true;
-    const { form, visit, binding } = await listEvents({ ecrf: cfg.ecrf, db: cfg.db });
-    event.value = new Event(form, visit, binding, eventMode.value);
+    const { ecrf, db } = config.value;
+    eventMode.value = EventMode.FORM;
+    if (config.value.historyConfigId.length > 0) {
+        const { form, visit, binding } = await listPreviousEvents(config.value.historyConfigId);
+        event.value = new Event(form, visit, binding, eventMode.value);
+    } else {
+        const { form, visit, binding } = await listEvents({ ecrf, db });
+        event.value = new Event(form, visit, binding, eventMode.value);
+    }
     loading.value = false;
     previewRenderKey.value++;
     configDisplay.value = false;
@@ -182,6 +194,27 @@ function moveDown(row: number) {
     event.value.swapItem(front.id, back.id);
     previewRenderKey.value++;
 }
+
+function openSaveConfigDialog() {
+    saveConfigDisplay.value = true;
+}
+
+async function saveConfiguration(id: string, name: string) {
+    try {
+        await saveConfig(id.length === 0 ? null : id, name, event.value.toRenderData());
+        ElMessage.success("Save Configuration Success");
+    } catch (error) {
+        ElMessage.error(`Save Configuration Failed, becuase: ${error}`);
+    }
+    saveConfigDisplay.value = false;
+}
+
+function saveConfigurationCancel() {
+    saveConfigDisplay.value = false;
+}
+
+
+
 </script>
 
 <template>
@@ -195,6 +228,12 @@ function moveDown(row: number) {
                     <div class="config-bar">
                         <el-button @click="switchKind" type="primary" class="kind" plain>
                             {{ event.mode }}
+                        </el-button>
+                        <el-button :disabled="runnable" @click="openSaveConfigDialog" class="config" type="primary"
+                            plain>
+                            <el-icon>
+                                <CollectionTag />
+                            </el-icon>
                         </el-button>
                         <el-button :disabled="runnable" @click="sortByPage" class="config" type="primary" plain>
                             <el-icon>
@@ -269,7 +308,7 @@ function moveDown(row: number) {
             </el-container>
         </el-main>
     </el-container>
-    <el-drawer size="60%" v-model="configDisplay" title="Configuration">
+    <el-drawer size="60%" v-model="configDisplay" title="Configuration" destroy-on-close>
         <Config @close="closeConfig" @update="updateConfig" />
     </el-drawer>
     <el-dialog v-model="addVisitDisplay" title="Create New Visit" draggable destroy-on-close>
@@ -284,11 +323,12 @@ function moveDown(row: number) {
     <el-drawer direction="ltr" size="69.5%" v-model="modifyVisitDisplay" title="Modify Visit" destroy-on-close>
         <ModifyVisit :id="activeId" @close="closeModifyVisit" />
     </el-drawer>
-    <el-dialog v-model="completeDisplay" draggable title="Complete">
+    <el-dialog v-model="completeDisplay" draggable title="Complete" destroy-on-close>
         <Complete :filename="config.filename" @close="completeDialogClose" />
     </el-dialog>
     <el-dialog v-model="saveConfigDisplay" draggable title="Save Configuration">
-        <SaveConfig />
+        <SaveConfig :id="config.historyConfigId" :name="config.historyConfigName" @save="saveConfiguration"
+            @close="saveConfigurationCancel" />
     </el-dialog>
     <el-dialog v-model="removeItemDisplay" draggable :title="`Remove ${eventMode}`">
         <el-text>

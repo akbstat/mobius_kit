@@ -2,18 +2,27 @@ import { invoke } from "@tauri-apps/api";
 
 
 export async function listEvents(param: listEventsParam): Promise<{ form: Form[], visit: Visit[], binding: Binding[] }> {
-    if (param.db.length > 0 && param.ecrf.length > 0) {
-        return await invoke("read_db", { param });
-    }
-    return {
-        form: [],
-        visit: [],
-        binding: [],
-    }
+    return await invoke("read_db", { param });
+}
+
+export async function listPreviousEvents(id: string): Promise<RenderData> {
+    return await invoke("get_db_config", { id });
 }
 
 export async function renderAcrf(param: RenderAcrfParam) {
     return await invoke("render_acrf", { param });
+}
+
+export async function listConfig(): Promise<ConfigList[]> {
+    return await invoke("list_db_config");
+}
+
+export async function saveConfig(id: null | string, name: string, data: RenderData) {
+    return await invoke("save_db_config", { id, name, config: data });
+}
+
+export async function removeConfig(id: string) {
+    return await invoke("remove_db_config", { id });
 }
 
 export interface listEventsParam {
@@ -49,4 +58,9 @@ export interface RenderAcrfParam {
     event: RenderData,
     source: string,
     destination: string,
+}
+
+export interface ConfigList {
+    id: string,
+    name: string,
 }

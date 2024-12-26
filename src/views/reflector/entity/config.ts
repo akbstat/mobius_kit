@@ -4,4 +4,6 @@ export interface AcrfConfig {
     filename: string,
     ecrf: string,
     db: string,
+    historyConfigId: string,
+    historyConfigName: string,
 }

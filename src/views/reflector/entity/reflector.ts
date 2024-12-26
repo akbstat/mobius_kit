@@ -14,11 +14,16 @@ export class Event {
     nextFormOrder: number
     nextVisitOrder: number
     constructor(form: Form[], visit: Visit[], binding: Binding[], mode: EventMode) {
+        this.runningId = -1;
         this.form = new Map(form.map(f => [f.id, f]));
-        this.visit = new Map(visit.map(v => [v.id, v]));
+        this.visit = new Map(visit.map(v => {
+            if (v.name === "Running Records") {
+                this.runningId = v.id;
+            }
+            return [v.id, v];
+        }));
         this.binding = new Map(binding.map(b => [b.parent, new Set(b.children)]));
         this.mode = mode;
-        this.runningId = -1;
         this.nextFormOrder = form.length;
         this.nextVisitOrder = visit.length;
     }

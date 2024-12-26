@@ -22,6 +22,7 @@ const WORD_WORKER: &str = "MK_WORD_WORKER";
 const FUSION: &str = "MK_FUSION";
 const COMBINE_BIN: &str = "MK_COMBINE_BIN";
 const ACRF_OUTLINTE_BIN: &str = "MK_ACRF_OUTLINTE_BIN";
+pub const REFLECTOR: &str = "MK_REFLECTOR";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -74,8 +75,13 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     if !fusion.exists() {
         fs::create_dir_all(&fusion)?;
     }
-
     env::set_var(FUSION, fusion);
+
+    let reflector = user_temp_path.join(r"app\mobiuskit\reflector");
+    if !reflector.exists() {
+        fs::create_dir_all(&reflector)?;
+    }
+    env::set_var(REFLECTOR, reflector);
 
     // init private template dir
     let private_template_root = user_temp_path.join(r"app\mobiuskit\scaffold");

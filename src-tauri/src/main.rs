@@ -67,6 +67,10 @@ fn main() {
             fusion::fusion::fetch_previous_log,
             reflector::read_db,
             reflector::render_acrf,
+            reflector::save_db_config,
+            reflector::list_db_config,
+            reflector::get_db_config,
+            reflector::remove_db_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

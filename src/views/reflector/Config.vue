@@ -1,19 +1,22 @@
 <script lang="ts" setup>
-import { ref, Ref } from 'vue';
+import { computed, onMounted, ref, Ref } from 'vue';
 import { selectDirectory, selectFile } from "../../api/utils/directory";
 import { AcrfConfig } from './entity/config.ts';
+import { listConfig, removeConfig } from '../../api/reflector/reflector.ts';
+import { ElMessage } from 'element-plus';
+import { storeToRefs } from 'pinia';
+import { useReflector } from '../../store/reflector.ts';
+
+let { config } = storeToRefs(useReflector());
 const emit = defineEmits<{ (e: "update", config: AcrfConfig): void, (e: "close"): void }>();
 const edcConfigDisplay = ref(false);
-const selectedHistoryConfig = ref("");
-const config: Ref<AcrfConfig> = ref({ source: "", destination: "", filename: "acrf", ecrf: "", db: "" });
-// const config: Ref<AcrfConfig> = ref({
-//     source: "D:\\projects\\rusty\\acrf_outline\\.data\\ecollect\\AK120-301_aCRF_v0.23.pdf",
-//     destination: "D:\\projects\\rusty\\acrf_outline\\.data\\ecollect",
-//     filename: "acrf",
-//     ecrf: "D:\\projects\\rusty\\acrf_outline\\.data\\ecollect\\AK120-301_Unique eCRF_V2.0_20240530.pdf",
-//     db: "D:\\projects\\rusty\\acrf_outline\\.data\\ecollect\\database_export_AK120-301_20240606_0000.xlsx",
-// });
+// const config: Ref<AcrfConfig> = ref({ source: "", destination: "", filename: "acrf", ecrf: "", db: "", historyConfigId: "", historyConfigName: "" });
 const historyConfig: Ref<{ id: string, name: string }[]> = ref([]);
+const advanceEnable = computed(() => config.value.historyConfigId.length !== 0);
+const removeConfigDisplay = ref(false);
+const configSelectionRef = ref();
+const removeConfigId = ref("");
+const removeConfigName = computed(() => historyConfig.value.find(c => c.id === removeConfigId.value)?.name as string);
 
 async function selectFolder() {
     config.value.destination = await selectDirectory();
@@ -40,6 +43,18 @@ async function selectDB() {
     });
 }
 
+function historicalConfigChange(value: string) {
+    console.log(value);
+    if (value.length !== 0) {
+        config.value.db = "";
+        config.value.ecrf = "";
+        edcConfigDisplay.value = false;
+        config.value.historyConfigName = historyConfig.value.find(c => c.id === value)?.name as string;
+        return;
+    }
+    config.value.historyConfigName = "";
+}
+
 async function submit() {
     emit("update", config.value);
 }
@@ -48,15 +63,31 @@ function closeConfig() {
     emit("close");
 }
 
+function removeHistoryConfigConfirm(id: string) {
+    configSelectionRef.value.blur();
+    removeConfigId.value = id;
+    removeConfigDisplay.value = true;
+}
+
+function removeHistoryConfigCancel() {
+    removeConfigDisplay.value = false;
+}
+
+async function removeHistoryConfig() {
+    await removeConfig(removeConfigId.value);
+    ElMessage.success(`Remove Config ${removeConfigName.value} Success`);
+    removeConfigDisplay.value = false;
+    historyConfig.value = await listConfig();
+}
+
+onMounted(async () => {
+    historyConfig.value = await listConfig();
+});
+
 </script>
 
 <template>
     <el-form label-width="auto">
-        <el-form-item label="From Config">
-            <el-select v-model="selectedHistoryConfig" clearable>
-                <el-option v-for="config in historyConfig" :key="config.id" :label="config.name" :value="config.id" />
-            </el-select>
-        </el-form-item>
         <el-form-item label="Source aCRF">
             <el-input v-model="config.source" clearable>
                 <template #prepend>
@@ -84,8 +115,24 @@ function closeConfig() {
                 </template>
             </el-input>
         </el-form-item>
+        <el-form-item label="From Config">
+            <el-select ref="configSelectionRef" filterable class="history" v-model="config.historyConfigId"
+                @change="historicalConfigChange" clearable>
+                <el-option v-for="config in historyConfig" :key="config.id" :label="config.name" :value="config.id">
+                    <template #default>
+                        <span>{{ config.name }}</span>
+                        <el-button type="danger" class="remove-option" size="small"
+                            @click.stop="() => { removeHistoryConfigConfirm(config.id) }" link>
+                            <el-icon>
+                                <Delete />
+                            </el-icon>
+                        </el-button>
+                    </template>
+                </el-option>
+            </el-select>
+        </el-form-item>
         <el-form-item label="Advanced Config">
-            <el-switch v-model="edcConfigDisplay" />
+            <el-switch :disabled="advanceEnable" v-model="edcConfigDisplay" />
         </el-form-item>
         <div v-if="edcConfigDisplay">
             <el-form-item label="eCRF">
@@ -124,6 +171,22 @@ function closeConfig() {
             </el-button>
         </el-form-item>
     </el-form>
+    <el-dialog v-model="removeConfigDisplay" title="Remove Previous Configuration">
+        Configuration <el-text type="danger">{{ removeConfigName }}</el-text> will be removed permanently, continue?
+        <div class="remove-confirm">
+            <el-button @click="removeHistoryConfig" type="primary" plain>
+                <el-icon>
+                    <Check />
+                </el-icon>
+            </el-button>
+            <el-button @click="removeHistoryConfigCancel" type="danger" plain>
+                <el-icon>
+                    <Close />
+                </el-icon>
+            </el-button>
+        </div>
+
+    </el-dialog>
 </template>
 
 <style scoped>
@@ -138,5 +201,18 @@ function closeConfig() {
 
 .btn {
     width: 55px;
+}
+
+.history {
+    width: 100%;
+}
+
+.remove-option {
+    float: right;
+    margin-top: 8px;
+}
+
+.remove-confirm {
+    margin-top: 40px;
 }
 </style>

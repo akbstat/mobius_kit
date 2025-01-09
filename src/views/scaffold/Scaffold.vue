@@ -19,6 +19,7 @@ import { storeToRefs } from 'pinia';
 import { TemplateSelected } from '../../components/template/template';
 import { fetchOfficalTemplate } from "../../api/scaffold/template";
 import { Assignment } from '../../components/task-assignment/assignment';
+import { EpPropMergeType } from 'element-plus/es/utils/index.mjs';
 
 
 const buttonStyle = {
@@ -271,11 +272,11 @@ function showQcResultDetailPanel() {
     qcResultDetailPanelShow.value = true;
 }
 
-function fileTagType(f: FileResult) {
+function fileTagType(f: FileResult): EpPropMergeType<StringConstructor, "success" | "warning" | "info" | "primary" | "danger", unknown> | undefined {
     if (f.existed) {
         return "info";
     }
-    return "";
+    return undefined;
 }
 
 function showResult(result: FileResult[], filter: boolean): FileResult[] {
@@ -435,15 +436,16 @@ async function qcDestinationSelect() {
 
                 </el-main>
                 <el-footer style="padding: 5px 0px 0px 0px; height: auto;">
-                    <el-button disabled click="() => { showCreateProject = true }" type="primary" style="width: 100%"
+                    <el-button @click="() => { showCreateProject = true }" type="primary" style="width: 100%"
                         plain>New</el-button>
                 </el-footer>
             </el-container>
         </el-aside>
         <el-main style="padding: 0px;">
             <el-container>
-                <el-header style="padding: 15px 0px 9px 20px; height: 40px; ">
-                    <el-breadcrumb style="float: left;" v-if="chosenProject.purpose" :separator-icon="ArrowRight">
+                <el-header style="padding: 10px 0px 9px 20px; height: 40px; ">
+                    <el-breadcrumb style="margin-top: 7px;float: left;" v-if="chosenProject.purpose"
+                        :separator-icon="ArrowRight">
                         <el-breadcrumb-item>
                             <span style="color: #409EFF;">{{ chosenProject.product }}</span>
                         </el-breadcrumb-item>
@@ -455,8 +457,8 @@ async function qcDestinationSelect() {
                         </el-breadcrumb-item>
                     </el-breadcrumb>
 
-                    <el-select @change="movementChange" v-model="currentMovement" placeholder="Movement Tracing"
-                        size="small" style="float: right; margin-right: 30px;">
+                    <el-select class="movement-trace" @change="movementChange" v-model="currentMovement"
+                        placeholder="Movement Tracing" size="small">
                         <el-option v-for="movement in trace" :key="movement" :label="movementLabel(movement)"
                             :value="movement" />
                     </el-select>
@@ -633,7 +635,7 @@ async function qcDestinationSelect() {
     </el-drawer>
 </template>
 
-<style>
+<style scoped>
 .el-button {
     width: 70px;
 }
@@ -641,5 +643,11 @@ async function qcDestinationSelect() {
 .el-radio-button__original-radio:checked+.el-radio-button__inner {
     background-color: #18222c;
     color: #409EFF;
+}
+
+.movement-trace {
+    float: right;
+    margin: 0 20px 30px 0;
+    width: 150px;
 }
 </style>

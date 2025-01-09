@@ -112,14 +112,14 @@ watch(versionSelected, debounce(async () => {
                 <el-radio-button label="qc">Validation</el-radio-button>
             </el-radio-group>
             <div style="float: right; padding-top: 5px;">
-                <el-select style="margin-right: 10px" v-model="versionSelected[role as keyof VersionSelected]"
+                <el-select class="version-select" v-model="versionSelected[role as keyof VersionSelected]"
                     placeholder="Select" size="default" @change="templateVersionChange">
                     <el-option v-for="version in displayVersions" :value="versionOptionValue(version)">
                         <span style="float: left">{{ versionOptionValue(version) }}</span>
                     </el-option>
                 </el-select>
-                <el-button type="primary" plain style="margin-right: 10px" @click="updateTemplate">Update</el-button>
-                <el-button style="margin-left: 0" @click="savePrivateTemplateShow">Save As</el-button>
+                <el-button class="update-button" type="primary" plain @click="updateTemplate">Update</el-button>
+                <el-button class="save-as-button" @click="savePrivateTemplateShow">Save As</el-button>
             </div>
         </el-header>
         <el-main style="padding: 0;">
@@ -152,3 +152,18 @@ watch(versionSelected, debounce(async () => {
     </el-dialog>
 
 </template>
+
+<style scoped>
+.version-select {
+    width: 200px;
+    margin-right: 10px;
+}
+
+.update-button {
+    margin-left: 0px;
+}
+
+.save-as-button {
+    margin-left: 10px;
+}
+</style>

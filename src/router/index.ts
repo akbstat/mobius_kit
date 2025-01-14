@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import Home from "../views/home/Home.vue";
 // import Inspector from "../views/inspector/Inspector.vue";
-import Inspector from "../views/inspector/Inspector.vue";
+import Inspector from "../views/inspector/InspectorView.vue";
 // import Combiner from "../views/Combiner.vue"
 import Divider from "../views/divider/Divider.vue";
 import Scaffold from "../views/scaffold/Scaffold.vue";

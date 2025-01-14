@@ -71,6 +71,7 @@ fn main() {
             reflector::list_db_config,
             reflector::get_db_config,
             reflector::remove_db_config,
+            inspector::v2::list_products,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

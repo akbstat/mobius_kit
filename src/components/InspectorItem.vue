@@ -9,7 +9,7 @@ interface Param {
 
 const props = defineProps<Param>()
 
-const fileTagType = (status: string): EpPropMergeType<StringConstructor, "" | "success" | "warning" | "info" | "danger", unknown> | undefined => {
+const fileTagType = (status: string): EpPropMergeType<StringConstructor, "primary" | "success" | "warning" | "info" | "danger", unknown> | undefined => {
     switch (status) {
         case "Missing":
             return "info";
@@ -18,7 +18,7 @@ const fileTagType = (status: string): EpPropMergeType<StringConstructor, "" | "s
         case "NotMatch":
             return "danger";
         default:
-            return "";
+            return "primary";
     }
 };
 
@@ -46,8 +46,8 @@ const fileTagType = (status: string): EpPropMergeType<StringConstructor, "" | "s
                                     placement="top-start" :width="300">
                                     <template #reference>
                                         <el-tag :type="fileTagType(scope.row.status)" :style="{ width: 70 + 'px' }">{{
-                scope.row.kind
-            }}</el-tag>
+                                            scope.row.kind
+                                            }}</el-tag>
                                     </template>
                                 </el-popover>
                             </template>
@@ -69,7 +69,7 @@ const fileTagType = (status: string): EpPropMergeType<StringConstructor, "" | "s
                                     placement="top-start" :width="300">
                                     <template #reference>
                                         <el-tag :type="fileTagType(scope.row.status)" :style="{ width: 70 + 'px' }">{{
-                scope.row.kind
+                                            scope.row.kind
                                             }}</el-tag>
                                     </template>
                                 </el-popover>

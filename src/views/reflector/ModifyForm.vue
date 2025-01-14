@@ -70,7 +70,7 @@ function close() {
     emit("close");
 }
 
-function itemTagType(id: number): string {
+function itemTagType(id: number) {
     if (id === event.value.runningId) {
         return "warning";
     }

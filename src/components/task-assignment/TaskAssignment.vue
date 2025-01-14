@@ -56,11 +56,11 @@ function removeDeveloper(developer: string) {
     assignedItems.value = [];
 }
 
-function developerTagType(developer: string): "" | "success" | "warning" | "info" | "danger" {
+function developerTagType(developer: string): "primary" | "success" | "warning" | "info" | "danger" {
     if (currentDeveloper.value === developer) {
         return "success";
     }
-    return "";
+    return "primary";
 }
 
 function switchDeveloper(developer: string) {
@@ -143,7 +143,7 @@ onMounted(() => {
                         <div>
                             <span style="width: 260px; display: inline-block;">{{ option.key.split("|")[0] }}</span>
                             <el-tag size="small" style="width: 40px;"
-                                :type="option.key.split('|')[1] === 'dev' ? '' : 'warning'">{{
+                                :type="option.key.split('|')[1] === 'dev' ? 'primary' : 'warning'">{{
                                     option.key.split("|")[1] }}</el-tag>
                         </div>
                     </template>

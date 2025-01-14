@@ -83,7 +83,7 @@ const tagType = (value: string) => {
         case "NotStart":
             return "warning";
     }
-    return "";
+    return "primary";
 };
 
 const extractFileName = (name: string): string => {
@@ -259,8 +259,8 @@ onMounted(() => {
                         :width="300">
                         <template #reference>
                             <el-tag :type="tagType(scope.row.groups[0].status)" :style="{ width: 100 + 'px' }">{{
-                scope.row.groups[0].status
-            }}</el-tag>
+                                scope.row.groups[0].status
+                                }}</el-tag>
                         </template>
                     </el-popover>
                 </template>
@@ -272,8 +272,8 @@ onMounted(() => {
                         :width="300">
                         <template #reference>
                             <el-tag :type="tagType(scope.row.groups[1].status)" :style="{ width: 100 + 'px' }">{{
-                scope.row.groups[1].status
-            }}</el-tag>
+                                scope.row.groups[1].status
+                                }}</el-tag>
                         </template>
                     </el-popover>
                 </template>
@@ -303,7 +303,7 @@ onMounted(() => {
             </el-form-item>
             <el-form-item label="Configuration">
                 <el-select v-model="config" :style="{ width: '96%' }" default-first-option>
-                    <el-option v-for=" config  in  configFileList " :key="config" :label="extractFileName(config)"
+                    <el-option v-for=" config in configFileList " :key="config" :label="extractFileName(config)"
                         :value="config" />
                 </el-select>
             </el-form-item>

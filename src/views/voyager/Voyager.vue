@@ -140,8 +140,8 @@ function selectDomain(index: string) {
     domainSelected.value = index;
 }
 
-function variableTagType(annotation: Annotation): "" | "success" | "warning" | "info" | "danger" {
-    return annotation.supp ? "warning" : "";
+function variableTagType(annotation: Annotation): "primary" | "success" | "warning" | "info" | "danger" {
+    return annotation.supp ? "warning" : "primary";
 }
 
 async function copyPages(pages: number[]) {

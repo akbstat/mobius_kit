@@ -303,7 +303,7 @@ onMounted(async () => {
                             </template>
                         </el-button>
                     </el-tooltip>
-                    <el-tag :type="index === activeTaskIndex ? '' : 'info'" class="task-tag"
+                    <el-tag :type="index === activeTaskIndex ? 'primary' : 'info'" class="task-tag"
                         v-for="(task, index) in fusionConfig.tasks" :key="index"
                         @click="() => { activeTaskIndex = index }">
                         <template #default>

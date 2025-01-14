@@ -51,7 +51,7 @@ function timelineHeight(row: Item): string {
     return (max * 50) + "px";
 };
 
-function fileTagType(status: string): EpPropMergeType<StringConstructor, "" | "success" | "warning" | "info" | "danger", unknown> | undefined {
+function fileTagType(status: string): EpPropMergeType<StringConstructor, "primary" | "success" | "warning" | "info" | "danger", unknown> | undefined {
     switch (status) {
         case "Missing":
             return "info";
@@ -60,7 +60,7 @@ function fileTagType(status: string): EpPropMergeType<StringConstructor, "" | "s
         case "NotMatch":
             return "danger";
         default:
-            return "";
+            return "primary";
     }
 };
 </script>
@@ -87,7 +87,7 @@ function fileTagType(status: string): EpPropMergeType<StringConstructor, "" | "s
                         <div style="padding: 5px; border-radius: 5px">
                             <div>
                                 <el-tag :type="fileTagType(file.status)" :style="{ width: 70 + 'px' }">{{
-                    file.kind }}</el-tag>
+                                    file.kind }}</el-tag>
                             </div>
                             <div>
                                 <el-text truncated class="w-500px">{{ file.name }}</el-text>

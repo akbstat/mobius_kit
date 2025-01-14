@@ -45,7 +45,7 @@ const runnable = computed(() => {
     return !runnable;
 });
 
-function itemTagType(id: number): string {
+function itemTagType(id: number) {
     if (event.value.mode === EventMode.FORM) {
         return "primary";
     }

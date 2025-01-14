@@ -57,7 +57,7 @@ onMounted(() => {
         <el-table-column prop="tasks" label="Task">
             <template #default="scope">
                 <el-space wrap>
-                    <el-tag style="font-size: medium;" :type="task.split('|')[1] === 'dev' ? '' : 'warning'"
+                    <el-tag style="font-size: medium;" :type="task.split('|')[1] === 'dev' ? 'primary' : 'warning'"
                         v-for="task in scope.row.tasks">{{
                             task.split("|")[0] }}</el-tag>
                 </el-space>

@@ -185,7 +185,7 @@ onMounted(() => {
     <el-dialog v-model="runningRecordDisplay" title="Move to Running Records" draggable>
         Following forms will be move to <el-text type="primary">Running Records</el-text>, continue?
         <el-scrollbar height="300px">
-            <el-tag class="item" v-for="d in form" type="">{{ d.name }}</el-tag>
+            <el-tag class="item" v-for="d in form" type="primary">{{ d.name }}</el-tag>
         </el-scrollbar>
         <div class="close">
             <el-button @click="moveToRunningRecords" type="primary" plain>

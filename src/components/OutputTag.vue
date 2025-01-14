@@ -24,10 +24,10 @@ const outputType = computed<OutputType>(() => {
     return OutputType.Unknown;
 });
 
-function tagType(): EpPropMergeType<StringConstructor, "" | "success" | "warning" | "info" | "danger", unknown> | undefined {
+function tagType(): EpPropMergeType<StringConstructor, "primary" | "success" | "warning" | "info" | "danger", unknown> | undefined {
     switch (outputType.value) {
         case OutputType.Table:
-            return "";
+            return "primary";
         case OutputType.Listing:
             return "success";
         case OutputType.Figure:
@@ -42,4 +42,3 @@ function tagType(): EpPropMergeType<StringConstructor, "" | "success" | "warning
 <template>
     <el-tag :type="tagType()" style="width: 70px;">{{ outputType }}</el-tag>
 </template>
-

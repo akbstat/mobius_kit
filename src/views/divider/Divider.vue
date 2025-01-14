@@ -27,7 +27,6 @@ function handleSelectionChange(val: Rtf[]) {
 function clearSelections(rows?: Rtf[]) {
     if (rows) {
         rows.forEach((row) => {
-            // @ts-expect-error
             multipleTableRef.value!.toggleRowSelection(row, undefined)
         })
     } else {

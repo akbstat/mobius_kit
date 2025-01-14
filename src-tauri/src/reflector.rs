@@ -11,7 +11,7 @@ use reflector::{
 };
 use serde::Deserialize;
 use std::{
-    env,
+    env, fs,
     path::{Path, PathBuf},
 };
 
@@ -71,11 +71,10 @@ pub fn read_db(param: DBStructParam) -> Result<DBStruct, String> {
 #[tauri::command]
 pub fn render_acrf(param: RenderAcrfParam) -> Result<(), String> {
     let acrf_outline_bin = std::env::var("MK_ACRF_OUTLINTE_BIN").map_err(|e| e.to_string())?;
-    let workspace = param
-        .destination
-        .parent()
-        .ok_or("Error: Invalid workspace".to_string())?
-        .to_path_buf();
+    let workspace = Path::new(&env::var(REFLECTOR).map_err(|e| e.to_string())?).join("workspace");
+    if !workspace.exists() {
+        fs::create_dir(&workspace).map_err(|e| e.to_string())?;
+    }
     let bookmark_bin = Path::new(acrf_outline_bin.as_str());
     ACrfBuilder::new(param.event)
         .build(BuildParam {

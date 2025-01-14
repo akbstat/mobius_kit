@@ -323,7 +323,7 @@ export class Event {
             let visits = binding.get(f.id);
             if (visits) {
                 headers.forEach(h => {
-                    row[h.field] = visits.has(h.id) ? true : false;
+                    row[h.field] = visits?.has(h.id) ? true : false;
                 });
             }
             return row;

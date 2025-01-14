@@ -64,10 +64,10 @@ const defaultProps = {
     isFile: false,
 }
 
-function fileTag(node: TreeNode): EpPropMergeType<StringConstructor, "" | "success" | "warning" | "info" | "danger", unknown> | undefined {
+function fileTag(node: TreeNode): EpPropMergeType<StringConstructor, "primary" | "success" | "warning" | "info" | "danger", unknown> | undefined {
     switch (node.encoding) {
         case "UTF8BOM":
-            return "";
+            return "primary";
         case "UTF8":
             return "warning";
         default:

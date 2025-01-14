@@ -30,7 +30,7 @@ const visitOptions: Ref<{ id: number, label: string }[]> = ref([]);
 const visitSelected: Ref<number[]> = ref([]);
 const formSeleted: Ref<number[]> = ref([]);
 
-function itemTagType(id: number): string {
+function itemTagType(id: number) {
     if (id === event.value.runningId) {
         return "warning";
     }
@@ -67,7 +67,7 @@ onMounted(() => {
         <el-table-column fixed label="Form / Visit" width="200">
             <template #default="scope">
                 <el-tooltip effect="dark" placement="right" :content="scope.row.label">
-                    <el-tag class="form" type="">
+                    <el-tag class="form" type="primary">
                         {{ scope.row.label }}
                     </el-tag>
                 </el-tooltip>

@@ -1,95 +1,32 @@
 import { invoke } from "@tauri-apps/api";
 
+/**
+ * to get the configuration file according project code and project kind
+ */
+export async function configIllation(param: {
+    product: string,
+    trial: string,
+    purpose: string,
+    kind: ProjectKind,
+}): Promise<string> {
+    const filepath: string = await invoke("config_illation", { param });
+    return filepath;
+}
+
+
+export async function configRootDir(param: {
+    product: string,
+    trial: string,
+    purpose: string,
+    kind: ProjectKind,
+}): Promise<string> {
+    const dir: string = await invoke("config_root", { param });
+    return dir;
+}
+
 export async function listAllProjects(): Promise<Product[]> {
-    const products = await invoke("list_products", {});
-    console.log(products);
+    const products: Product[] = await invoke("list_products", {});
     return products;
-    // return [
-    //     {
-    //         id: "ak101", name: "ak101", trials: [
-    //             {
-    //                 id: "ak101-101",
-    //                 name: "101",
-    //                 purposes: [
-    //                     { id: "ak101-101-csr", name: "csr" },
-    //                     { id: "ak101-101-dryrun", name: "dryrun" },
-    //                     { id: "ak101-101-finalrun", name: "finalrun" },
-    //                 ],
-    //             }, {
-    //                 id: "ak101-102",
-    //                 name: "102",
-    //                 purposes: [
-    //                     { id: "ak101-102-csr", name: "csr" },
-    //                     { id: "ak101-102-dryrun", name: "dryrun" },
-    //                     { id: "ak101-102-finalrun", name: "finalrun" },
-    //                 ],
-    //             }
-    //         ]
-    //     },
-    //     {
-    //         id: "ak102", name: "ak102", trials: [
-    //             {
-    //                 id: "ak102-101",
-    //                 name: "101",
-    //                 purposes: [
-    //                     { id: "ak102-101-csr", name: "csr" },
-    //                     { id: "ak102-101-cdryrun", name: "dryrun" },
-    //                     { id: "ak102-101-cfinalrun", name: "finalrun" },
-    //                 ],
-    //             }, {
-    //                 id: "ak102-102",
-    //                 name: "102",
-    //                 purposes: [
-    //                     { id: "ak102-102-ccsr", name: "csr" },
-    //                     { id: "ak102-102-dryrun", name: "dryrun" },
-    //                     { id: "ak102-102-finalrun", name: "finalrun" },
-    //                 ],
-    //             }
-    //         ]
-    //     },
-    //     {
-    //         id: "ak103", name: "ak103", trials: [
-    //             {
-    //                 id: "ak103-101",
-    //                 name: "101",
-    //                 purposes: [
-    //                     { id: "ak103-101-csr", name: "csr" },
-    //                     { id: "ak103-101-dryrun", name: "dryrun" },
-    //                     { id: "ak103-101-finalrun", name: "finalrun" },
-    //                 ],
-    //             }, {
-    //                 id: "ak103-102",
-    //                 name: "102",
-    //                 purposes: [
-    //                     { id: "ak103-102-csr", name: "csr" },
-    //                     { id: "ak103-102-dryrun", name: "dryrun" },
-    //                     { id: "ak103-102-finalrun", name: "finalrun" },
-    //                 ],
-    //             }
-    //         ]
-    //     },
-    //     {
-    //         id: "ak104", name: "ak104", trials: [
-    //             {
-    //                 id: "ak104-101",
-    //                 name: "101",
-    //                 purposes: [
-    //                     { id: "ak104-101-csr", name: "csr" },
-    //                     { id: "ak104-101-dryrun", name: "dryrun" },
-    //                     { id: "ak104-101-finalrun", name: "finalrun" },
-    //                 ],
-    //             }, {
-    //                 id: "ak104-102",
-    //                 name: "102",
-    //                 purposes: [
-    //                     { id: "ak104-102-csr", name: "csr" },
-    //                     { id: "ak104-102-dryrun", name: "dryrun" },
-    //                     { id: "ak104-102-finalrun", name: "finalrun" },
-    //                 ],
-    //             }
-    //         ]
-    //     },
-    // ];
 }
 
 
@@ -110,148 +47,191 @@ export async function projectKind(): Promise<ProjectKind[]> {
     ]
 }
 
-export async function projectStatus(): Promise<Item[]> {
-    return [
-        {
-            name: "AE",
-            group: [
-                {
-                    group: Group.Production,
-                    log: {
-                        kind: StatusKind.Pass,
-                        message: ""
-                    },
-                    missing: false,
-                },
-                {
-                    group: Group.Validation,
-                    log: {
-                        kind: StatusKind.Failed,
-                        message: "Error"
-                    },
-                    missing: false,
-                }
-            ],
-            qcResult: {
-                kind: StatusKind.Pass,
-                message: ""
-            },
-            sequence: {
-                kind: StatusKind.Failed,
-                message: "File missing"
-            }
-        },
-        {
-            name: "LB",
-            group: [
-                {
-                    group: Group.Production,
-                    log: {
-                        kind: StatusKind.Failed,
-                        message: "Warning"
-                    },
-                    missing: false,
-                },
-                {
-                    group: Group.Validation,
-                    log: {
-                        kind: StatusKind.Pass,
-                        message: ""
-                    },
-                    missing: false,
-                }
-            ],
-            qcResult: {
-                kind: StatusKind.Failed,
-                message: "Attribute Difference"
-            },
-            sequence: {
-                kind: StatusKind.Pass,
-                message: ""
-            }
-        },
-        {
-            name: "EX",
-            group: [
-                {
-                    group: Group.Production,
-                    log: {
-                        kind: StatusKind.Missing,
-                        message: ""
-                    },
-                    missing: true,
-                },
-                {
-                    group: Group.Validation,
-                    log: {
-                        kind: StatusKind.Missing,
-                        message: ""
-                    },
-                    missing: true,
-                }
-            ],
-            qcResult: {
-                kind: StatusKind.Missing,
-                message: ""
-            },
-            sequence: {
-                kind: StatusKind.Failed,
-                message: "File missing"
-            }
-        },
-    ];
+export async function projectStatus(param: {
+    product: string,
+    trial: string,
+    purpose: string,
+    kind: ProjectKind,
+    config: string,
+    qcIgnore: string[],
+}): Promise<Item[]> {
+    const result: InspectionResult[] = await invoke("inspect_summary", { param });
+    return result.map((r: InspectionResult) => {
+        const { item, productionResult, validationResult, qc, qcSupp } = r;
+        const qcResult: Status[] = [status(qc)];
+        if (qcSupp) {
+            qcResult.push(status(qcSupp));
+        }
+        return {
+            name: item,
+            group: [{
+                startCoding: r.productionResult.startCoding,
+                group: Group.Production,
+                log: status(productionResult.log),
+                sequence: status(productionResult.sequence),
+            }, {
+                startCoding: r.validationResult.startCoding,
+                group: Group.Validation,
+                log: status(validationResult.log),
+                sequence: status(validationResult.sequence),
+            }],
+            qcResult,
+        };
+    });
 }
 
-export async function sequenceStatus(_item: string): Promise<SequenceStatus> {
+export async function sequenceStatus(param: SequenceDetailRequest): Promise<SequenceStatus> {
+    const sequenceResult: AuditSequenceResult[] = await invoke("sequence_detail", { param });
+    console.log(sequenceResult);
     return {
-        timeline: [
-            { item: "ae", timestamp: "2024-01-09T14:26:49.000", kind: "SasCode", group: Group.Production, pass: true, },
-            { item: "ae", timestamp: "2024-01-09T14:26:49.001", kind: "SasData", group: Group.Validation, pass: false, },
-            { item: "ae", timestamp: "2024-01-09T14:26:49.002", kind: "Xpt", group: Group.Production, pass: true, },
-        ],
-        detail: [
-            {
-                item: "ae", kind: "SasCode", group: [
-                    { group: Group.Production, status: { kind: StatusKind.Missing, message: "" } },
-                    { group: Group.Validation, status: { kind: StatusKind.Failed, message: "" } },
-                ]
-            },
-            {
-                item: "ae", kind: "SasData", group: [
-                    { group: Group.Production, status: { kind: StatusKind.Missing, message: "" } },
-                    { group: Group.Validation, status: { kind: StatusKind.Failed, message: "" } },
-                ]
-            },
-            {
-                item: "ae", kind: "Log", group: [
-                    { group: Group.Production, status: { kind: StatusKind.Pass, message: "" } },
-                    { group: Group.Validation, status: { kind: StatusKind.Failed, message: "" } },
-                ]
-            }
-        ],
+        timeline: buildTimeline(sequenceResult),
+        detail: buildSequenceDetail(sequenceResult),
     };
 }
 
-export async function logDetail(item: string): Promise<LogDetail> {
+function buildSequenceDetail(sequenceResult: AuditSequenceResult[]): SequenceDetail[] {
+    const production = sequenceResult[0].sequences;
+    const validation = sequenceResult[1].sequences;
+    const convert = (s: SequenceResult[]): SequenceGroup[] => {
+        return s.map(s => {
+            return {
+                item: s.name,
+                group: s.group,
+                status: status(s.status),
+            }
+        });
+    };
+    const code: SequenceDetail = {
+        kind: "Code",
+        group: convert(production.filter(s => s.kind === "Code").concat(validation.filter(s => s.kind === "Code")))
+    };
+    const mainData: SequenceDetail = {
+        kind: "Data",
+        group: convert(production.filter(s => s.kind === "Data" && !s.name.includes("supp")).concat(validation.filter(s => s.kind === "Data" && !s.name.includes("supp")))),
+    };
+    const suppData: SequenceDetail = {
+        kind: "Data",
+        group: convert(production.filter(s => s.kind === "Data" && s.name.includes("supp")).concat(validation.filter(s => s.kind === "Data" && s.name.includes("supp")))),
+    };
+    const mainXpt: SequenceDetail = {
+        kind: "Xpt",
+        group: convert(production.filter(s => s.kind === "Xpt" && !s.name.includes("supp"))),
+    };
+    const suppXpt: SequenceDetail = {
+        kind: "Xpt",
+        group: convert(production.filter(s => s.kind === "Xpt" && s.name.includes("supp"))),
+    };
+
+    const log: SequenceDetail = {
+        kind: "Log",
+        group: convert(production.filter(s => s.kind === "Log").concat(validation.filter(s => s.kind === "Log"))),
+    };
+    const mainQc: SequenceDetail = {
+        kind: "Qc",
+        group: convert(validation.filter(s => s.kind === "Qc" && !s.name.includes("supp"))),
+    };
+    const suppQc: SequenceDetail = {
+        kind: "Qc",
+        group: convert(validation.filter(s => s.kind === "Qc" && s.name.includes("supp"))),
+    };
+    const output: SequenceDetail = {
+        kind: "Output",
+        group: convert(production.filter(s => s.kind === "Output")),
+    };
+    return [code, mainData, suppData, mainXpt, suppXpt, output, mainQc, suppQc, log].filter(d => d.group.length > 0);
+}
+
+function buildTimeline(auditResult: AuditSequenceResult[]): Timeline[] {
+    const sequences = [];
+    for (const result of auditResult) {
+        sequences.push(...result.sequences);
+    }
+    return sequences.filter(s => s.status !== "Missing").map(s => {
+        return {
+            timestamp: s.modifiedAt ? s.modifiedAt.slice(0, 22) : s.modifiedAt,
+            item: s.name,
+            kind: s.kind,
+            group: s.group,
+            pass: s.status === "Pass",
+        }
+    }).sort((x, y) => x.timestamp.localeCompare(y.timestamp));
+}
+
+export async function logDetail(param: LogDetailRequest): Promise<LogDetail> {
+    const result: LogDetailResult = await invoke("log_detail", { param });
     return {
-        item,
-        status: { kind: StatusKind.Failed, message: "" },
-        group: Group.Production,
-        failures: [
-            { row: 11, content: "Error" },
-            { row: 22, content: "Warning" },
-            { row: 33, content: "Uninitalize" },
-        ],
+        status: status(result.status),
+        details: result.details,
     }
 }
 
-export async function graphData(): Promise<GraphData> {
+export async function qcDetailMain(param: QcDetailRequest): Promise<QcDetail> {
+    const result = await qcDetail(param);
+    return result[0];
+}
+
+export async function qcDetailSupp(param: QcDetailRequest): Promise<QcDetail> {
+    const result = await qcDetail(param);
+    return result[1];
+}
+
+export async function openQcFile(param: OpenQcDetailParam) {
+    await invoke("open_qc_file", { param })
+}
+
+async function qcDetail(param: QcDetailRequest): Promise<QcDetail[]> {
+    const result: QcDetailResult[] = await invoke("qc_detail", { param });
+    return result.map(row => {
+        return {
+            itemType: row.itemType,
+            status: status(row.status),
+        }
+    });
+}
+
+export async function graphData(param: {
+    product: string,
+    trial: string,
+    purpose: string,
+    kind: ProjectKind,
+    config: string,
+    qcIgnore: string[]
+}): Promise<GraphData> {
+    const items = await projectStatus(param);
+    let logPass = 0;
+    let qcPass = 0;
+    let logTotal = 0;
+    let qcTotal = 0;
+    let notStart = 0;
+    let building = 0;
+    let complete = 0;
+    for (const item of items) {
+        let isComplete = true;
+        item.group.forEach(group => {
+            logTotal++;
+            group.startCoding ? null : notStart++;
+            if (group.log.kind === StatusKind.Pass) {
+                logPass++;
+            } else {
+                isComplete = false;
+            }
+        });
+        item.qcResult.forEach(qc => {
+            qcTotal++;
+            if (qc.kind === StatusKind.Pass) {
+                qcPass++;
+            } else {
+                isComplete = false;
+            }
+        });
+        isComplete ? complete++ : building++;
+    }
     return {
-        logPassPercentage: 70,
-        qcPassPercentage: 20,
-        complete: 9,
-        building: 21,
-        notStart: 2,
+        logPassPercentage: Math.round((logPass / logTotal * 10000)) / 100,
+        qcPassPercentage: Math.round((qcPass / qcTotal * 10000)) / 100,
+        complete,
+        building,
+        notStart,
     }
 }
 
@@ -263,16 +243,30 @@ export interface GraphData {
     notStart: number,
 }
 
-export interface LogDetail {
-    item: string,
+export interface QcDetail {
+    itemType: string,
     status: Status,
-    group: Group,
-    failures: LogFailure[]
 }
 
-export interface LogFailure {
+export interface LogDetail {
+    status: Status,
+    details: LogRow[],
+}
+
+export interface LogRow {
     row: number,
     content: string,
+    pass: boolean,
+}
+
+export interface LogDetailResult {
+    status: ItemStatus,
+    details: LogRow[]
+}
+
+export interface QcDetailResult {
+    itemType: string,
+    status: ItemStatus,
 }
 
 export interface SequenceStatus {
@@ -290,12 +284,12 @@ export interface Timeline {
 }
 
 export interface SequenceDetail {
-    item: string,
     kind: string,
     group: SequenceGroup[],
 }
 
 export interface SequenceGroup {
+    item: string,
     group: Group,
     status: Status,
 }
@@ -349,12 +343,88 @@ export enum Group {
 export interface Item {
     name: string,
     group: ItemGroup[],
-    qcResult: Status,
-    sequence: Status,
+    qcResult: Status[],
 }
 
 export interface ItemGroup {
     group: Group,
+    startCoding: boolean,
     log: Status,
-    missing: boolean,
+    sequence: Status,
 }
+
+interface InspectionResult {
+    item: string,
+    qc: ItemStatus,
+    qcSupp: ItemStatus | null,
+    productionResult: IndividualResult,
+    validationResult: IndividualResult,
+}
+
+interface IndividualResult {
+    startCoding: boolean,
+    log: ItemStatus;
+    sequence: ItemStatus;
+}
+
+type ItemStatus = "Pass" | { Failed: string } | "Missing";
+
+export interface LogDetailRequest {
+    product: string,
+    trial: string,
+    purpose: string,
+    kind: ProjectKind,
+    item: string,
+    group: Group,
+}
+
+export interface QcDetailRequest {
+    product: string,
+    trial: string,
+    purpose: string,
+    kind: ProjectKind,
+    item: string,
+    ignore: string[],
+}
+
+export interface OpenQcDetailParam {
+    product: string,
+    trial: string,
+    purpose: string,
+    item: string,
+    kind: ProjectKind,
+    supp: boolean,
+}
+
+export interface AuditSequenceResult {
+    status: ItemStatus,
+    sequences: SequenceResult[],
+}
+
+export interface SequenceDetailRequest {
+    product: string,
+    trial: string,
+    purpose: string,
+    kind: ProjectKind,
+    item: string,
+    supp: boolean,
+}
+
+export interface SequenceResult {
+    name: string,
+    kind: string,
+    status: ItemStatus,
+    group: Group,
+    modifiedAt: string,
+}
+
+function status(source: ItemStatus): Status {
+    if (source === "Pass") {
+        return { kind: StatusKind.Pass, message: "" };
+    } else if (source === "Missing") {
+        return { kind: StatusKind.Missing, message: "" };
+    } else {
+        return { kind: StatusKind.Failed, message: source.Failed };
+    }
+}
+

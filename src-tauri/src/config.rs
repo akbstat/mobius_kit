@@ -23,6 +23,7 @@ const FUSION: &str = "MK_FUSION";
 const COMBINE_BIN: &str = "MK_COMBINE_BIN";
 const ACRF_OUTLINTE_BIN: &str = "MK_ACRF_OUTLINTE_BIN";
 pub const REFLECTOR: &str = "MK_REFLECTOR";
+const VALIDATOR: &str = "MK_VALIDATOR";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -34,7 +35,11 @@ pub struct Config {
     pub skeleton_stat: String,
     pub project_root: String,
     pub combine_bin: String,
+<<<<<<< HEAD
     pub acrf_outline_bin: String,
+=======
+    pub validator: String,
+>>>>>>> e64fb89 (feat: add state manager for inspector v2)
 }
 
 pub fn config_env_init() -> Result<(), Box<dyn Error>> {
@@ -58,7 +63,11 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     env::set_var(SKELETON_DOCUMENT, config.skeleton_document);
     env::set_var(SKELETON_STAT, config.skeleton_stat);
     env::set_var(COMBINE_BIN, config.combine_bin);
+<<<<<<< HEAD
     env::set_var(ACRF_OUTLINTE_BIN, config.acrf_outline_bin);
+=======
+    env::set_var(VALIDATOR, config.validator);
+>>>>>>> e64fb89 (feat: add state manager for inspector v2)
 
     let user_temp_path = build_temp_script_path(&config.user_temp, &user_id);
     if !user_temp_path.exists() {

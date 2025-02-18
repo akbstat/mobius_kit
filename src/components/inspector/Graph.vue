@@ -1,9 +1,22 @@
 <script lang="ts" setup>
 import * as echarts from "echarts";
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { gaugeColor } from "./display";
-import { GraphData, graphData } from "../../api/inspector/inspector";
+import { GraphData, graphData, ProjectKind } from "../../api/inspector/inspector";
 
+const props = defineProps<{
+    param: {
+        product: string,
+        trial: string,
+        purpose: string,
+        kind: ProjectKind,
+        config: string,
+        qcIgnore: string[],
+    }
+}>();
+
+const { product, trial, purpose, kind, config, qcIgnore } = props.param;
+const loading = ref(false);
 
 function initSummary(data: GraphData) {
     const { complete, building, notStart } = data;
@@ -41,7 +54,7 @@ function initSummary(data: GraphData) {
                 label: {
                     show: true,
                     position: 'right',
-                    formatter: (params: any) => `${params.value} (${params.value / total * 100}%)`
+                    formatter: (params: any) => `${params.value} (${Math.round(params.value / total * 10000) / 100}%)`
                 },
                 data: [{
                     value: notStart,
@@ -139,7 +152,6 @@ function initGauge(id: string, value: number, name: string) {
             }
         ]
     };
-    // 渲染图表
     Chart.setOption(options);
 }
 
@@ -152,15 +164,17 @@ function initQc(value: number) {
 }
 
 onMounted(async () => {
-    const data = await graphData();
+    loading.value = true;
+    const data = await graphData({ product, trial, purpose, kind, config, qcIgnore });
     initSummary(data);
     initLog(data.logPassPercentage);
     initQc(data.qcPassPercentage);
+    loading.value = false;
 });
 </script>
 
 <template>
-    <div class="graph">
+    <div v-loading="loading" class="graph">
         <div id="summary" />
         <div>
             <div id="log" />

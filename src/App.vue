@@ -16,6 +16,28 @@ const isDark = useDark();
 const toggleDark = useToggle(isDark);
 const backgroundColor = ref("");
 
+function headerBackgroundColor() {
+  return isDark.value ? "rgb(24.4, 33.8, 43.5)" : "rgb(216.8, 235.6, 255)";
+}
+
+function headerContainerStyle() {
+  return {
+    height: "100%",
+    color: "#409EFF",
+    backgroundColor: headerBackgroundColor(),
+  }
+}
+
+function LogoStyle() {
+  return {
+    fontSize: "20px",
+    textAlign: "center",
+    height: "100%",
+    paddingTop: "15px",
+    color: "#409EFF",
+    backgroundColor: headerBackgroundColor(),
+  }
+}
 
 onMounted(async () => { user.value = await currentUser(); isDark.value = true })
 </script>
@@ -24,9 +46,8 @@ onMounted(async () => { user.value = await currentUser(); isDark.value = true })
   <div :style="{ backgroundColor }">
     <el-container class="layout-container">
       <el-header style="text-align: right; padding: 0px 0px 0px 0px">
-        <el-container style="height: 100%; color: #409EFF; background-color: #18222c;">
-          <el-aside width="15%"
-            style="font-size: 20px; text-align: center; height: 100%; padding-top: 15px; color: #409EFF; background-color: #18222c;">AkesoBio
+        <el-container :style="headerContainerStyle()">
+          <el-aside width="15%" :style="LogoStyle()">AkesoBio
             - Möbius</el-aside>
           <el-main style="padding: 15px;">
             <div class="toolbar">

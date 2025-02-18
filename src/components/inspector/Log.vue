@@ -1,35 +1,60 @@
 <script lang="ts" setup>
-import { onMounted, ref, Ref } from 'vue';
-import { LogDetail, logDetail } from '../../api/inspector/inspector';
+import { computed, onMounted, ref, Ref } from 'vue';
+import { LogDetail, logDetail, LogDetailRequest, LogRow, Status } from '../../api/inspector/inspector';
+import { statusColor } from './display';
 
+
+const props = defineProps<{ param: LogDetailRequest }>();
+const { product, trial, purpose, kind, item, group } = props.param;
 const log: Ref<LogDetail | null> = ref(null);
+const failedOnly = ref(false);
+const logRow = computed(() => {
+    if (!log.value) {
+        return [];
+    }
+    if (failedOnly.value) {
+        return log.value.details.filter(r => !r.pass);
+    }
+    return log.value.details;
+});
+
+function rowStyle({ row }: { row: LogRow }) {
+    if (!row.pass) {
+        return {
+            backgroundColor: "var(--el-color-danger-light-9)",
+            color: "var(--el-color-danger)",
+        };
+    }
+    return {};
+}
 
 onMounted(async () => {
-    log.value = await logDetail("AE");
+    log.value = await logDetail({ product, trial, purpose, kind, item, group });
 });
 </script>
 
 <template>
-    <el-container>
+    <el-container v-if="log">
         <el-header class="header">
-            <div class="title"> {{ `Log Details of ${log?.item}` }}</div>
+            <div class="title"> {{ `Log Details of ${item}` }}</div>
             <div>
-                <el-tag type="primary" style="margin-right: 5px">{{ log?.group }}</el-tag>
-                <el-tag class="status" type="danger">{{ log?.status.kind }}</el-tag>
+                <el-tag type="primary" style="margin-right: 5px">{{ group }}</el-tag>
+                <el-tag class="status" :type="statusColor(log?.status as Status)">{{ log?.status.kind }}</el-tag>
             </div>
         </el-header>
         <el-main class="main-area">
-            <el-table :data="log?.failures">
-                <el-table-column label="Row" width="75" prop="row" />
+            <el-table :row-style="rowStyle" :data="logRow" max-height="610" height="610">
+                <el-table-column label="Row" width="75">
+                    <template #default="scope">
+                        {{ scope.row.row + 1 }}
+                    </template>
+                </el-table-column>
                 <el-table-column prop="content">
                     <template #header>
                         <div>
-                            <span>Failed Detail</span>
-                            <el-button class="read-log" type="primary" link plain>
-                                <el-icon>
-                                    <Reading />
-                                </el-icon>
-                            </el-button>
+                            <span>Content</span>
+                            <el-switch style="--el-switch-on-color: #ff4949" size="small" class="read-log"
+                                v-model="failedOnly" />
                         </div>
                     </template>
                 </el-table-column>
@@ -53,7 +78,7 @@ onMounted(async () => {
 }
 
 .status {
-    width: 82%;
+    width: 90.5%;
 }
 
 .read-log {

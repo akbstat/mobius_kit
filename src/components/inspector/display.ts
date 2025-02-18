@@ -1,7 +1,7 @@
 import { Group, ItemGroup, Status, StatusKind } from "../../api/inspector/inspector";
 
 export function groupColor(group: ItemGroup) {
-    if (group.missing) {
+    if (!group.startCoding) {
         return "info";
     }
     if (group.group === Group.Production) {
@@ -19,9 +19,12 @@ export function statusColor(status: Status) {
     return "success";
 }
 
-export function statusContent(status: Status) {
-    if (status.kind === StatusKind.Failed) {
-        return `${status.kind}: ${status.message}`;
+export function statusContent(status: Status, displayDetail: boolean) {
+    if (!displayDetail) {
+        status.message = "";
+    }
+    if (status.kind === StatusKind.Failed && status.message.length > 0) {
+        return `${status.message}`;
     }
     return status.kind;
 }
@@ -55,4 +58,8 @@ export function gaugeColor(value: number): string {
     }
 
     return `rgb(${r}, ${g}, ${b})`;
+}
+
+export function qcStatusTagStyle(qcResult: Status[]) {
+    return qcResult.length > 1 ? "qc-status-tag" : "status-tag";
 }

@@ -79,7 +79,8 @@ onMounted(async () => {
                     <DArrowLeft />
                 </el-icon>
             </el-button>
-            <el-button @click="switchMenuMode" type="primary" link plain class="menu-switch">{{ menuMode }}</el-button>
+            <el-button disabled @click="switchMenuMode" type="primary" link plain class="menu-switch">{{ menuMode
+                }}</el-button>
         </el-tag>
         <el-scrollbar class="scroll" height="589px" max-height="589px">
             <el-menu @select="onSelect" v-if="isHistoryMode">

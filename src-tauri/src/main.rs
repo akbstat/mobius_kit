@@ -72,6 +72,13 @@ fn main() {
             reflector::get_db_config,
             reflector::remove_db_config,
             inspector::v2::list_products,
+            inspector::v2::inspect_summary,
+            inspector::v2::log_detail,
+            inspector::v2::qc_detail,
+            inspector::v2::open_qc_file,
+            inspector::v2::sequence_detail,
+            inspector::v2::config_root,
+            inspector::v2::config_illation,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,11 +1,15 @@
 <script lang="ts" setup>
-import { Ref, ref } from 'vue';
+import { ref } from 'vue';
 import ProjectSelector from '../../components/inspector/ProjectSelector.vue';
 import ProjectStatus from '../../components/inspector/ProjectStatus.vue';
 import { Project } from '../../api/inspector/inspector';
+import { useInspector } from '../../store/inspectorV2';
+import { storeToRefs } from 'pinia';
 
 const asideWidth = ref("15%");
-const project: Ref<Project> = ref({ product: "ak101", trial: "101", purpose: "csr" });
+const store = useInspector();
+const { project } = storeToRefs(store);
+// const project: Ref<Project> = ref({ product: "", trial: "", purpose: "" });
 
 function toggleMenu(width: string) {
     asideWidth.value = width;
@@ -23,7 +27,7 @@ function switchProject(p: Project) {
             <ProjectSelector @toggle="toggleMenu" @switch="switchProject" />
         </el-aside>
         <el-main class="main">
-            <ProjectStatus :project="project" />
+            <ProjectStatus />
         </el-main>
     </el-container>
 </template>

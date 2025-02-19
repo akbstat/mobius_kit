@@ -3,11 +3,8 @@ use lazy_static::lazy_static;
 use reflector::{
     acrf::builder::{ACrfBuilder, BuildParam},
     config::{config::ConfigList, controller::ConfigController},
-    ecrf::ECRF,
-    edc::{
-        db::{DBStruct, DBStructReader, Form},
-        ecollect::{db::EcollectDBStructReader, ecrf::ECollectECRF},
-    },
+    ecrf::ecrf_reader,
+    edc::db::{db_reader, DBKind, DBStruct, Form},
 };
 use serde::Deserialize;
 use std::{
@@ -23,6 +20,7 @@ lazy_static! {
 pub struct DBStructParam {
     ecrf: PathBuf,
     db: PathBuf,
+    edc: DBKind,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,8 +39,9 @@ pub fn read_db(param: DBStructParam) -> Result<DBStruct, String> {
             binding: vec![],
         });
     }
-    let ecrf = ECollectECRF::new(&param.ecrf).map_err(|e| e.to_string())?;
-    let reader = EcollectDBStructReader::new();
+    // let ecrf = ECollectECRF::new(&param.ecrf).map_err(|e| e.to_string())?;
+    let ecrf = ecrf_reader(&param.edc, param.ecrf).map_err(|e| e.to_string())?;
+    let reader = db_reader(&param.edc);
     if !param.db.exists() {
         Ok(DBStruct {
             visit: vec![],

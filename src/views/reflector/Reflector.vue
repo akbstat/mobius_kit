@@ -114,13 +114,13 @@ async function updateConfig(cfg: AcrfConfig) {
 
 async function updateEvent() {
     loading.value = true;
-    const { ecrf, db } = config.value;
+    const { ecrf, db, edc } = config.value;
     eventMode.value = EventMode.FORM;
     if (config.value.historyConfigId.length > 0) {
         const { form, visit, binding } = await listPreviousEvents(config.value.historyConfigId);
         event.value = new Event(form, visit, binding, eventMode.value);
     } else {
-        const { form, visit, binding } = await listEvents({ ecrf, db });
+        const { form, visit, binding } = await listEvents({ ecrf, db, edc });
         event.value = new Event(form, visit, binding, eventMode.value);
     }
     loading.value = false;

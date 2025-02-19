@@ -12,11 +12,12 @@ const emit = defineEmits<{ (e: "update", config: AcrfConfig): void, (e: "close")
 const edcConfigDisplay = ref(false);
 // const config: Ref<AcrfConfig> = ref({ source: "", destination: "", filename: "acrf", ecrf: "", db: "", historyConfigId: "", historyConfigName: "" });
 const historyConfig: Ref<{ id: string, name: string }[]> = ref([]);
-const advanceEnable = computed(() => config.value.historyConfigId.length !== 0);
+const advanceEnable = computed(() => config.value.historyConfigId ? true : false);
 const removeConfigDisplay = ref(false);
 const configSelectionRef = ref();
 const removeConfigId = ref("");
 const removeConfigName = computed(() => historyConfig.value.find(c => c.id === removeConfigId.value)?.name as string);
+const edcOptions = ["ECollect", "Rave"];
 
 async function selectFolder() {
     config.value.destination = await selectDirectory();
@@ -38,14 +39,13 @@ async function selectEcrf() {
 
 async function selectDB() {
     config.value.db = await selectFile({
-        extensions: ["xls", "xlsx", "xlsm"],
+        extensions: ["xls", "xlsx", "xlsm", "xml"],
         filter: "",
     });
 }
 
 function historicalConfigChange(value: string) {
-    console.log(value);
-    if (value.length !== 0) {
+    if (value) {
         config.value.db = "";
         config.value.ecrf = "";
         edcConfigDisplay.value = false;
@@ -156,6 +156,11 @@ onMounted(async () => {
                         </el-button>
                     </template>
                 </el-input>
+            </el-form-item>
+            <el-form-item label="EDC">
+                <el-select v-model="config.edc">
+                    <el-option v-for="option in edcOptions" :key="option" :label="option" :value="option" />
+                </el-select>
             </el-form-item>
         </div>
         <el-form-item>

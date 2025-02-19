@@ -28,6 +28,7 @@ export async function removeConfig(id: string) {
 export interface listEventsParam {
     ecrf: string,
     db: string,
+    edc: string,
 }
 
 export interface Form {

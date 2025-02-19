@@ -116,8 +116,9 @@ async function updateEvent() {
     loading.value = true;
     const { ecrf, db, edc } = config.value;
     eventMode.value = EventMode.FORM;
+    console.log(config.value);
     try {
-        if (config.value.historyConfigId.length > 0) {
+        if (config.value.historyConfigId && config.value.historyConfigId.length > 0) {
             const { form, visit, binding } = await listPreviousEvents(config.value.historyConfigId);
             event.value = new Event(form, visit, binding, eventMode.value);
         } else {

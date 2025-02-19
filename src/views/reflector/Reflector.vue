@@ -116,12 +116,16 @@ async function updateEvent() {
     loading.value = true;
     const { ecrf, db, edc } = config.value;
     eventMode.value = EventMode.FORM;
-    if (config.value.historyConfigId.length > 0) {
-        const { form, visit, binding } = await listPreviousEvents(config.value.historyConfigId);
-        event.value = new Event(form, visit, binding, eventMode.value);
-    } else {
-        const { form, visit, binding } = await listEvents({ ecrf, db, edc });
-        event.value = new Event(form, visit, binding, eventMode.value);
+    try {
+        if (config.value.historyConfigId.length > 0) {
+            const { form, visit, binding } = await listPreviousEvents(config.value.historyConfigId);
+            event.value = new Event(form, visit, binding, eventMode.value);
+        } else {
+            const { form, visit, binding } = await listEvents({ ecrf, db, edc });
+            event.value = new Event(form, visit, binding, eventMode.value);
+        }
+    } catch (error) {
+        ElMessage.error(`Failed parsing EDC files, because: ${error}`);
     }
     loading.value = false;
     previewRenderKey.value++;

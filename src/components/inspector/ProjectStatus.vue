@@ -196,7 +196,7 @@ watch(() => project.value, debounce(() => {
                         </el-tag>
                         <el-tag v-if="scope.row.qcResult.length > 1"
                             @click="() => { selectedItem = scope.row.name; showQc(true); }" class="qc-status-tag"
-                            style="margin-bottom: 10px; margin-left: 5px;" :type="statusColor(scope.row.qcResult)">
+                            style="margin-bottom: 10px; margin-left: 5px;" :type="statusColor(scope.row.qcResult[1])">
                             {{ statusContent(scope.row.qcResult[1], false) }}
                         </el-tag>
                     </template>

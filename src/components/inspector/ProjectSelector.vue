@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue';
 import { Search } from '@element-plus/icons-vue';
-import { listAllProjects, listHistoryProjects, Product, Project, Purpose, Trial } from '../../api/inspector/inspector';
+import { createHistory, listAllProjects, listHistoryProjects, Product, Project, Purpose, Trial } from '../../api/inspector/inspector';
 
 const emit = defineEmits<{ (e: "toggle", width: string): void; (e: "switch", project: Project): void }>();
 const menuCollapsed = ref(false);
@@ -45,6 +45,14 @@ function toggleMenu() {
 
 function onSelect(project: String) {
     const slice = project.split("-");
+    const product = slice[0];
+    const trial = slice[1];
+    const purpose = slice[2];
+    createHistory({ product, trial, purpose }).then(() => {
+        listHistoryProjects().then((projects) => {
+            historyProjects.value = projects;
+        });
+    });
     emit("switch", {
         product: slice[0],
         trial: slice[1],
@@ -54,6 +62,11 @@ function onSelect(project: String) {
 
 async function switchMenuMode() {
     isHistoryMode.value = !isHistoryMode.value;
+    if (isHistoryMode.value) {
+        historyProjects.value = await listHistoryProjects();
+    } else {
+        allProjects.value = await listAllProjects();
+    }
     searchProject.value = "";
 }
 
@@ -79,7 +92,7 @@ onMounted(async () => {
                     <DArrowLeft />
                 </el-icon>
             </el-button>
-            <el-button disabled @click="switchMenuMode" type="primary" link plain class="menu-switch">{{ menuMode
+            <el-button @click="switchMenuMode" type="primary" link plain class="menu-switch">{{ menuMode
                 }}</el-button>
         </el-tag>
         <el-scrollbar class="scroll" height="589px" max-height="589px">

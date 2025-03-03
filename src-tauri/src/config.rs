@@ -24,6 +24,7 @@ const COMBINE_BIN: &str = "MK_COMBINE_BIN";
 const ACRF_OUTLINTE_BIN: &str = "MK_ACRF_OUTLINTE_BIN";
 pub const REFLECTOR: &str = "MK_REFLECTOR";
 const VALIDATOR: &str = "MK_VALIDATOR";
+pub const COMPASS_BASE_URL: &str = "MK_COMPASS_BASE_URL";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -37,6 +38,7 @@ pub struct Config {
     pub combine_bin: String,
     pub acrf_outline_bin: String,
     pub validator: String,
+    pub compass_base_url: String,
 }
 
 pub fn config_env_init() -> Result<(), Box<dyn Error>> {
@@ -62,6 +64,7 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     env::set_var(COMBINE_BIN, config.combine_bin);
     env::set_var(ACRF_OUTLINTE_BIN, config.acrf_outline_bin);
     env::set_var(VALIDATOR, config.validator);
+    env::set_var(COMPASS_BASE_URL, config.compass_base_url);
 
     let user_temp_path = build_temp_script_path(&config.user_temp, &user_id);
     if !user_temp_path.exists() {

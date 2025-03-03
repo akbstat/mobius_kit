@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api";
+import { currentUser } from "../mobiuskit/user";
 
 /**
  * to get the configuration file according project code and project kind
@@ -31,12 +32,16 @@ export async function listAllProjects(): Promise<Product[]> {
 
 
 export async function listHistoryProjects(): Promise<string[]> {
-    return [
-        "ak104-102-csr",
-        "ak104-101-dryrun",
-        "ak103-102-finalrun",
-        "ak102-102-dryrun",
-    ];
+    let user = await currentUser();
+    const projects: string[] = await invoke("list_historical_trials", { user });
+    return projects;
+}
+
+
+export async function createHistory(param: { product: string, trial: string, purpose: string }): Promise<void> {
+    let user = await currentUser();
+    let { product, trial, purpose: kind } = param;
+    await invoke("create_history", { param: { product, trial, kind, user } });
 }
 
 export async function projectKind(): Promise<ProjectKind[]> {

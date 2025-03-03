@@ -5,7 +5,7 @@ use inspector::v2::{
     AuditResult, Group, Investigator, InvestigatorParam,
 };
 use lazy_static::lazy_static;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     env,
     path::{Path, PathBuf},
@@ -16,6 +16,8 @@ lazy_static! {
         &env::var(config::PROJECT_ROOT).expect("Error: Invalid project root environment variable")
     )
     .into();
+    static ref COMPASS_BASE_URL: String = env::var(config::COMPASS_BASE_URL)
+        .expect("Error: failed to get base url of compass server");
 }
 
 #[tauri::command]
@@ -227,6 +229,34 @@ pub fn sequence_detail(param: InspectDetailParam) -> Result<Vec<AuditResult>, St
     ))
 }
 
+#[tauri::command]
+pub fn list_historical_trials(user: String) -> Result<Vec<String>, String> {
+    let response = reqwest::blocking::get(format!(
+        "{}/api/v1/trail?user={}&top=10",
+        *COMPASS_BASE_URL, user
+    ))
+    .map_err(|e| e.to_string())?;
+    let response = response
+        .json::<HistoricalTrialReply>()
+        .map_err(|e| e.to_string())?;
+    Ok(response
+        .trails
+        .iter()
+        .map(|t| format!("{}-{}-{}", t.product, t.trial, t.kind))
+        .collect())
+}
+
+#[tauri::command]
+pub fn create_history(param: CreatHistoryRequest) -> Result<(), String> {
+    let client = reqwest::blocking::Client::new();
+    client
+        .post(format!("{}/api/v1/trail", *COMPASS_BASE_URL))
+        .json(&param)
+        .send()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct ConfigRootRequest {
     product: String,
@@ -284,4 +314,24 @@ pub struct InspectDetailParam {
     kind: v2::Kind,
     item: String,
     supp: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct HistoricalTrialReply {
+    trails: Vec<Trial>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Trial {
+    product: String,
+    trial: String,
+    kind: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreatHistoryRequest {
+    product: String,
+    trial: String,
+    kind: String,
+    user: String,
 }

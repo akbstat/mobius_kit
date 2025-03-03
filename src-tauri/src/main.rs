@@ -79,6 +79,8 @@ fn main() {
             inspector::v2::sequence_detail,
             inspector::v2::config_root,
             inspector::v2::config_illation,
+            inspector::v2::list_historical_trials,
+            inspector::v2::create_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

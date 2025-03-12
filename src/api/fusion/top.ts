@@ -38,7 +38,7 @@ export async function listRtfsWithTitle(output: string, top: string): Promise<Rt
         let { kind, modified_at, name, size } = output;
         return {
             kind, modified_at, name, size,
-            title: topInfoMap.get(name),
+            title: topInfoMap.get(name.toLowerCase()),
         }
     });
 }

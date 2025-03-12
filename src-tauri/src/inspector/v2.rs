@@ -16,8 +16,7 @@ lazy_static! {
         &env::var(config::PROJECT_ROOT).expect("Error: Invalid project root environment variable")
     )
     .into();
-    static ref COMPASS_BASE_URL: String = env::var(config::COMPASS_BASE_URL)
-        .expect("Error: failed to get base url of compass server");
+    static ref COMPASS_BASE_URL: String = env::var(config::COMPASS_BASE_URL).unwrap_or_default();
 }
 
 #[tauri::command]
@@ -231,6 +230,9 @@ pub fn sequence_detail(param: InspectDetailParam) -> Result<Vec<AuditResult>, St
 
 #[tauri::command]
 pub fn list_historical_trials(user: String) -> Result<Vec<String>, String> {
+    if COMPASS_BASE_URL.is_empty() {
+        return Ok(vec![]);
+    }
     let response = reqwest::blocking::get(format!(
         "{}/api/v1/trail?user={}&top=10",
         *COMPASS_BASE_URL, user
@@ -248,6 +250,9 @@ pub fn list_historical_trials(user: String) -> Result<Vec<String>, String> {
 
 #[tauri::command]
 pub fn create_history(param: CreatHistoryRequest) -> Result<(), String> {
+    if COMPASS_BASE_URL.is_empty() {
+        return Ok(());
+    }
     let client = reqwest::blocking::Client::new();
     client
         .post(format!("{}/api/v1/trail", *COMPASS_BASE_URL))

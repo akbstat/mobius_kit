@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import { onMounted, Ref, ref } from 'vue';
 import { Rtf, listRtfsWithTitle } from '../../api/fusion/top';
-import { ConfigRecord, findConfig, FusionConfig, saveConfig, Task, File } from '../../api/fusion/config';
+import { ConfigRecord, findConfig, FusionConfig, saveConfig, Task, File, checkTitleMissing } from '../../api/fusion/config';
 import { ElMessage } from 'element-plus';
 import { GeneralConfig } from './fusion';
 import { runFusionTask } from '../../api/fusion/fusion';
 import { openFile } from '../../api/utils/directory';
 import { useFusion } from '../../store/fusion';
+import { storeToRefs } from 'pinia';
 import Config from "./Config.vue";
 import NewTask from './NewTask.vue';
 import AppendOutput from './AppendOutput.vue';
@@ -14,11 +15,12 @@ import UpdateTaskConfig from './UpdateTaskConfig.vue';
 import RemoveConfirm from './RemoveConfirm.vue';
 import FusionProgress from './FusionProgress.vue';
 import SaveConfig from './SaveConfig.vue';
-import { storeToRefs } from 'pinia';
+import TitleMissingList from './TitleMissingList.vue';
 
 const cleanAllTaskDisplay = ref(false);
 const saveConfigDisplay = ref(false);
 const configDrawerDisplay = ref(false);
+const titleMissingListDisplay = ref(false);
 const rtfs: Ref<Rtf[]> = ref([]);
 const newTaskDisplay = ref(false);
 const appendOutputDisplay = ref(false);
@@ -31,8 +33,11 @@ const removeTaskConfirmDisplay = ref(false);
 const removeOutputConfirmDisplay = ref(false);
 const fusionProgressDisplay = ref(false);
 const config: Ref<{ id: string | null, name: string }> = ref({ id: null, name: "" });
-
 const { fusionConfig, previousTaskStartTime } = storeToRefs(useFusion());
+const titleMissingTasks: Ref<{ name: string, files: string[] }[]> = ref([]);
+// -1 stands for all task prepare to fusion, other stands for task indexes in task list
+const prepareToFusion = ref(-1);
+
 
 function showConfigDrawer() {
     configDrawerDisplay.value = true;
@@ -106,13 +111,35 @@ function removeAllTask(confirm: boolean) {
 }
 
 async function submitAllTask() {
-    await run(fusionConfig.value);
+    titleMissingTasks.value = checkTitleMissing(fusionConfig.value);
+    if (titleMissingTasks.value.length > 0) {
+        prepareToFusion.value = -1;
+        titleMissingListDisplay.value = true;
+    } else {
+        await run(fusionConfig.value);
+    }
 }
 
 async function submitOneTask(index: number) {
+    prepareToFusion.value = index;
     const { id, source, destination, top, tasks } = fusionConfig.value;
     const config = { id, source, destination, top, tasks: [tasks[index]] };
-    await run(config);
+    titleMissingTasks.value = checkTitleMissing(config);
+    if (titleMissingTasks.value.length > 0) {
+        titleMissingListDisplay.value = true;
+    } else {
+        await run(config);
+    }
+}
+
+async function continueRun() {
+    if (prepareToFusion.value === -1) {
+        await run(fusionConfig.value);
+    } else {
+        const { id, source, destination, top, tasks } = fusionConfig.value;
+        const config = { id, source, destination, top, tasks: [tasks[prepareToFusion.value]] };
+        await run(config);
+    }
 }
 
 async function run(config: FusionConfig) {
@@ -177,6 +204,13 @@ async function readCombineFile(task: Task) {
         await openFile(destination);
     } catch (error) {
         ElMessage.error(`Failed to open ${task.name}: ${error}`)
+    }
+}
+
+async function titleMissingListClose(submit: boolean) {
+    titleMissingListDisplay.value = false;
+    if (submit) {
+        await continueRun();
     }
 }
 
@@ -440,6 +474,9 @@ onMounted(async () => {
                 <Close />
             </el-icon>
         </el-button>
+    </el-dialog>
+    <el-dialog draggable destroy-on-close title="Title Missing List" v-model="titleMissingListDisplay">
+        <TitleMissingList @close="titleMissingListClose" :tasks="titleMissingTasks" />
     </el-dialog>
     <el-dialog top="5vh" title="Task Progress" v-model="fusionProgressDisplay" width="75%" draggable destroy-on-close>
         <FusionProgress :previous-task-start-time="previousTaskStartTime" @close="(isCancelled: boolean) => {

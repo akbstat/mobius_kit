@@ -39,6 +39,12 @@ async function selectDirectory(): Promise<string> {
     })) as string;
 }
 
+async function selectTop(): Promise<string> {
+    return (await open({
+        filters: [{ name: "", extensions: ["xlsx"] }],
+    })) as string
+}
+
 async function selectOutput() {
     const dir = await selectDirectory();
     if (dir.length > 0) {
@@ -108,7 +114,7 @@ onMounted(async () => {
         <el-form-item label="Top">
             <el-input v-model="config.top" style="width: 100%;">
                 <template #append>
-                    <el-button plain type="primary" @click="selectOutput">
+                    <el-button plain type="primary" @click="selectTop">
                         <el-icon>
                             <FolderOpened />
                         </el-icon>

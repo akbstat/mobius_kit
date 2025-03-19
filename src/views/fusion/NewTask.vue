@@ -55,7 +55,7 @@ function submit() {
     task.value.files = allOutputs.value.filter((_, i) => selectedIndex.includes(i)).map((output: Rtf) => {
         return {
             filename: output.name,
-            title: output.title,
+            title: output.title ? output.title : "",
             path: `${config.source}\\${output.name}`,
             size: 0,
         }

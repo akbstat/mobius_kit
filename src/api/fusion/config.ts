@@ -59,3 +59,14 @@ export async function saveConfig(id: string | null, name: string, param: FusionC
     let return_id: string = await invoke("save_config", { config: { id, name }, param });
     return return_id;
 }
+
+export function checkTitleMissing(config: FusionConfig): { name: string, files: string[] }[] {
+    const result: { name: string, files: string[] }[] = [];
+    for (const task of config.tasks) {
+        const titleMissingFiles = task.files.filter(t => t.title.length === 0);
+        if (titleMissingFiles.length > 0) {
+            result.push({ name: task.name, files: titleMissingFiles.map(f => f.filename) })
+        }
+    }
+    return result;
+}

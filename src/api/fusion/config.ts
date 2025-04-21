@@ -60,6 +60,10 @@ export async function saveConfig(id: string | null, name: string, param: FusionC
     return return_id;
 }
 
+export async function deleteConfig(id: string): Promise<void> {
+    await invoke("remove_config", { id });
+}
+
 export function checkTitleMissing(config: FusionConfig): { name: string, files: string[] }[] {
     const result: { name: string, files: string[] }[] = [];
     for (const task of config.tasks) {

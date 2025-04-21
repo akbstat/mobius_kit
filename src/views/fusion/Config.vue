@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { onMounted, reactive, Ref, ref, watch } from 'vue';
+import { computed, onMounted, reactive, Ref, ref, watch } from 'vue';
 import { open } from '@tauri-apps/api/dialog';
 import { configInfer } from '../../api/fusion/top';
 import { debounce } from 'lodash';
 import { GeneralConfig } from './fusion';
-import { ConfigRecord, findConfig, listConfigs } from '../../api/fusion/config';
+import { ConfigRecord, findConfig, listConfigs, deleteConfig } from '../../api/fusion/config';
+import { ElMessage } from 'element-plus';
 
 const emit = defineEmits<{
     (e: "submit", config: GeneralConfig, configRecord: ConfigRecord | null): void;
@@ -21,7 +22,14 @@ const config = reactive({
 
 const configRecords: Ref<ConfigRecord[]> = ref([]);
 const configRecord: Ref<ConfigRecord | null> = ref(null);
+const configSelectionRef = ref();
 const selectedConfigRecordId: Ref<string> = ref("");
+const removeConfigDisplay = ref(false);
+const removeConfigId = ref("");
+const removeConfigName = computed(() => {
+    const configRecord = configRecords.value.find(c => c.id === removeConfigId.value);
+    return configRecord ? configRecord.name : "";
+});
 
 function submit() {
     emit("submit", config, configRecord.value);
@@ -69,6 +77,27 @@ async function outputChange(output: string) {
     }
 }
 
+function removeConfig(id: string) {
+    configSelectionRef.value.blur();
+    removeConfigId.value = id;
+    removeConfigDisplay.value = true;
+}
+
+async function removeConfigSubmit() {
+    removeConfigDisplay.value = false;
+    try {
+        await deleteConfig(removeConfigId.value);
+        ElMessage.success(`Remove configuration <${removeConfigName.value}> success`);
+    } catch (e) {
+        ElMessage.error(`Remove configuration <${removeConfigName.value}> failed: ${e}`);
+    }
+    configRecords.value = await listConfigs();
+}
+
+function removeConfigCancel() {
+    removeConfigDisplay.value = false;
+}
+
 watch(() => config.source, debounce(async () => {
     await outputChange(config.source)
 }, 100))
@@ -96,9 +125,21 @@ onMounted(async () => {
 <template>
     <el-form label-width="auto">
         <el-form-item label="From Config">
-            <el-select value-key="id" clearable filterable placeholder="Previous Configuration"
+            <el-select ref="configSelectionRef" value-key="id" clearable filterable placeholder="Previous Configuration"
                 v-model="selectedConfigRecordId" style="width: 100%;">
-                <el-option v-for="config in configRecords" :key="config.id" :label="config.name" :value="config.id" />
+                <el-option v-for="config in configRecords" :key="config.id" :label="config.name" :value="config.id">
+                    <div style="display: flex;">
+                        <el-text>{{ config.name }}</el-text>
+                        <div style="width: 100%;">
+                            <el-button @click.stop="() => { removeConfig(config.id) }"
+                                style="float: right; margin-top: 5px;" type="danger" size="small" text>
+                                <el-icon>
+                                    <Delete />
+                                </el-icon>
+                            </el-button>
+                        </div>
+                    </div>
+                </el-option>
             </el-select>
         </el-form-item>
         <el-form-item label="Source">
@@ -147,4 +188,21 @@ onMounted(async () => {
             </el-button>
         </el-form-item>
     </el-form>
+    <el-dialog v-model="removeConfigDisplay" destroy-on-close title="Remove Historical Configuration">
+        <div style="margin-bottom: 20px;">
+            Removing configuration <el-text type="danger">{{ removeConfigName }}</el-text>, continue?
+        </div>
+        <div>
+            <el-button @click="removeConfigSubmit" type="primary" plain>
+                <el-icon>
+                    <Check />
+                </el-icon>
+            </el-button>
+            <el-button @click="removeConfigCancel" type="danger" plain>
+                <el-icon>
+                    <Close />
+                </el-icon>
+            </el-button>
+        </div>
+    </el-dialog>
 </template>

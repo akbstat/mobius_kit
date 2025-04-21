@@ -84,7 +84,7 @@ function createTaskWithAllOutput() {
         mode: 'PDF',
         files: rtfs.value.map(output => {
             let file: File = {
-                title: output.title,
+                title: output.title ? output.title : "",
                 path: `${fusionConfig.value.source}\\${output.name}`,
                 filename: output.name,
                 size: 0,

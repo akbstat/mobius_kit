@@ -39,10 +39,11 @@ async function selectDirectory(): Promise<string> {
     })) as string;
 }
 
-async function selectTop(): Promise<string> {
-    return (await open({
+async function selectTop() {
+    const top = (await open({
         filters: [{ name: "", extensions: ["xlsx"] }],
-    })) as string
+    })) as string;
+    config.top = top;
 }
 
 async function selectOutput() {

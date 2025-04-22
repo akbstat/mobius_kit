@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { open } from '@tauri-apps/api/dialog';
 import { debounce } from "lodash";
 import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
@@ -20,14 +20,18 @@ import { TemplateSelected } from '../../components/template/template';
 import { fetchOfficalTemplate } from "../../api/scaffold/template";
 import { Assignment } from '../../components/task-assignment/assignment';
 import { EpPropMergeType } from 'element-plus/es/utils/index.mjs';
+import { useDark } from '@vueuse/core';
 
 
-const buttonStyle = {
-    backgroundColor: "#18222c",
-    color: "#409EFF",
-    borderColor: "#2a598a",
-    borderWidth: "1px"
-}
+const buttonStyle = computed(() => {
+    const isDark = useDark();
+    return {
+        backgroundColor: isDark.value ? "#18222c" : "#ffffff",
+        color: "#409EFF",
+        borderColor: isDark.value ? "#2a598a" : "rgb(216.8, 235.6, 255)",
+        borderWidth: "1px"
+    }
+})
 // const trace: Ref<string[]> = ref([]);
 let store = useScaffold();
 let { chosenProject, openedTab, projectKind, trace } = storeToRefs(store);
@@ -482,7 +486,7 @@ async function qcDestinationSelect() {
                                 </el-form-item>
                                 <el-form-item label="Configuration">
                                     <el-select v-model="configPath" style="width: 480px" default-first-option>
-                                        <el-option v-for=" config in configs " :label="extractFileName(config)"
+                                        <el-option v-for="config in configs" :label="extractFileName(config)"
                                             :value="config" />
                                     </el-select>
                                     <el-button :disabled="configPath.length === 0" type="primary" plain
@@ -502,7 +506,7 @@ async function qcDestinationSelect() {
                                 </el-form-item>
                                 <el-form-item label="SAS Version">
                                     <el-select v-model="engine" style="width: 480px" default-first-option>
-                                        <el-option v-for=" engine in engines " :key="engine" :label="engine"
+                                        <el-option v-for="engine in engines" :key="engine" :label="engine"
                                             :value="engine" />
                                     </el-select>
                                 </el-form-item>

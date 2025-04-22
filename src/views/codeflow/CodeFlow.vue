@@ -7,6 +7,7 @@ import { open } from '@tauri-apps/api/dialog';
 import { ElNotification, ElTree } from 'element-plus';
 import { useCodeFlow } from "../../store/codeflow";
 import { storeToRefs } from 'pinia';
+import { useDark } from '@vueuse/core';
 
 const { directory } = storeToRefs(useCodeFlow());
 const fileTree: Ref<TreeNode[]> = ref([]);
@@ -136,6 +137,18 @@ function unexpectedCount(root: TreeNode): number {
     return count;
 }
 
+function scrollbarStyle() {
+    const isDark = useDark();
+    const style = {
+        margin: "0px 15px 0px 15px",
+        backgroundColor: "#202121",
+    }
+    if (!isDark.value) {
+        style.backgroundColor = "rgb(216.8, 235.6, 255)";
+    }
+    return style;
+}
+
 async function selectDirectory() {
     const dir = (await open({
         directory: true,
@@ -202,9 +215,9 @@ watch(directory, debounce(async () => {
 
     <el-container style="margin:0px 15px 0px ">
     </el-container>
-    <el-scrollbar height="555px" style="margin: 0px 15px 0px 15px; background-color: #202121;" v-loading="loading">
-        <el-tree ref="treeRef" show-checkbox style="width: 95%; margin: 15px" :data="displayFileTree"
-            :props="defaultProps" node-key="path" default-expand-all>
+    <el-scrollbar height="555px" :style="scrollbarStyle()" v-loading="loading">
+        <el-tree ref="treeRef" show-checkbox style="width: 95%; margin: 15px; background-color: transparent;"
+            :data="displayFileTree" :props="defaultProps" node-key="path" default-expand-all>
             <template #default="{ node, data }">
                 <span :style="fileNameFontColor(data)">{{ node.label }}</span>
                 <span style="margin-left: auto; margin-right: 0;" v-if="data.is_file">

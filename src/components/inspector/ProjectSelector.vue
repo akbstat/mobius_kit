@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import { createHistory, listAllProjects, listHistoryProjects, Product, Project, Purpose, Trial } from '../../api/inspector/inspector';
+import { useDark } from '@vueuse/core';
 
 const emit = defineEmits<{ (e: "toggle", width: string): void; (e: "switch", project: Project): void }>();
 const menuCollapsed = ref(false);
@@ -42,6 +43,17 @@ function toggleMenu() {
         emit("toggle", "15%");
     }
 }
+
+function scrollbarStyle() {
+    const isDark = useDark();
+    if (!isDark.value) {
+        return {
+            backgroundColor: "#ffffff",
+        };
+    }
+    return {};
+}
+
 
 function onSelect(project: String) {
     const slice = project.split("-");
@@ -93,9 +105,9 @@ onMounted(async () => {
                 </el-icon>
             </el-button>
             <el-button @click="switchMenuMode" type="primary" link plain class="menu-switch">{{ menuMode
-                }}</el-button>
+            }}</el-button>
         </el-tag>
-        <el-scrollbar class="scroll" height="589px" max-height="589px">
+        <el-scrollbar :style="scrollbarStyle()" class="scroll" height="589px" max-height="589px">
             <el-menu @select="onSelect" v-if="isHistoryMode">
                 <el-menu-item v-for="project in historyProjectsDisplay" :index="project">
                     <template #title>

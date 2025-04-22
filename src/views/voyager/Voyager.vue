@@ -10,6 +10,7 @@ import { open } from '@tauri-apps/api/dialog';
 import { Search, Connection, Aim } from '@element-plus/icons-vue';
 import { storeToRefs } from 'pinia';
 import { useVoyager } from "../../store/voyager";
+import { useDark } from '@vueuse/core';
 
 const dialogDisplay = ref(false);
 const { filePath } = storeToRefs(useVoyager())
@@ -47,6 +48,18 @@ listen('tauri://file-drop', event => {
         filePath.value = payloads[0].endsWith(".pdf") ? payloads[0] : "";
     }
 })
+
+function scrollbarStyle() {
+    const isDark = useDark();
+    if (!isDark.value) {
+        return {
+            backgroundColor: "rgb(216.8, 235.6, 255)",
+        };
+    }
+    return {
+        backgroundColor: "#18222c",
+    };
+}
 
 function openExportAnnotationDialog() {
     dialogDisplay.value = true;
@@ -200,8 +213,8 @@ onMounted(async () => {
                         <el-input clearable v-model="domainFilter" style="height: 40px;" placeholder="Domain" />
                     </el-header>
                     <el-main style="padding: 0;margin: 0;">
-                        <el-scrollbar height="550px" style="background-color: #18222c;">
-                            <el-menu background-color="#18222c" @select="selectDomain">
+                        <el-scrollbar height="550px" :style="scrollbarStyle()">
+                            <el-menu @select="selectDomain">
                                 <el-menu-item v-for="domain in domainDisplay" :index="domain">
                                     {{ domain }}
                                 </el-menu-item>

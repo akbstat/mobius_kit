@@ -69,7 +69,7 @@ pub fn scaffold_generate(param: Parameter) -> Result<String, String> {
     };
     let mut result = GenerateResult::default();
     let kind = kind_match(&param.kind);
-    let generator = match Generator::new(config, kind, assignment) {
+    let generator = match Generator::new(config, kind, assignment, param.force) {
         Ok(g) => g,
         Err(e) => return Err(e.to_string()),
     };
@@ -138,7 +138,7 @@ pub fn open_directory_with_root(path: String) -> Result<(), String> {
 #[tauri::command]
 pub fn list_task_items(kind: String, path: String) -> Result<Vec<ConfigItem>, String> {
     let reader = new_reader(&kind_match(&kind), Path::new(&path));
-    match reader.read() {
+    match reader.read(true) {
         Ok(items) => Ok(items),
         Err(err) => Err(err.to_string()),
     }
@@ -200,6 +200,7 @@ pub struct Parameter {
     pub custom_code: Vec<String>,
     pub template: Template,
     pub assignment: Vec<Assignment>,
+    pub force: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

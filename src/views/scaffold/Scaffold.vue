@@ -368,7 +368,7 @@ function cancelCreateProject(formEl: FormInstance | undefined) {
     formEl.resetFields();
 }
 
-async function submit() {
+async function submit(force: boolean) {
     const param = {
         project: project.value,
         engine: engine.value,
@@ -381,6 +381,7 @@ async function submit() {
         custom_code: customCode.value,
         template: templateSelected,
         assignment,
+        force,
     };
     loading.value = true
     try {
@@ -530,8 +531,8 @@ async function qcDestinationSelect() {
                                     </el-input>
                                 </el-form-item>
                                 <el-form-item>
-                                    <el-button :disabled="readyToSubmit()" type="primary" @click="submit"
-                                        plain>Submit</el-button>
+                                    <el-button :disabled="readyToSubmit()" type="primary"
+                                        @click="() => { submit(false) }" plain>Submit</el-button>
                                     <el-button @click="reset" plain>Reset</el-button>
                                 </el-form-item>
                             </el-form>
@@ -574,17 +575,23 @@ async function qcDestinationSelect() {
         <el-button type="primary" @click="() => { showCompleteDialag = false }"
             style="margin-left: 0px; margin-top: 20px;" plain>Close</el-button>
     </el-dialog>
-    <el-dialog v-model="showErrorPanel" title="Task Failed">
-        <el-text class="mx-1" type="danger" size="large">Failed to generate templates, please fix following issues and
-            retry</el-text>
+    <el-dialog v-model="showErrorPanel" title="Issues detected">
+        <el-text class="mx-1" type="danger" size="large">The following issues have been detected in the configuration
+            file.
+            Please fix them and retry, or ignore the issuees and proceed with generation.</el-text>
         <div style="margin-top: 20px;">
             <el-table :data="errorMessages">
                 <el-table-column label="Item" prop="item" />
                 <el-table-column label="Issue" prop="message" />
             </el-table>
         </div>
-        <el-button style="margin-top: 20px;" type="primary" @click="() => showErrorPanel = false" plain>Got
-            it</el-button>
+        <div>
+            <el-button style="margin-top: 20px; width: 100%;" type="primary" @click="() => showErrorPanel = false"
+                plain>Back to fix thg issuees in configuration file, then retry later</el-button>
+        </div>
+        <el-button style="margin-top: 10px; width: 100%;" type="danger"
+            @click="() => { showErrorPanel = false; submit(true) }" plain>Ignore
+            the issuees and proceed with generation</el-button>
     </el-dialog>
     <el-drawer v-model="customCodePanelShow" title="Custom Code" size="1100px" destroy-on-close>
         <Template :kind="projectKind" @template-change="(template: TemplateSelected) => {

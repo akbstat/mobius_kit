@@ -30,6 +30,8 @@ export interface Param {
     custom_code: string[],
     template: TemplateSelected,
     assignment: Assignment[],
+    // force to generate files
+    force: boolean,
 }
 
 export interface GeneratedResult {

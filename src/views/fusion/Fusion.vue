@@ -16,6 +16,7 @@ import RemoveConfirm from './RemoveConfirm.vue';
 import FusionProgress from './FusionProgress.vue';
 import SaveConfig from './SaveConfig.vue';
 import TitleMissingList from './TitleMissingList.vue';
+import { useDark } from '@vueuse/core';
 
 const cleanAllTaskDisplay = ref(false);
 const saveConfigDisplay = ref(false);
@@ -37,6 +38,7 @@ const { fusionConfig, previousTaskStartTime } = storeToRefs(useFusion());
 const titleMissingTasks: Ref<{ name: string, files: string[] }[]> = ref([]);
 // -1 stands for all task prepare to fusion, other stands for task indexes in task list
 const prepareToFusion = ref(-1);
+const isDark = useDark();
 
 
 function showConfigDrawer() {
@@ -108,6 +110,18 @@ function removeAllTask(confirm: boolean) {
         fusionConfig.value.tasks = [];
     }
     cleanAllTaskDisplay.value = false;
+}
+
+
+function rowStyle({
+    row,
+}: {
+    row: File
+}) {
+    if (row.title.length === 0) {
+        return { backgroundColor: isDark.value ? "rgb(87.5, 46.4, 46.4)" : "rgb(247, 137.4, 137.4)" };
+    }
+    return {};
 }
 
 async function submitAllTask() {
@@ -277,7 +291,7 @@ onMounted(async () => {
         </el-header>
         <el-container>
             <el-aside width="60%" style="padding-left: 5px;">
-                <el-table height="615" show-overflow-tooltip
+                <el-table :row-style="rowStyle" height="615" show-overflow-tooltip
                     :data="fusionConfig.tasks.length > 0 ? fusionConfig.tasks[activeTaskIndex].files : []">
                     <el-table-column width="265px" prop="filename" label="Filename" />
                     <el-table-column width="265px" prop="title" label="Title" />
@@ -507,5 +521,9 @@ onMounted(async () => {
 
 .task-button {
     width: 20px;
+}
+
+.el-table .warning-row {
+    --el-table-tr-bg-color: var(--el-color-warning-light-9);
 }
 </style>

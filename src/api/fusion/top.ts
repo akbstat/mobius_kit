@@ -32,13 +32,21 @@ export async function listRtfsWithTitle(output: string, top: string): Promise<Rt
     }
     const topInfo: Top[] = await invoke("top_info", { filepath: top });
     const topInfoMap = new Map();
-    topInfo.forEach(top => { topInfoMap.set(top.filename, top.title) });
+    const outputOrder = new Map();
+    topInfo.forEach((top, index) => {
+        topInfoMap.set(top.filename, top.title);
+        outputOrder.set(top.filename, index);
+    });
     const outputs = await listRtfs(output);
-    return outputs.map(output => {
+
+    const result = outputs.map(output => {
         let { kind, modified_at, name, size } = output;
         return {
             kind, modified_at, name, size,
             title: topInfoMap.get(name.toLowerCase()),
+            order: outputOrder.get(name.toLowerCase()) ?? -1,
         }
     });
+    result.sort((a, b) => { return a.order - b.order });
+    return result;
 }

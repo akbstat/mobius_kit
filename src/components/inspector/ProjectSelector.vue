@@ -105,7 +105,7 @@ onMounted(async () => {
                 </el-icon>
             </el-button>
             <el-button @click="switchMenuMode" type="primary" link plain class="menu-switch">{{ menuMode
-            }}</el-button>
+                }}</el-button>
         </el-tag>
         <el-scrollbar :style="scrollbarStyle()" class="scroll" height="589px" max-height="589px">
             <el-menu @select="onSelect" v-if="isHistoryMode">
@@ -120,11 +120,11 @@ onMounted(async () => {
                     <template #title>
                         <span>{{ project.name }}</span>
                     </template>
-                    <el-sub-menu v-for="trail in project.trials" :index="trail.id">
+                    <el-sub-menu v-for="trial in project.trials" :index="trial.id">
                         <template #title>
-                            <span>{{ trail.name }}</span>
+                            <span>{{ trial.name }}</span>
                         </template>
-                        <el-menu-item v-for="purpose in trail.purposes" :index="purpose.id">
+                        <el-menu-item v-for="purpose in trial.purposes" :index="purpose.id">
                             <span>{{ purpose.name }}</span>
                         </el-menu-item>
                     </el-sub-menu>

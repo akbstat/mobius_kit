@@ -55,7 +55,7 @@
         "resizable": true,
         "title": "MobiusKit",
         "width": 1300,
-        "height": 720,
+        "height": 745,
         "center": true,
         "maximizable": true,
         "theme": "Dark"

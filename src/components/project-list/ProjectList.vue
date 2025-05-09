@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Product, Trail, Purpose, ChosenProject } from "./project";
+import { Product, Trial, Purpose, ChosenProject } from "./project";
 import { ElMenu } from "element-plus";
 import { debounce } from "lodash";
 
@@ -26,11 +26,11 @@ function filterProject() {
 }
 
 function trimProject(project: Product, keyword: string): Product | undefined {
-    const trails = project.trails.map((trail: Trail) => {
-        const purpose = trail.purpose.filter((purpose: Purpose) => purpose.id.toUpperCase().includes(keyword.toUpperCase()));
-        return purpose.length === 0 ? undefined : { id: trail.id, name: trail.name, purpose };
-    }).filter((trail: Trail | undefined) => trail) as Trail[];
-    return trails.length === 0 ? undefined : { id: project.id, name: project.name, trails };
+    const trials = project.trials.map((trial: Trial) => {
+        const purpose = trial.purpose.filter((purpose: Purpose) => purpose.id.toUpperCase().includes(keyword.toUpperCase()));
+        return purpose.length === 0 ? undefined : { id: trial.id, name: trial.name, purpose };
+    }).filter((trial: Trial | undefined) => trial) as Trial[];
+    return trials.length === 0 ? undefined : { id: project.id, name: project.name, trials };
 }
 
 function onSelect(index: string) {
@@ -38,7 +38,7 @@ function onSelect(index: string) {
     if (id.length > 2) {
         const chosenProject = {
             product: id[0],
-            trail: id[1],
+            trial: id[1],
             purpose: id[2],
         };
         emit("project-change", chosenProject);
@@ -61,11 +61,11 @@ watch(searchText, debounce(filterProject, 100));
                         <template #title>
                             <span>{{ product.name }}</span>
                         </template>
-                        <el-sub-menu v-for="trail in product.trails" :index="trail.id">
+                        <el-sub-menu v-for="trial in product.trials" :index="trial.id">
                             <template #title>
-                                <span>{{ trail.name }}</span>
+                                <span>{{ trial.name }}</span>
                             </template>
-                            <el-menu-item v-for="purpose in trail.purpose" :index="purpose.id">
+                            <el-menu-item v-for="purpose in trial.purpose" :index="purpose.id">
                                 {{ purpose.name }}
                             </el-menu-item>
                         </el-sub-menu>
@@ -73,6 +73,5 @@ watch(searchText, debounce(filterProject, 100));
                 </el-menu>
             </el-scrollbar>
         </el-main>
-
     </el-container>
 </template>

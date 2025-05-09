@@ -10,7 +10,7 @@ enum Group {
     Qc = "validation",
 }
 
-const prop = defineProps<{ config: { product: string, trail: string, purpose: string, kind: string } }>();
+const prop = defineProps<{ config: { product: string, trial: string, purpose: string, kind: string } }>();
 let { config } = prop;
 
 watchEffect(() => {
@@ -18,62 +18,62 @@ watchEffect(() => {
 })
 
 async function openProtocol() {
-    await openDirectory(`${config.product}\\${config.trail}\\${document}\\protocol`)
+    await openDirectory(`${config.product}\\${config.trial}\\${document}\\protocol`)
 }
 
 async function openCRF() {
-    const { product, trail } = config;
-    await openDirectory(`${product}\\${trail}\\${document}\\crf`)
+    const { product, trial } = config;
+    await openDirectory(`${product}\\${trial}\\${document}\\crf`)
 }
 
 async function openSpecs() {
-    const { product, trail } = config;
-    await openDirectory(`${product}\\${trail}\\${document}\\specs`)
+    const { product, trial } = config;
+    await openDirectory(`${product}\\${trial}\\${document}\\specs`)
 }
 
 async function openSap() {
-    const { product, trail } = config;
-    await openDirectory(`${product}\\${trail}\\${document}\\sap`)
+    const { product, trial } = config;
+    await openDirectory(`${product}\\${trial}\\${document}\\sap`)
 }
 
 async function openRawdata() {
-    const { product, trail, purpose } = config;
-    await openDirectory(`${product}\\${trail}\\${stat}\\${purpose}\\rawdata`)
+    const { product, trial, purpose } = config;
+    await openDirectory(`${product}\\${trial}\\${stat}\\${purpose}\\rawdata`)
 }
 
 async function openCommonMacro() {
-    const { product, trail, purpose } = config;
-    await openDirectory(`${product}\\${trail}\\${stat}\\${purpose}\\macros`)
+    const { product, trial, purpose } = config;
+    await openDirectory(`${product}\\${trial}\\${stat}\\${purpose}\\macros`)
 }
 
 async function openUtility() {
-    const { product, trail, purpose } = config;
-    await openDirectory(`${product}\\${trail}\\${stat}\\${purpose}\\utility`)
+    const { product, trial, purpose } = config;
+    await openDirectory(`${product}\\${trial}\\${stat}\\${purpose}\\utility`)
 }
 
 async function openProgram(group: Group) {
-    const { product, trail, purpose, kind } = config;
-    await openDirectory(`${product}\\${trail}\\${stat}\\${purpose}\\${group}\\program\\${projectKind(kind)}`)
+    const { product, trial, purpose, kind } = config;
+    await openDirectory(`${product}\\${trial}\\${stat}\\${purpose}\\${group}\\program\\${projectKind(kind)}`)
 }
 
 async function openGroupProgram(group: Group) {
-    const { product, trail, purpose } = config;
-    await openDirectory(`${product}\\${trail}\\${stat}\\${purpose}\\${group}\\program\\macros`)
+    const { product, trial, purpose } = config;
+    await openDirectory(`${product}\\${trial}\\${stat}\\${purpose}\\${group}\\program\\macros`)
 }
 
 async function openGroupDataset(group: Group) {
-    const { product, trail, purpose, kind } = config;
-    await openDirectory(`${product}\\${trail}\\${stat}\\${purpose}\\${group}\\dataset\\${projectKind(kind)}`)
+    const { product, trial, purpose, kind } = config;
+    await openDirectory(`${product}\\${trial}\\${stat}\\${purpose}\\${group}\\dataset\\${projectKind(kind)}`)
 }
 
 async function openOutput() {
-    const { product, trail, purpose } = config;
-    await openDirectory(`${product}\\${trail}\\${stat}\\${purpose}\\product\\output`)
+    const { product, trial, purpose } = config;
+    await openDirectory(`${product}\\${trial}\\${stat}\\${purpose}\\product\\output`)
 }
 
 async function openQcResult() {
-    const { product, trail, purpose, kind } = config;
-    await openDirectory(`${product}\\${trail}\\${stat}\\${purpose}\\validation\\qc-result\\${projectKind(kind)}`)
+    const { product, trial, purpose, kind } = config;
+    await openDirectory(`${product}\\${trial}\\${stat}\\${purpose}\\validation\\qc-result\\${projectKind(kind)}`)
 }
 
 function projectKind(source: string) {

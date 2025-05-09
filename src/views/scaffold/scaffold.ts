@@ -2,7 +2,7 @@ import { ChosenProject } from "../../components/project-list/project";
 
 export interface CreateProjectForm {
     product: string,
-    trail: string,
+    trial: string,
     purpose: string,
     from: string,
 }
@@ -15,7 +15,7 @@ export function inferChosenProject(rootPath: string): ChosenProject | undefined 
     }
     return {
         product: paths[size - 4],
-        trail: paths[size - 3],
+        trial: paths[size - 3],
         purpose: paths[size - 1],
     }
 }

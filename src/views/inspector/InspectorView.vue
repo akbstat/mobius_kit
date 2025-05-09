@@ -3,12 +3,14 @@ import { ref } from 'vue';
 import ProjectSelector from '../../components/inspector/ProjectSelector.vue';
 import ProjectStatus from '../../components/inspector/ProjectStatus.vue';
 import { Project } from '../../api/inspector/inspector';
-import { useInspector } from '../../store/inspectorV2';
+// import { useInspector } from '../../store/inspectorV2';
+import { useProjectContext } from '../../store/context';
 import { storeToRefs } from 'pinia';
 
 const asideWidth = ref("15%");
-const store = useInspector();
-const { project } = storeToRefs(store);
+// const store = useInspector();
+const contextStore = useProjectContext();
+const { project } = storeToRefs(contextStore);
 // const project: Ref<Project> = ref({ product: "", trial: "", purpose: "" });
 
 function toggleMenu(width: string) {
@@ -18,6 +20,8 @@ function toggleMenu(width: string) {
 function switchProject(p: Project) {
     project.value = p;
 }
+
+
 
 </script>
 

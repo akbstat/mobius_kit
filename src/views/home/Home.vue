@@ -55,7 +55,7 @@ const routeInfo = (() => {
 </script>
 
 <template>
-  <el-container style="padding: 40px;">
+  <el-container style="padding: 20px;">
     <el-scrollbar height="580px">
       <el-space wrap>
         <el-card class="module" v-for="info in routeInfo" @click="() => { router.push(info.path) }">
@@ -75,8 +75,8 @@ const routeInfo = (() => {
 }
 
 .module {
-  width: 460px;
-  height: 240px;
+  width: 505px;
+  height: 250px;
   margin-bottom: 40px;
   margin-right: 20px;
 }

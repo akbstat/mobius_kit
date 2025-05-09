@@ -13,9 +13,12 @@ import { ElMessage } from 'element-plus';
 import { debounce } from 'lodash';
 import { useInspector } from '../../store/inspectorV2';
 import { storeToRefs } from 'pinia';
+import { useProjectContext } from '../../store/context';
 
 const store = useInspector();
-const { project, selectedKind, configFile, qcIgnore } = storeToRefs(store);
+const contextStore = useProjectContext();
+const { selectedKind, configFile, qcIgnore } = storeToRefs(store);
+const { project } = storeToRefs(contextStore);
 const projectKinds: Ref<ProjectKind[]> = ref([]);
 // const selectedKind: Ref<ProjectKind> = ref(ProjectKind.SDTM);
 const selectedGroup: Ref<Group> = ref(Group.Production);
@@ -71,12 +74,18 @@ function updateConfig(config: string, ignore: string[]) {
 }
 
 async function updateProjectKind() {
+    if (!project.value) {
+        return;
+    }
     const { product, trial, purpose } = project.value;
     configFile.value = await configIllation({ product, trial, purpose, kind: selectedKind.value });
     await updateProjectStatus();
 }
 
 async function updateProjectStatus() {
+    if (!project.value) {
+        return;
+    }
     const { product, trial, purpose } = project.value;
     if (configFile.value.length === 0) {
         configFile.value = await configIllation({ product, trial, purpose, kind: selectedKind.value });
@@ -110,7 +119,7 @@ watch(() => project.value, debounce(() => {
 <template>
     <el-container>
         <el-header class="header">
-            <div v-if="project.purpose">
+            <div v-if="project">
                 <el-breadcrumb style="margin-top: 7px;float: left;" :separator-icon="ArrowRight">
                     <el-breadcrumb-item>
                         <span class="breadcrumb-span">{{ project.product }}</span>
@@ -229,7 +238,7 @@ watch(() => project.value, debounce(() => {
             </el-table>
         </el-main>
     </el-container>
-    <el-drawer v-model="sequenceDisplay" :with-header="false" size="60%" destroy-on-close>
+    <el-drawer v-if="project" v-model="sequenceDisplay" :with-header="false" size="60%" destroy-on-close>
         <Sequence :param="{
             product: project.product,
             trial: project.trial,
@@ -239,7 +248,7 @@ watch(() => project.value, debounce(() => {
             supp: selectedQcSupp,
         }" :group="selectedGroup" />
     </el-drawer>
-    <el-drawer v-model="logDisplay" :with-header="false" size="73%" destroy-on-close>
+    <el-drawer v-if="project" v-model="logDisplay" :with-header="false" size="73%" destroy-on-close>
         <Log :param="{
             product: project.product,
             trial: project.trial,
@@ -249,7 +258,7 @@ watch(() => project.value, debounce(() => {
             group: selectedGroup,
         }" />
     </el-drawer>
-    <el-dialog v-model="graphDisplay" destroy-on-close draggable width="80%">
+    <el-dialog v-if="project" v-model="graphDisplay" destroy-on-close draggable width="80%">
         <Graph :param="{
             product: project.product,
             trial: project.trial,
@@ -259,13 +268,13 @@ watch(() => project.value, debounce(() => {
             qcIgnore: qcIgnore,
         }" />
     </el-dialog>
-    <el-drawer title="Configuration" v-model="configDisplay" size="50%" destroy-on-close>
+    <el-drawer v-if="project" title="Configuration" v-model="configDisplay" size="50%" destroy-on-close>
         <Config :project="project" :kind="selectedKind" :config-file="configFile" :qc-ignore="qcIgnore"
             @update="updateConfig" @close="closeConfig" />
     </el-drawer>
     <el-dialog :title="`Qc Result of ${selectedQcSupp ? 'SUPP' : ''}${selectedItem}`" v-model="qcDisplay"
         destroy-on-close draggable>
-        <QcResult :param="{
+        <QcResult v-if="project" :param="{
             product: project.product,
             trial: project.trial,
             purpose: project.purpose,

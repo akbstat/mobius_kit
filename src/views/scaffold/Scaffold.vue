@@ -15,7 +15,9 @@ import ProjectNavigator from "../../components/project-navigator/ProjectNavigato
 import Template from "../../components/template/Template.vue";
 import TaskAssignment from '../../components/task-assignment/TaskAssignment.vue';
 import { useScaffold } from "../../store/scaffold";
+import { useProjectContext } from '../../store/context';
 import { storeToRefs } from 'pinia';
+
 import { TemplateSelected } from '../../components/template/template';
 import { fetchOfficalTemplate } from "../../api/scaffold/template";
 import { Assignment } from '../../components/task-assignment/assignment';
@@ -33,10 +35,12 @@ const buttonStyle = computed(() => {
     }
 })
 // const trace: Ref<string[]> = ref([]);
+const contextStore = useProjectContext();
+const { project: chosenProject } = storeToRefs(contextStore);
 let store = useScaffold();
-let { chosenProject, openedTab, projectKind, trace } = storeToRefs(store);
+let { openedTab, projectKind, trace } = storeToRefs(store);
 let newProject = ref<CreateProjectForm>({
-    product: "", trail: "", purpose: "", from: "",
+    product: "", trial: "", purpose: "", from: "",
 });
 const currentMovement = ref("");
 const ruleFormRef = ref<FormInstance>();
@@ -70,7 +74,7 @@ const createProjectRules = reactive<FormRules<CreateProjectForm>>({
     product: [
         { validator: validateProductID, trigger: "change" },
     ],
-    trail: [{ required: true, trigger: "change" }],
+    trial: [{ required: true, trigger: "change" }],
     purpose: [{ required: true, trigger: "change" }],
 });
 const items = ref<Item[]>([]);
@@ -92,7 +96,7 @@ watch(configPath, debounce(async () => {
 }, 100));
 
 onMounted(async () => {
-    if (chosenProject.value.purpose) {
+    if (chosenProject.value && chosenProject.value.purpose) {
         rootPath.value = await buildRootPath(chosenProject.value);
     }
     trace.value = await readTrace();
@@ -113,7 +117,7 @@ function switchProject(project: ChosenProject) {
 }
 
 function movementKey(movement: ChosenProject): string {
-    return `${movement.product}|${movement.trail}|${movement.purpose}`;
+    return `${movement.product}|${movement.trial}|${movement.purpose}`;
 }
 
 function movementLabel(movement: string): string {
@@ -126,7 +130,7 @@ function movementChange() {
     if (movements.length > 2) {
         const project = {
             product: movements[0],
-            trail: movements[1],
+            trial: movements[1],
             purpose: movements[2]
         }
         switchProject(project);
@@ -190,7 +194,7 @@ function update() {
 function setChosenProject(project: ChosenProject | undefined) {
     if (project !== undefined) {
         ElMessage({
-            message: `Switch to project: ${project.product.toUpperCase()}-${project.trail.toUpperCase()}-${project.purpose} (${projectKind.value})`,
+            message: `Switch to project: ${project.product.toUpperCase()}-${project.trial.toUpperCase()}-${project.purpose} (${projectKind.value})`,
             type: "success",
         })
         chosenProject.value = project;
@@ -304,7 +308,7 @@ function productCodeSearch(queryString: string, cb: any) {
     cb(queryString.length === 0 ? products : products.filter((product) => product.value.toLowerCase().includes(queryString.toLowerCase())));
 }
 
-function trailCodeSearch(queryString: string, cb: any) {
+function trialCodeSearch(queryString: string, cb: any) {
     let product_code = newProject.value.product;
     if (!product_code || product_code.length === 0) {
         return cb([]);
@@ -313,10 +317,10 @@ function trailCodeSearch(queryString: string, cb: any) {
     if (products.length === 0) {
         return cb([]);
     }
-    const trails = products[0].trails.map((trail) => {
-        return { value: trail.name };
+    const trials = products[0].trials.map((trial) => {
+        return { value: trial.name };
     });
-    cb(queryString.length === 0 ? trails : trails.filter((t) => t.value.toLowerCase().includes(queryString)));
+    cb(queryString.length === 0 ? trials : trials.filter((t) => t.value.toLowerCase().includes(queryString)));
 }
 
 function purposeSearch(queryString: string, cb: any) {
@@ -324,12 +328,12 @@ function purposeSearch(queryString: string, cb: any) {
 }
 
 function fromSearch(queryString: string, cb: any) {
-    const { product, trail } = newProject.value;
-    if (product.length === 0 || trail.length === 0) {
+    const { product, trial } = newProject.value;
+    if (product.length === 0 || trial.length === 0) {
         cb([]);
         return;
     }
-    const purposes = projectList.value.flatMap((product) => product.trails.flatMap((trail) => trail.purpose)).filter((purpose) => purpose.id.includes(`${product}-${trail}`)).map(purpose => { return { value: purpose.name } });
+    const purposes = projectList.value.flatMap((product) => product.trials.flatMap((trial) => trial.purpose)).filter((purpose) => purpose.id.includes(`${product}-${trial}`)).map(purpose => { return { value: purpose.name } });
     cb(queryString.length === 0 ? purposes : purposes.filter((purpose) => purpose.value.includes(queryString.toLowerCase())));
 }
 
@@ -353,10 +357,10 @@ async function createNewProject(formEl: FormInstance | undefined) {
     }
     await createProject(newProject.value);
     showCreateProject.value = false;
-    const { product, trail, purpose } = newProject.value;
+    const { product, trial, purpose } = newProject.value;
     ElMessage({
         type: "success",
-        message: `Project ${product.toUpperCase()}-${trail}-${purpose.toUpperCase()} has been created`,
+        message: `Project ${product.toUpperCase()}-${trial}-${purpose.toUpperCase()} has been created`,
     });
     formEl.resetFields();
     projectList.value = await getProjects();
@@ -449,13 +453,13 @@ async function qcDestinationSelect() {
         <el-main style="padding: 0px;">
             <el-container>
                 <el-header style="padding: 10px 0px 9px 20px; height: 40px; ">
-                    <el-breadcrumb style="margin-top: 7px;float: left;" v-if="chosenProject.purpose"
+                    <el-breadcrumb style="margin-top: 7px;float: left;" v-if="chosenProject"
                         :separator-icon="ArrowRight">
                         <el-breadcrumb-item>
                             <span style="color: #409EFF;">{{ chosenProject.product }}</span>
                         </el-breadcrumb-item>
                         <el-breadcrumb-item>
-                            <span style="color: #409EFF;">{{ chosenProject.trail }}</span>
+                            <span style="color: #409EFF;">{{ chosenProject?.trial }}</span>
                         </el-breadcrumb-item>
                         <el-breadcrumb-item>
                             <span style=" color: #409EFF;">{{ chosenProject.purpose }}</span>
@@ -539,7 +543,7 @@ async function qcDestinationSelect() {
                         </el-tab-pane>
                         <el-tab-pane label="Project Navigator" key="navigator" name="navigator">
                             <ProjectNavigator v-if="chosenProject"
-                                :config="{ product: chosenProject.product, trail: chosenProject.trail, purpose: chosenProject.purpose, kind: projectKind }" />
+                                :config="{ product: chosenProject.product, trial: chosenProject.trial, purpose: chosenProject.purpose, kind: projectKind }" />
                             <div v-else>Please select one project</div>
                         </el-tab-pane>
                     </el-tabs>
@@ -622,11 +626,11 @@ async function qcDestinationSelect() {
                     newProject.product = value.toLowerCase();
                 }" style="width: 90%;" :fetch-suggestions="productCodeSearch" clearable></el-autocomplete>
             </el-form-item>
-            <el-form-item label="Trail Code" prop="trail">
-                <el-autocomplete v-model="newProject.trail" style="width: 90%;" :fetch-suggestions="trailCodeSearch"
+            <el-form-item label="Trial Code" prop="trial">
+                <el-autocomplete v-model="newProject.trial" style="width: 90%;" :fetch-suggestions="trialCodeSearch"
                     clearable />
             </el-form-item>
-            <el-form-item label="Trail Type" prop="purpose">
+            <el-form-item label="Trial Type" prop="purpose">
                 <el-autocomplete v-model="newProject.purpose" :fetch-suggestions="purposeSearch" style="width: 90%;"
                     clearable />
             </el-form-item>

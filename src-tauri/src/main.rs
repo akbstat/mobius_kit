@@ -14,6 +14,7 @@ mod reflector;
 mod scaffold;
 mod user;
 mod utils;
+mod vestige;
 mod void_probe;
 mod voyager;
 
@@ -81,6 +82,9 @@ fn main() {
             inspector::v2::config_illation,
             inspector::v2::list_historical_trials,
             inspector::v2::create_history,
+            vestige::client::list_histories,
+            vestige::client::save_history,
+            vestige::client::remove_histories,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

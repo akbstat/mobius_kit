@@ -4,83 +4,49 @@
 // import Greet from "./components/Greet.vue";
 import { RouterView } from 'vue-router';
 import { currentUser } from "./api/mobiuskit/user";
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { routes } from "./router";
 import "element-plus/theme-chalk/el-message.css";
-import { useDark, useToggle } from '@vueuse/core';
-import { Sunny, Moon } from '@element-plus/icons-vue';
+import { useDark } from '@vueuse/core';
+import ProjectContext from './components/ProjectContext.vue';
 // import 'element-plus/packages/menu-item/src/menu-item.css';
 
 const user = ref("")
 const isDark = useDark();
-const toggleDark = useToggle(isDark);
-const backgroundColor = ref("");
-
-function headerBackgroundColor() {
-  return isDark.value ? "rgb(24.4, 33.8, 43.5)" : "rgb(216.8, 235.6, 255)";
-}
-
-function headerContainerStyle() {
-  return {
-    height: "100%",
-    color: "#409EFF",
-    backgroundColor: headerBackgroundColor(),
-  }
-}
-
-function LogoStyle() {
-  return {
-    fontSize: "20px",
-    textAlign: "center",
-    height: "100%",
-    paddingTop: "15px",
-    color: "#409EFF",
-    backgroundColor: headerBackgroundColor(),
-  }
-}
+const backgroundColor = computed(() => {
+  return isDark.value ? '' : 'white';
+});
 
 onMounted(async () => { user.value = await currentUser(); isDark.value = true })
 </script>
 
 <template>
-  <div :style="{ backgroundColor }">
-    <el-container class="layout-container">
-      <el-header style="text-align: right; padding: 0px 0px 0px 0px">
-        <el-container :style="headerContainerStyle()">
-          <el-aside width="15%" :style="LogoStyle()">AkesoBio
-            - Möbius</el-aside>
-          <el-main style="padding: 15px;">
-            <div class="toolbar">
-              <el-icon style="margin-right: 8px; margin-top: 1px">
-                <ElementPlus />
-              </el-icon>
-              <span>{{ user }}</span>
-              <el-switch inline-prompt :active-icon="Moon" :inactive-icon="Sunny" style="margin-left: 10px;"
-                v-model="isDark" @change="(value: string | number | boolean) => {
-                  backgroundColor = value ? '' : 'white';
-                  toggleDark(value as boolean);
-                }" />
-            </div>
-          </el-main>
-        </el-container>
-      </el-header>
+  <el-container :style="{ backgroundColor }" class="layout-container">
+    <el-header style="padding: 0; height: 85px;">
       <el-container>
-        <el-aside width="15%" height="100%">
-          <el-scrollbar>
-            <el-menu router>
-              <el-menu-item v-for="route in routes" :index="route.path"> {{ route.name }}</el-menu-item>
-            </el-menu>
-          </el-scrollbar>
-        </el-aside>
+        <el-header style="padding: 0; ">
+          <AppHeader :user="user" />
+        </el-header>
         <el-main>
-          <el-scrollbar style="margin: 0;">
-            <RouterView />
-          </el-scrollbar>
+          <ProjectContext v-if="user.length > 0" :user="user" />
         </el-main>
       </el-container>
+    </el-header>
+    <el-container>
+      <el-aside width="15%" height="100%">
+        <el-scrollbar>
+          <el-menu router>
+            <el-menu-item v-for="route in routes" :index="route.path"> {{ route.name }}</el-menu-item>
+          </el-menu>
+        </el-scrollbar>
+      </el-aside>
+      <el-main>
+        <el-scrollbar style="margin: 0;">
+          <RouterView />
+        </el-scrollbar>
+      </el-main>
     </el-container>
-  </div>
-
+  </el-container>
 </template>
 
 <style scoped>
@@ -106,13 +72,5 @@ onMounted(async () => { user.value = await currentUser(); isDark.value = true })
 
 .layout-container .el-main {
   padding: 0;
-}
-
-.layout-container .toolbar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 90%;
-  right: 20px;
 }
 </style>

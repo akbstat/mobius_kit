@@ -47,7 +47,7 @@ pub fn skeleton_generate(param: String) -> Result<(), String> {
     let builder = scaffold::Builder::new(project_root);
     builder
         .set_product_id(&param.product)
-        .set_trial_id(&param.trail);
+        .set_trial_id(&param.trial);
     builder.build(skeleton_document).unwrap();
     builder.build(skeleton_stat).unwrap();
     Ok(())
@@ -114,7 +114,7 @@ pub fn build_root_path(param: String) -> Result<String, String> {
     let project_root = env::var(config::PROJECT_ROOT).unwrap();
     let project_root = Path::new(&project_root)
         .join(param.product)
-        .join(param.trail)
+        .join(param.trial)
         .join(STAT)
         .join(param.purpose);
     Ok(project_root.to_string_lossy().to_string())
@@ -218,6 +218,6 @@ struct GenerateResult {
 #[derive(Debug, Serialize, Deserialize)]
 struct GenerateSkeletonParam {
     pub product: String,
-    pub trail: String,
+    pub trial: String,
     pub purpose: String,
 }

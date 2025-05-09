@@ -1,10 +1,10 @@
 export interface Product {
     id: string,
     name: string,
-    trails: Trail[],
+    trials: Trial[],
 }
 
-export interface Trail {
+export interface Trial {
     id: string,
     name: string,
     purpose: Purpose[],
@@ -17,6 +17,6 @@ export interface Purpose {
 
 export interface ChosenProject {
     product: string,
-    trail: string,
+    trial: string,
     purpose: string,
 }

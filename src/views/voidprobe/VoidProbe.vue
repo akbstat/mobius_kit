@@ -10,9 +10,13 @@ import { probe, getProgress, getProbeResult, openPDF, probeRunning } from "../..
 import { useVoidProbeStore } from "../../store/voidprobe";
 import { storeToRefs } from 'pinia';
 import { listRtfs, Rtf } from '../../api/utils/rtf';
+import { useProjectContext } from '../../store/context';
+import { outputPath } from '../../api/utils/project_path';
 
 const store = useVoidProbeStore();
 const { directory, result } = storeToRefs(store);
+const contextStore = useProjectContext();
+const { project: chosenProject } = storeToRefs(contextStore);
 const files = ref<File[]>([]);
 const selectedFiles = ref<File[]>([]);
 const resultShow = ref(false);
@@ -187,7 +191,20 @@ async function list_rtfs() {
 
 watch(directory, debounce(list_rtfs, 100));
 
-onMounted(list_rtfs);
+watch(chosenProject, async () => {
+    const project = chosenProject.value;
+    if (project) {
+        directory.value = await outputPath(project);
+    }
+})
+
+onMounted(async () => {
+    const project = chosenProject.value;
+    if (project) {
+        directory.value = await outputPath(project);
+    }
+    await list_rtfs();
+});
 
 </script>
 

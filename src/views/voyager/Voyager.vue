@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { writeText } from '@tauri-apps/api/clipboard';
 import { ElMessage, ElNotification } from 'element-plus';
@@ -11,9 +11,13 @@ import { Search, Connection, Aim } from '@element-plus/icons-vue';
 import { storeToRefs } from 'pinia';
 import { useVoyager } from "../../store/voyager";
 import { useDark } from '@vueuse/core';
+import { useProjectContext } from '../../store/context';
+import { latestAcrfFilepath } from '../../api/utils/project_path';
 
 const dialogDisplay = ref(false);
-const { filePath } = storeToRefs(useVoyager())
+const { filePath } = storeToRefs(useVoyager());
+const contextStore = useProjectContext();
+const { project: chosenProject } = storeToRefs(contextStore);
 const annotations = ref<Annotation[]>([]);
 const loading = ref(false);
 const domainSelected = ref("");
@@ -186,6 +190,18 @@ async function selectDirectory() {
 }
 
 onMounted(async () => {
+    if (chosenProject.value) {
+        filePath.value = await latestAcrfFilepath(chosenProject.value);
+    }
+    if (filePath.value.length > 0) {
+        await fetchAnnotations();
+    }
+});
+
+watch(chosenProject, async () => {
+    if (chosenProject.value) {
+        filePath.value = await latestAcrfFilepath(chosenProject.value);
+    }
     if (filePath.value.length > 0) {
         await fetchAnnotations();
     }
@@ -261,7 +277,7 @@ onMounted(async () => {
                         <template #default="scope">
                             <div style="float: left;" v-for="page in scope.row.page">
                                 <el-link type="primary" @click="() => { openAcrf(page) }">{{ page
-                                    }}&#160;&#160;</el-link>
+                                }}&#160;&#160;</el-link>
                             </div>
                         </template>
                     </el-table-column>

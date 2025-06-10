@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { open } from '@tauri-apps/api/dialog';
 import { ElMessageBox, ElTable, ElNotification } from "element-plus";
 import { debounce } from "lodash";
@@ -8,8 +8,12 @@ import { Rtf, rtfExtention } from "./rtf";
 import { invoke } from "@tauri-apps/api/tauri";
 import OutputTag from "../../components/OutputTag.vue";
 import { listRtfs } from "../../api/utils/rtf";
+import { useProjectContext } from '../../store/context';
+import { storeToRefs } from "pinia";
+import { outputPath } from '../../api/utils/project_path';
 
-
+const contextStore = useProjectContext();
+const { project: chosenProject } = storeToRefs(contextStore);
 const configPagesizePageVisible = ref(false);
 const resultPageVisible = ref(false);
 const loading = ref(false);
@@ -103,6 +107,20 @@ async function openResultDirectory() {
 }
 
 watch(directory, debounce(updateRtfList, 100));
+
+watch(chosenProject, async () => {
+    const project = chosenProject.value;
+    if (project) {
+        directory.value = await outputPath(project);
+    }
+})
+
+onMounted(async () => {
+    const project = chosenProject.value;
+    if (project) {
+        directory.value = await outputPath(project);
+    }
+});
 
 </script>
 

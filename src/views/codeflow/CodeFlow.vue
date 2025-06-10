@@ -8,8 +8,12 @@ import { ElNotification, ElTree } from 'element-plus';
 import { useCodeFlow } from "../../store/codeflow";
 import { storeToRefs } from 'pinia';
 import { useDark } from '@vueuse/core';
+import { useProjectContext } from '../../store/context';
+import { projectRootPath } from '../../api/utils/project_path';
 
 const { directory } = storeToRefs(useCodeFlow());
+const contextStore = useProjectContext();
+const { project: chosenProject } = storeToRefs(contextStore);
 const fileTree: Ref<TreeNode[]> = ref([]);
 const unexpectedCounter = computed(() => {
     if (fileTree.value.length === 0) {
@@ -191,7 +195,11 @@ async function submit() {
     await getFileTree();
 }
 
-onMounted(() => {
+onMounted(async () => {
+    if (chosenProject.value) {
+        const root_path = await projectRootPath(chosenProject.value)
+        directory.value = root_path;
+    }
     if (directory.value.length > 0) {
         getFileTree();
     }
@@ -200,6 +208,14 @@ onMounted(() => {
 watch(directory, debounce(async () => {
     await getFileTree()
 }, 100));
+
+watch(chosenProject, async () => {
+    if (chosenProject.value) {
+        const root_path = await projectRootPath(chosenProject.value)
+        directory.value = root_path;
+    }
+    await getFileTree()
+});
 
 </script>
 

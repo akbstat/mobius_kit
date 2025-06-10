@@ -5,7 +5,7 @@ import { createHistory, listAllProjects, listHistoryProjects, Product, Project, 
 import { useDark } from '@vueuse/core';
 
 const emit = defineEmits<{ (e: "toggle", width: string): void; (e: "switch", project: Project): void }>();
-const menuCollapsed = ref(false);
+const menuCollapsed = ref(true);
 const searchProject = ref("");
 const menuMode = computed(() => isHistoryMode.value ? "History" : "All Studies");
 const allProjects = ref<Product[]>([]);
@@ -105,7 +105,7 @@ onMounted(async () => {
                 </el-icon>
             </el-button>
             <el-button @click="switchMenuMode" type="primary" link plain class="menu-switch">{{ menuMode
-                }}</el-button>
+            }}</el-button>
         </el-tag>
         <el-scrollbar :style="scrollbarStyle()" class="scroll" height="589px" max-height="589px">
             <el-menu @select="onSelect" v-if="isHistoryMode">

@@ -120,7 +120,7 @@ watch(() => project.value, debounce(() => {
     <el-container>
         <el-header class="header">
             <div v-if="project">
-                <el-breadcrumb style="margin-top: 7px;float: left;" :separator-icon="ArrowRight">
+                <!-- <el-breadcrumb style="margin-top: 7px;float: left;" :separator-icon="ArrowRight">
                     <el-breadcrumb-item>
                         <span class="breadcrumb-span">{{ project.product }}</span>
                     </el-breadcrumb-item>
@@ -130,7 +130,7 @@ watch(() => project.value, debounce(() => {
                     <el-breadcrumb-item>
                         <span class="breadcrumb-span">{{ project.purpose }}</span>
                     </el-breadcrumb-item>
-                </el-breadcrumb>
+                </el-breadcrumb> -->
                 <el-select @change="updateProjectKind" v-model="selectedKind" size="small" class="kind">
                     <el-option v-for="kind in projectKinds" :value="kind" :label="kind" />
                 </el-select>
@@ -292,7 +292,7 @@ watch(() => project.value, debounce(() => {
 
 .header {
     height: 30px;
-    padding: 3px 3px 3px 10px;
+    padding: 3px 3px 3px 3px;
     margin-bottom: 2px;
 }
 
@@ -301,7 +301,6 @@ watch(() => project.value, debounce(() => {
 }
 
 .kind {
-    margin-left: 15px;
     width: 15%;
 }
 

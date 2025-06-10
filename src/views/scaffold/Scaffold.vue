@@ -42,7 +42,7 @@ let { openedTab, projectKind, trace } = storeToRefs(store);
 let newProject = ref<CreateProjectForm>({
     product: "", trial: "", purpose: "", from: "",
 });
-const currentMovement = ref("");
+// const currentMovement = ref("");
 const ruleFormRef = ref<FormInstance>();
 let showCreateProject = ref(false);
 let showErrorPanel = ref(false);
@@ -120,23 +120,23 @@ function movementKey(movement: ChosenProject): string {
     return `${movement.product}|${movement.trial}|${movement.purpose}`;
 }
 
-function movementLabel(movement: string): string {
-    const movements = movement.split("|");
-    return `${movements[0]}-${movements[1]}-${movements[2]}`;
-}
+// function movementLabel(movement: string): string {
+//     const movements = movement.split("|");
+//     return `${movements[0]}-${movements[1]}-${movements[2]}`;
+// }
 
-function movementChange() {
-    const movements = currentMovement.value.split("|");
-    if (movements.length > 2) {
-        const project = {
-            product: movements[0],
-            trial: movements[1],
-            purpose: movements[2]
-        }
-        switchProject(project);
-    }
-    currentMovement.value = "";
-}
+// function movementChange() {
+//     const movements = currentMovement.value.split("|");
+//     if (movements.length > 2) {
+//         const project = {
+//             product: movements[0],
+//             trial: movements[1],
+//             purpose: movements[2]
+//         }
+//         switchProject(project);
+//     }
+//     currentMovement.value = "";
+// }
 
 function update() {
     fetchOfficalTemplate(projectKind.value).then(data => {
@@ -466,11 +466,11 @@ async function qcDestinationSelect() {
                         </el-breadcrumb-item>
                     </el-breadcrumb>
 
-                    <el-select class="movement-trace" @change="movementChange" v-model="currentMovement"
+                    <!-- <el-select class="movement-trace" @change="movementChange" v-model="currentMovement"
                         placeholder="Movement Tracing" size="small">
                         <el-option v-for="movement in trace" :key="movement" :label="movementLabel(movement)"
                             :value="movement" />
-                    </el-select>
+                    </el-select> -->
                 </el-header>
                 <el-main>
                     <el-radio-group v-model="projectKind" @change="update" style="margin-bottom: 30px;">

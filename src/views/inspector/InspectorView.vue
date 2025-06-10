@@ -7,7 +7,7 @@ import { Project } from '../../api/inspector/inspector';
 import { useProjectContext } from '../../store/context';
 import { storeToRefs } from 'pinia';
 
-const asideWidth = ref("15%");
+const asideWidth = ref("2%");
 // const store = useInspector();
 const contextStore = useProjectContext();
 const { project } = storeToRefs(contextStore);

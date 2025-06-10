@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, Ref, watch } from 'vue';
-import { ArrowRight } from '@element-plus/icons-vue';
 import { Search } from '@element-plus/icons-vue';
 import { groupColor, statusColor, statusContent, qcStatusTagStyle } from "./display";
 import { configIllation, Group, Item, projectKind, ProjectKind, projectStatus } from '../../api/inspector/inspector';

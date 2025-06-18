@@ -36,6 +36,7 @@ fn main() {
             utils::project_path::project_root_path,
             utils::project_path::output_path,
             utils::project_path::latest_arcf_filepath,
+            utils::env::is_prod_env,
             scaffold::scaffold_generate,
             scaffold::get_projects,
             scaffold::skeleton_generate,

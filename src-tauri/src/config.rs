@@ -1,3 +1,4 @@
+use crate::{user::get_user_id, utils};
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 use std::{
@@ -6,8 +7,6 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
-
-use crate::{user::get_user_id, utils};
 
 const CONFIG: &str = "MK_CONFIG";
 const PDF_READER: &str = "MK_PDF_READER";
@@ -41,11 +40,23 @@ pub struct Config {
     pub compass_base_url: String,
 }
 
+#[cfg(feature = "test")]
 pub fn config_env_init() -> Result<(), Box<dyn Error>> {
     let config_path = if let Ok(path) = env::var(CONFIG) {
         path
     } else {
-        r"\\180.0.0.1\Data\Utility\tools\MobiusKit\.config\config.yaml".into()
+        r"\\180.0.0.1\Data\Utility\tools\MobiusKit\.config\config.test.yaml".into()
+    };
+    let config_path = Path::new(&config_path);
+    config_to_env(config_path)
+}
+
+#[cfg(feature = "prod")]
+pub fn config_env_init() -> Result<(), Box<dyn Error>> {
+    let config_path = if let Ok(path) = env::var(CONFIG) {
+        path
+    } else {
+        r"\\180.0.0.1\Data\Utility\tools\MobiusKit\.config\config.prod.yaml".into()
     };
     let config_path = Path::new(&config_path);
     config_to_env(config_path)

@@ -4,13 +4,11 @@ import { open } from '@tauri-apps/api/dialog';
 import { debounce } from "lodash";
 import { inferPathAdam, inferPathSdtm, inferPathTfls } from "../../api/inspector/project";
 import { createFromTemplate, FileResult } from "../../api/scaffold/create";
-import { getProjects, createProject, buildRootPath, openDirectory, listItems, saveTrace, readTrace } from "../../api/scaffold/project";
+import { getProjects, createProject, buildRootPath, openDirectory, listItems, readTrace } from "../../api/scaffold/project";
 import { ElMessage, ElNotification, FormInstance, FormRules, TabPaneName } from 'element-plus';
 import { ErrorInfo } from "./errorInfo";
 import { inferChosenProject, CreateProjectForm, purposes, ProjectKind, Item } from "./scaffold";
 import { ChosenProject, Product } from "../../components/project-list/project";
-import { ArrowRight } from '@element-plus/icons-vue';
-import ProjectList from "../../components/project-list/ProjectList.vue";
 import ProjectNavigator from "../../components/project-navigator/ProjectNavigator.vue";
 import Template from "../../components/template/Template.vue";
 import TaskAssignment from '../../components/task-assignment/TaskAssignment.vue';
@@ -49,7 +47,6 @@ let showErrorPanel = ref(false);
 let errorMessages = ref<ErrorInfo[]>([]);
 let showCompleteDialag = ref(false);
 let loading = ref(false);
-// let projectKind = ref<ProjectKind>(ProjectKind.SDTM);
 let rootPath = ref("");
 let devDestinationPath = ref("");
 let qcDestinationPath = ref("");
@@ -58,7 +55,7 @@ let project = ref("");
 let configs = ref<string[]>([]);
 let engine = ref("SAS 9.4 Unicode")
 let groupDev = ref(true);
-let groupQc = ref(false);
+let groupQc = ref(true);
 let engines = ref<string[]>(["SAS 9.4 Unicode", "SAS 9.4", "SAS EG 8.3"]);
 let customCodePanelShow = ref(false);
 let customCode = ref(["", "", ""]);
@@ -103,39 +100,16 @@ onMounted(async () => {
     projectList.value = await getProjects();
 });
 
-function switchProject(project: ChosenProject) {
-    const key = movementKey(project);
-    let tracing = trace.value;
-    const index = tracing.indexOf(key);
-    if (index > -1) {
-        tracing = tracing.splice(0, index).concat(tracing.splice(1));
-    }
-    tracing.unshift(key);
-    trace.value = tracing;
-    chosenProject.value = project;
-    saveTrace(tracing);
-}
-
-function movementKey(movement: ChosenProject): string {
-    return `${movement.product}|${movement.trial}|${movement.purpose}`;
-}
-
-// function movementLabel(movement: string): string {
-//     const movements = movement.split("|");
-//     return `${movements[0]}-${movements[1]}-${movements[2]}`;
-// }
-
-// function movementChange() {
-//     const movements = currentMovement.value.split("|");
-//     if (movements.length > 2) {
-//         const project = {
-//             product: movements[0],
-//             trial: movements[1],
-//             purpose: movements[2]
-//         }
-//         switchProject(project);
-//     }
-//     currentMovement.value = "";
+// async function switchProject(project: ChosenProject) {
+//     chosenProject.value = project;
+//     const { product, trial, purpose } = chosenProject.value;
+//     const user = await currentUser();
+//     await saveHistory({
+//         user,
+//         product,
+//         trial,
+//         purpose,
+//     });
 // }
 
 function update() {
@@ -437,7 +411,7 @@ async function qcDestinationSelect() {
 
 <template>
     <el-container style="height: 650px;">
-        <el-aside width="200px" style="padding: 5px;">
+        <!-- <el-aside width="200px" style="padding: 5px;">
             <el-container>
                 <el-main style="padding: 0px;">
                     <ProjectList :projects="projectList"
@@ -449,48 +423,34 @@ async function qcDestinationSelect() {
                         plain>New</el-button>
                 </el-footer>
             </el-container>
-        </el-aside>
+        </el-aside> -->
         <el-main style="padding: 0px;">
             <el-container>
-                <el-header style="padding: 10px 0px 9px 20px; height: 40px; ">
-                    <el-breadcrumb style="margin-top: 7px;float: left;" v-if="chosenProject"
-                        :separator-icon="ArrowRight">
-                        <el-breadcrumb-item>
-                            <span style="color: #409EFF;">{{ chosenProject.product }}</span>
-                        </el-breadcrumb-item>
-                        <el-breadcrumb-item>
-                            <span style="color: #409EFF;">{{ chosenProject?.trial }}</span>
-                        </el-breadcrumb-item>
-                        <el-breadcrumb-item>
-                            <span style=" color: #409EFF;">{{ chosenProject.purpose }}</span>
-                        </el-breadcrumb-item>
-                    </el-breadcrumb>
-
-                    <!-- <el-select class="movement-trace" @change="movementChange" v-model="currentMovement"
-                        placeholder="Movement Tracing" size="small">
-                        <el-option v-for="movement in trace" :key="movement" :label="movementLabel(movement)"
-                            :value="movement" />
-                    </el-select> -->
-                </el-header>
                 <el-main>
                     <el-radio-group v-model="projectKind" @change="update" style="margin-bottom: 30px;">
                         <el-radio-button :label="ProjectKind.SDTM" />
                         <el-radio-button :label="ProjectKind.ADaM" />
                         <el-radio-button :label="ProjectKind.TFLs" />
                     </el-radio-group>
+                    <el-button size="small" @click="() => { showCreateProject = true }" type="primary"
+                        style="width: 10px;margin: 8px 0 0 15px;" text>
+                        <el-icon>
+                            <Plus />
+                        </el-icon>
+                    </el-button>
                     <el-tabs tab-position="right" :model-value="openedTab"
                         @tab-change="(tab: TabPaneName) => { openedTab = tab as string }">
                         <el-tab-pane label="Template Builder" key="builder" name="builder">
                             <el-form :rules="createProjectRules" label-position="left" label-width="100px">
                                 <el-form-item label=" Project Root">
-                                    <el-input v-model="rootPath" clearable style="width: 480px;">
+                                    <el-input v-model="rootPath" clearable style="width: 780px;">
                                         <template #prepend>
                                             <el-button @click="rootSelect" :style="buttonStyle">Select</el-button>
                                         </template>
                                     </el-input>
                                 </el-form-item>
                                 <el-form-item label="Configuration">
-                                    <el-select v-model="configPath" style="width: 480px" default-first-option>
+                                    <el-select v-model="configPath" style="width: 735px" default-first-option>
                                         <el-option v-for="config in configs" :label="extractFileName(config)"
                                             :value="config" />
                                     </el-select>
@@ -503,23 +463,17 @@ async function qcDestinationSelect() {
                                     </el-button>
                                 </el-form-item>
                                 <el-form-item label="Project Code">
-                                    <el-input v-model="project" clearable style="width: 480px;" />
+                                    <el-input v-model="project" clearable style="width: 780px;" />
                                 </el-form-item>
                                 <el-form-item label="Code Group">
                                     <el-checkbox v-model="groupDev" label="Dev" size="default" />
                                     <el-checkbox v-model="groupQc" label="Qc" size="default" />
                                 </el-form-item>
-                                <el-form-item label="SAS Version">
-                                    <el-select v-model="engine" style="width: 480px" default-first-option>
-                                        <el-option v-for="engine in engines" :key="engine" :label="engine"
-                                            :value="engine" />
-                                    </el-select>
-                                </el-form-item>
                                 <el-form-item label="Custom Code">
                                     <el-button type="primary" @click="showCustomPanel" plain>Edit</el-button>
                                 </el-form-item>
                                 <el-form-item v-if="groupDev" label="Dev Folder">
-                                    <el-input v-model="devDestinationPath" clearable style="width: 480px;">
+                                    <el-input v-model="devDestinationPath" clearable style="width: 780px;">
                                         <template #prepend>
                                             <el-button :style="buttonStyle" type="primary" @click="devDestinationSelect"
                                                 plain>Select</el-button>
@@ -527,7 +481,7 @@ async function qcDestinationSelect() {
                                     </el-input>
                                 </el-form-item>
                                 <el-form-item v-if="groupQc" label="Qc Folder">
-                                    <el-input v-model="qcDestinationPath" clearable style="width: 480px;">
+                                    <el-input v-model="qcDestinationPath" clearable style="width: 780px;">
                                         <template #prepend>
                                             <el-button :style="buttonStyle" type="primary" @click="qcDestinationSelect"
                                                 plain>Select</el-button>
@@ -554,9 +508,8 @@ async function qcDestinationSelect() {
 
     </el-container>
     <el-dialog v-model="showCompleteDialag" title="Complete" draggable>
-        <el-descriptions :column="2" direction="vertical" border>
+        <el-descriptions :column="1" direction="vertical" border>
             <el-descriptions-item label="Project Code">{{ project }}</el-descriptions-item>
-            <el-descriptions-item label="SAS Version">{{ engine }}</el-descriptions-item>
             <el-descriptions-item v-if="groupDev" label="Dev Directory" :span="2">
                 <el-button type="primary" link style="width: 514px; justify-content: left"
                     @click="() => { openDirectory(devDestinationPath) }">

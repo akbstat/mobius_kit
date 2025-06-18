@@ -26,3 +26,15 @@ Then launch with `cargo tauri dev`:
 ```bash
 $ cargo tauri dev
 ```
+
+## Build Binary Execution File:
+
+### Test Env
+```bash
+$ cargo build --release
+```
+
+### Prod Env
+```bash
+$ cargo build --release --no-default-features --features=prod
+```

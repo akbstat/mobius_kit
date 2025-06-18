@@ -1,4 +1,5 @@
 pub mod directory;
+pub mod env;
 pub mod project_path;
 mod rtf;
 

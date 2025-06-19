@@ -10,6 +10,7 @@ import CodeFlow from "../views/codeflow/CodeFlow.vue";
 import Voyager from "../views/voyager/Voyager.vue";
 import Fusion from "../views/fusion/Fusion.vue";
 import Reflector from "../views/reflector/Reflector.vue";
+import AtemView from "../views/atem/AtemView.vue";
 
 
 export const routes: RouteRecordRaw[] = [
@@ -57,6 +58,11 @@ export const routes: RouteRecordRaw[] = [
         path: "/reflector",
         name: "Reflector",
         component: Reflector,
+    },
+    {
+        path: "/atem",
+        name: "Atem",
+        component: AtemView,
     },
 ];
 

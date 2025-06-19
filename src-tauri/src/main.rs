@@ -4,6 +4,7 @@
 use config::config_env_init;
 use scaffold::template;
 
+mod atem;
 mod code_flow;
 mod combiner;
 mod config;
@@ -89,6 +90,10 @@ fn main() {
             vestige::client::list_histories,
             vestige::client::save_history,
             vestige::client::remove_histories,
+            atem::list_project_version,
+            atem::list_forms,
+            atem::list_items,
+            atem::list_annotation_by_form,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

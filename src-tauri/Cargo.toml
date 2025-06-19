@@ -31,6 +31,7 @@ code_flow = { path = "../../code_flow" }
 voyager = { path = "../../voyager" }
 fusion = { path = "../../fusion" }
 reflector = { path = "../../reflector" }
+atem = { path = "../../atem" }
 anyhow = "1.0.77"
 serde_yaml = "0.9.32"
 winapi = { version = "0.3.9", features = ["winbase"] }

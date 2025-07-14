@@ -2,12 +2,25 @@ use crate::atem::usecase::ATEM_USECASE;
 use atem::dto::rawdata::{
     CreateEDCVersionRequest, GetFormByIdReply, ListFormsReply, ListFormsRequest, ListItemsReply,
     ListItemsRequest, ListProjectVersionReply, ListProjectVersionRequest,
+    ModifyProjectVersionRequest,
 };
 
 #[tauri::command]
 pub async fn create_project_version(request: CreateEDCVersionRequest) -> Result<(), String> {
     ATEM_USECASE
         .create_project_version(&request)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn modify_project_version(
+    id: i32,
+    request: ModifyProjectVersionRequest,
+) -> Result<(), String> {
+    ATEM_USECASE
+        .modify_project_version(id, &request)
         .await
         .map_err(|e| e.to_string())?;
     Ok(())

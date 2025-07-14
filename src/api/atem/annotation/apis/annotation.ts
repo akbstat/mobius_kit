@@ -50,7 +50,7 @@ export async function createAnnotationVersion(request: CreateAnnotationVersionRe
 }
 
 export async function modifyAnnotationVersion(request: AnnotationVersion) {
-    console.log(`Modify annotation version: ${request}`);
+    await invoke("modify_annotation_version", { id: request.id, request: { name: request.name, description: request.description } });
 }
 
 export async function removeAnnotationVersion(id: number) {

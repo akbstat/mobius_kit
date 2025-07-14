@@ -30,10 +30,8 @@ export async function removeProjectVersion(id: number) {
 }
 
 export async function modifyProjectVersion(version: ProjectVersion) {
-    console.log(`Modify project version: ${version}`);
+    await invoke("modify_project_version", { id: version.id, request: { name: version.name } });
 }
-
-// export async function createProjectVersion(project)
 
 export interface FormInfo {
     id: number;

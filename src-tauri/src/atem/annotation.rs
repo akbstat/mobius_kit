@@ -3,7 +3,8 @@ use atem::{
     dto::annotation::{
         AnnotationVersion, CreateAnnotationRequest, CreateAnnotationVersionRequest,
         CreateFormDomainRequest, FormDomain, ListAnnotationByFormRequest,
-        ListAnnotationVersionRequest, ListFormDomainRequest, UpdateAnnootationRequest,
+        ListAnnotationVersionRequest, ListFormDomainRequest, ModifyAnnotationVersionRequest,
+        UpdateAnnootationRequest,
     },
     entity::annotation::AnnotationCollection,
 };
@@ -62,6 +63,18 @@ pub async fn create_annotation_version(
 ) -> Result<(), String> {
     ATEM_USECASE
         .create_annotation_version(&request)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn modify_annotation_version(
+    id: i32,
+    request: ModifyAnnotationVersionRequest,
+) -> Result<(), String> {
+    ATEM_USECASE
+        .modify_annotation_version(id, &request)
         .await
         .map_err(|e| e.to_string())?;
     Ok(())

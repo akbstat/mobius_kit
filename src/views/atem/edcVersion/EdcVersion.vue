@@ -66,6 +66,7 @@ async function updateProjectVersions(project: { product: string, trial: string }
     }
     const { product, trial } = project;
     const versions = (await listProjectVersions({ product, trial })).data;
+    versions.sort((x, y) => x.id - y.id < 0 ? -1 : 1);
     projectVersions.value = versions;
 
     if (activeProjectVersionId.value && versions.map(v => v.id).includes(activeProjectVersionId.value)) {

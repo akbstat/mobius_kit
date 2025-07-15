@@ -54,6 +54,11 @@ function cancel() {
     emit("cancel");
 }
 
+function changeDomain() {
+    selectedVariable.value = "";
+    clearDisplayAndChange();
+}
+
 async function submit() {
     if (activeAnnoationVersionId && activeFormId) {
         await createOrUpdateAnnotation({
@@ -146,7 +151,7 @@ watch(() => selectedDomainId.value, async () => {
             <el-switch @change="clearDisplayAndChange" :disabled="notSubmit" v-model="supp" />
         </el-form-item>
         <el-form-item v-if="!notSubmit" label="Domain">
-            <el-select :disabled="notSubmit" v-model="selectedDomainId">
+            <el-select @change="changeDomain" :disabled="notSubmit" v-model="selectedDomainId">
                 <el-option v-for="domain in activeFormDomains" :key="domain.id"
                     :label="`${domain.name}(${domain.description})`" :value="domain.id as number" />
             </el-select>

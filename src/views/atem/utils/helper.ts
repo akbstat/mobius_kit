@@ -35,7 +35,16 @@ export function buildFormAnnotation(annotations?: AnnotationCollection): Annotat
     if (!annotations) {
         return [];
     }
-    return annotations.form;
+    const form = annotations.form;
+    form.sort((x, y) => {
+        const variableX = x.variable;
+        const variableY = y.variable;
+        if (variableX && variableY) {
+            return variableX.domainId - variableY.domainId;
+        }
+        return 0;
+    });
+    return form;
 }
 
 export function buildItemsAnnotation(items: Item[], annotations?: AnnotationCollection): ItemAnnotation[] {

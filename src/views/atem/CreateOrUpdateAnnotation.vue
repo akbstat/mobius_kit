@@ -8,7 +8,7 @@ import { AnnotationLocation } from '../../api/atem/annotation/interfaces/annotat
 
 const { activeFormDomains, activeAnnoationVersionId, activeFormId, sdtmVersionId } = useAtem();
 const notSubmitDisplay = "[NOT SUBMITTED]";
-const { annotation, location } = defineProps<{ annotation?: Annotation, kind: AnnotationKind, location: AnnotationLocation }>();
+const { annotation, location, formLevel } = defineProps<{ annotation?: Annotation, kind: AnnotationKind, location: AnnotationLocation, formLevel?: boolean }>();
 const emit = defineEmits<{ (e: "submit"): void; (e: "cancel"): void }>();
 const variables: Ref<string[]> = ref([]);
 
@@ -128,6 +128,8 @@ onMounted(async () => {
         selectedVariable.value = variable ? variable.name : "";
         isAssign.value = assign;
         display.value = annotationDisplay;
+    } else {
+        isAssign.value = formLevel ? true : false;
     }
 });
 

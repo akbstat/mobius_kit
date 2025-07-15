@@ -89,7 +89,7 @@ async function hideCreateDomainDialogDisplay(submit: boolean) {
     <el-dialog destroy-on-close v-model="createNewAnnotationDialogDisplay" title="Create New Annotation For Form">
         <CreateOrUpdateAnnotation @submit="updateAnnotation" @cancel="hideCreateAnnotationDialog"
             :annotation="undefined" :kind="AnnotationKind.Form"
-            :location="{ sourceId: props.form.id, kind: AnnotationKind.Form }" />
+            :location="{ sourceId: props.form.id, kind: AnnotationKind.Form }" :form-level="true" />
     </el-dialog>
 </template>
 

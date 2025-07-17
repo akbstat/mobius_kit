@@ -7,8 +7,8 @@ import { ElLoading, ElMessage } from 'element-plus';
 import { createProjectVersion } from '../../../api/atem/metadata/apis/sdtm';
 
 const emit = defineEmits<{ (e: "close"): void }>();
-const edcKinds = [{ value: 1, label: "eCollect" }]
-const edcKind: Ref<number | undefined> = ref(1);
+const edcKinds = [{ value: 1, label: "eCollect (elder)" }, { value: 2, label: "eCollect (V6)" }]
+const edcKind: Ref<number | undefined> = ref(2);
 const versionName = ref("");
 const edcConfigFile = ref("");
 const { project } = useProjectContext();
@@ -29,7 +29,7 @@ async function submit() {
             trial: project.trial,
             versionName: versionName.value,
             edcFilepath: edcConfigFile.value,
-            edcKind: edcKind.value ? edcKind.value : 1,
+            edcKind: edcKind.value ? edcKind.value : 2,
         });
         ElMessage.success("Create EDC version succeesully");
     } catch (e) {
@@ -42,7 +42,7 @@ async function submit() {
 async function selectEDCConfig() {
     edcConfigFile.value = (await open({
         filters: [{
-            extensions: ["xls", "xlsx"],
+            extensions: ["xlsx"],
             name: ''
         }]
     })) as string;
@@ -52,7 +52,7 @@ listen('tauri://file-drop', event => {
     const payloads = event.payload as string[];
     if (payloads.length > 0) {
         const file = payloads[0];
-        edcConfigFile.value = file.endsWith(".xlsx") ? file : (file.endsWith(".xls") ? file : "");
+        edcConfigFile.value = file.endsWith(".xlsx") ? file : "";
     }
 })
 </script>

@@ -102,7 +102,7 @@ onMounted(async () => {
         <el-option style="padding: 0 5px 0 15px" v-for="version in annotationVersions" :key="version.id"
             :value="version.id" :label="annotationVersionLabel(version)">
             <div>
-                {{ version.name }}
+                {{ `${version.name} ${version.description.length > 0 ? `(${version.description})` : ""}` }}
                 <div style="float: right;">
                     <el-button @click.stop="() => { showModifyAnnotationVersionDialog(version) }" type="primary"
                         size="small" text>

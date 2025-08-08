@@ -1,8 +1,8 @@
 use crate::atem::usecase::ATEM_USECASE;
 use atem::dto::rawdata::{
-    CreateEDCVersionRequest, GetFormByIdReply, ListFormsReply, ListFormsRequest, ListItemsReply,
-    ListItemsRequest, ListProjectVersionReply, ListProjectVersionRequest,
-    ModifyProjectVersionRequest,
+    CreateEDCVersionRequest, GetFormByIdReply, Item, ItemOption, ItemUnit, ListFormsReply,
+    ListFormsRequest, ListItemsReply, ListItemsRequest, ListProjectVersionReply,
+    ListProjectVersionRequest, ModifyProjectVersionRequest,
 };
 
 #[tauri::command]
@@ -53,6 +53,33 @@ pub async fn get_form_by_id(id: i32) -> Result<GetFormByIdReply, String> {
         .await
         .map_err(|e| e.to_string())?;
     Ok(forms)
+}
+
+#[tauri::command]
+pub async fn get_item_by_id(id: i32) -> Result<Option<Item>, String> {
+    let item = ATEM_USECASE
+        .get_item_by_id(id)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(item)
+}
+
+#[tauri::command]
+pub async fn get_option_by_id(id: i32) -> Result<Option<ItemOption>, String> {
+    let option = ATEM_USECASE
+        .get_option_by_id(id)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(option)
+}
+
+#[tauri::command]
+pub async fn get_unit_by_id(id: i32) -> Result<Option<ItemUnit>, String> {
+    let unit = ATEM_USECASE
+        .get_unit_by_id(id)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(unit)
 }
 
 #[tauri::command]

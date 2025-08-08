@@ -74,6 +74,7 @@ export interface Item {
 
 export interface ItemOption {
     id: number;
+    itemId: number;
     optionValue: string,
     optionDisplay: string,
     optionOrder: number,
@@ -82,6 +83,7 @@ export interface ItemOption {
 export interface ItemUnit {
     id: number,
     name: string,
+    itemId: number;
     unitOrder: number,
 }
 

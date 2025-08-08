@@ -8,14 +8,13 @@ import { Language, SdtmVersion } from '../../api/atem/metadata/interfaces/sdtm';
 
 
 const store = useAtem();
-const { languageId, sdtmVersionId } = storeToRefs(store);
+const { languageId, sdtmVersionId, logSpread } = storeToRefs(store);
 const emit = defineEmits<{
     (e: "submit", config: Config): void;
     (e: "cancel"): void;
 }>();
 const sdtmVersions: Ref<SdtmVersion[]> = ref([]);
 const languages: Ref<Language[]> = ref([]);
-const logSpread = ref(true);
 const config: Ref<Config> = ref({ selectedVersionId: 1, selectedLangId: 1, logSpread: true });
 
 async function changeLanguage() {

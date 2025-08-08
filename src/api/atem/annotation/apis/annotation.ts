@@ -1,5 +1,7 @@
 import { invoke } from "@tauri-apps/api";
 import { AnnotationCollection, AnnotationKind, AnnotationVersion, CreateAnnotationRequest, CreateAnnotationVersionRequest, CreateOrUpdateAnnotationRequest, UpdateAnnotationRequest } from "../interfaces/annotation";
+import { useAtem } from "../../../../store/atem";
+import { Item, ItemOption, ItemUnit } from "../../rawdata/apis/rawdata";
 
 export async function listAnnotationVersion(projectVersionId: number): Promise<AnnotationVersion[]> {
     const versions = await invoke<AnnotationVersion[]>("list_annotation_version", { request: { projectVersionId } });
@@ -17,8 +19,10 @@ export async function listAnnotationByForm(request: { formId: number, annotation
 }
 
 export async function createOrUpdateAnnotation(request: CreateOrUpdateAnnotationRequest): Promise<void> {
-    const { id, annotationVersionId, formId, location, assign, annotationDisplay, newVariable, notSubmit } = request;
+    const { id, annotationVersionId, formId, location, assign, annotationDisplay, newVariable, notSubmit, logSpread } = request;
     const { sourceId, kind } = location;
+
+    // update annotation
     if (id) {
         await updateAnnotation(id, {
             assign: assign,
@@ -28,17 +32,22 @@ export async function createOrUpdateAnnotation(request: CreateOrUpdateAnnotation
         });
         return;
     }
-    await createAnnotation({
-        annotationVersionId,
-        formId,
-        location: {
-            sourceId,
-            kind: annotationKindToString(kind as AnnotationKind),
-        },
-        assign,
-        annotationDisplay,
-        variable: notSubmit ? undefined : newVariable,
-    });
+
+    // create annotation
+    const sourceIdList = logSpread ? await traceLoglineIds(sourceId, kind as AnnotationKind) : [sourceId];
+    for (const sourceId of sourceIdList) {
+        await createAnnotation({
+            annotationVersionId,
+            formId,
+            location: {
+                sourceId,
+                kind: annotationKindToString(kind as AnnotationKind),
+            },
+            assign,
+            annotationDisplay,
+            variable: notSubmit ? undefined : newVariable,
+        });
+    }
 }
 
 export async function removeAnnotation(id: number): Promise<void> {
@@ -65,6 +74,50 @@ async function updateAnnotation(id: number, request: UpdateAnnotationRequest): P
     await invoke("update_annotation", { id, request });
 }
 
+async function traceLoglineIds(sourceId: number, kind: AnnotationKind): Promise<number[]> {
+    if (kind === AnnotationKind.Form) {
+        return [sourceId]
+    }
+    const traceKey = await buildTraceKey(sourceId, kind);
+    const loglineTracer = useAtem().loglineTracer;
+    return loglineTracer.get(traceKey) || [];
+}
+
+async function buildTraceKey(sourceId: number, kind: AnnotationKind): Promise<string> {
+    if (kind === AnnotationKind.Item || kind === AnnotationKind.ItemValue) {
+        const item = await getItemById(sourceId);
+        return item ? item.name : "";
+    }
+    if (kind === AnnotationKind.Option) {
+        const option = await getOptionById(sourceId);
+        if (!option) {
+            return "";
+        }
+        const item = await getItemById(option.itemId);
+        return `${item?.name}|O|${option.optionOrder}`;
+    }
+    if (kind === AnnotationKind.Unit) {
+        const unit = await getUnitById(sourceId);
+        if (!unit) {
+            return "";
+        }
+        const item = await getItemById(unit.itemId);
+        return `${item?.name}|U|${unit.unitOrder}`;
+    }
+    return "";
+}
+
+async function getItemById(sourceId: number): Promise<Item | undefined> {
+    return await invoke<Item | undefined>("get_item_by_id", { id: sourceId });
+}
+
+async function getOptionById(sourceId: number): Promise<ItemOption | undefined> {
+    return await invoke<ItemOption | undefined>("get_option_by_id", { id: sourceId });
+}
+
+async function getUnitById(sourceId: number): Promise<ItemUnit | undefined> {
+    return await invoke<ItemUnit | undefined>("get_unit_by_id", { id: sourceId });
+}
 
 function annotationKindConvert(kind: string): AnnotationKind {
     switch (kind) {

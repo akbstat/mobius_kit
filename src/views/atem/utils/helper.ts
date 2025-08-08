@@ -5,6 +5,7 @@ import { Annotation, AnnotationCollection } from "../../../api/atem/annotation/i
 import { ItemAnnotation, ItemOptionAnnotation, ItemUnitAnnotation } from "./interfaces";
 import { FormInfo, Item } from "../../../api/atem/rawdata/apis/rawdata";
 import { listLanguages, listSdtmVersion } from "../../../api/atem/metadata/apis/sdtm";
+import _ from "lodash";
 
 export function tagStyle(order: number): EpPropMergeType<StringConstructor, "success" | "warning" | "info" | "primary" | "danger", unknown> | undefined {
     switch (order) {
@@ -156,4 +157,36 @@ export async function getDefaultSdtmVersionAndLanguageId(): Promise<{ sdtmVersio
     const language = languages.length > 0 ? languages[0].id : undefined;
     const sdtmVersion = language ? (await listSdtmVersion(language as number))[0].id : undefined;
     return { language, sdtmVersion }
+}
+
+
+export function loglineTracing(annotations: ItemAnnotation[]): Map<string, number[]> {
+    const mapper = new Map<string, number[]>();
+    annotations.forEach(annotation => {
+        const ids = mapper.get(annotation.name);
+        if (ids) {
+            ids.push(annotation.id);
+        } else {
+            mapper.set(annotation.name, [annotation.id]);
+        }
+        annotation.itemOption?.forEach(option => {
+            const optionName = `${annotation.name}|O|${option.optionOrder}`;
+            const optionIds = mapper.get(optionName);
+            if (optionIds) {
+                optionIds.push(option.id);
+            } else {
+                mapper.set(optionName, [option.id]);
+            }
+        });
+        annotation.itemUnit?.forEach(unit => {
+            const unitName = `${annotation.name}|U|${unit.unitOrder}`;
+            const unitIds = mapper.get(unitName);
+            if (unitIds) {
+                unitIds.push(unit.id);
+            } else {
+                mapper.set(unitName, [unit.id]);
+            }
+        });
+    });
+    return mapper;
 }

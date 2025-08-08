@@ -12,5 +12,6 @@ export const useAtem = defineStore("atem", {
         sdtmVersionId: 0 as number | undefined,
         scrollValue: 0,
         logSpread: true,
+        loglineTracer: new Map<string, number[]>(),
     }),
 });

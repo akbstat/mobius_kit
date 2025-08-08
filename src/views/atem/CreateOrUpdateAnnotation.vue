@@ -6,7 +6,7 @@ import { listSdtmDomains, listSdtmVariables } from '../../api/atem/metadata/apis
 import { Annotation, AnnotationKind } from '../../api/atem/annotation/interfaces/annotation';
 import { AnnotationLocation } from '../../api/atem/annotation/interfaces/annotation';
 
-const { activeFormDomains, activeAnnoationVersionId, activeFormId, sdtmVersionId } = useAtem();
+const { activeFormDomains, activeAnnoationVersionId, activeFormId, sdtmVersionId, logSpread } = useAtem();
 const notSubmitDisplay = "[NOT SUBMITTED]";
 const { annotation, location, formLevel } = defineProps<{ annotation?: Annotation, kind: AnnotationKind, location: AnnotationLocation, formLevel?: boolean }>();
 const emit = defineEmits<{ (e: "submit"): void; (e: "cancel"): void }>();
@@ -70,6 +70,7 @@ async function submit() {
             annotationDisplay: notSubmit.value ? notSubmitDisplay : display.value,
             newVariable: notSubmit.value ? undefined : imcomingVariable.value,
             notSubmit: notSubmit.value,
+            logSpread: logSpread,
         });
         emit("submit")
     }

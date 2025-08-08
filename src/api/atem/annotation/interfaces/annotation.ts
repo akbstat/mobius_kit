@@ -9,6 +9,7 @@ export interface CreateOrUpdateAnnotationRequest {
     annotationDisplay: string;
     newVariable?: NewAnnotationVariable;
     notSubmit: boolean,
+    logSpread?: boolean,
 }
 
 export interface AnnotationVariable {

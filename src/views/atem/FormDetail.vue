@@ -12,10 +12,10 @@ import { listDomainByForm } from '../../api/atem/annotation/apis/domain';
 import { FormInfo, getFormById, listItems } from '../../api/atem/rawdata/apis/rawdata';
 import { Annotation } from '../../api/atem/annotation/interfaces/annotation';
 import { listAnnotationByForm } from '../../api/atem/annotation/apis/annotation';
-import { buildFormAnnotation, buildItemsAnnotation } from './utils/helper';
+import { buildFormAnnotation, buildItemsAnnotation, loglineTracing } from './utils/helper';
 
 const store = useAtem();
-const { activeFormId, activeFormDomains, activeAnnoationVersionId, domainOrder, scrollValue } = storeToRefs(store);
+const { activeFormId, activeFormDomains, activeAnnoationVersionId, domainOrder, scrollValue, loglineTracer } = storeToRefs(store);
 const form: Ref<FormInfo | null> = ref(null);
 const items: Ref<ItemAnnotation[]> = ref([]);
 const formAnnotations: Ref<Annotation[]> = ref([]);
@@ -32,13 +32,14 @@ async function getFormDetail() {
         return;
     }
     const loadingInstance = ElLoading.service({ fullscreen: false, target: ".item-area", text: "loading" });
-    const itmeList = await listItems(activeFormId.value);
+    const itemList = await listItems(activeFormId.value);
     const formId = activeFormId.value;
     const annotationVersionId = activeAnnoationVersionId.value;
     const annotations = activeAnnoationVersionId.value ? await listAnnotationByForm({ formId, annotationVersionId }) : undefined;
     activeFormDomains.value = await listDomainByForm({ formId, annotationVersionId });
     domainOrder.value = new Map(activeFormDomains.value.map((domain, index) => [domain.id, index])) as Map<number, number>;
-    items.value = buildItemsAnnotation(itmeList, annotations);
+    items.value = buildItemsAnnotation(itemList, annotations);
+    loglineTracer.value = loglineTracing(items.value);
     formAnnotations.value = buildFormAnnotation(annotations);
     loadingInstance.close();
     key.value++;

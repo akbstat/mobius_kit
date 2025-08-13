@@ -81,6 +81,14 @@ pub async fn modify_annotation_version(
 }
 
 #[tauri::command]
+pub async fn remove_annotation_version(id: i32) -> Result<(), String> {
+    ATEM_USECASE
+        .remove_annotation_version(id)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn list_form_domain(request: ListFormDomainRequest) -> Result<Vec<FormDomain>, String> {
     let domains = ATEM_USECASE
         .list_form_domains(request)

@@ -110,12 +110,12 @@ onMounted(async () => {
                             <Edit />
                         </el-icon>
                     </el-button>
-                    <!-- <el-button @click.stop="() => { showAnnotationVersionDialog(version) }" style="margin: 0;"
+                    <el-button @click.stop="() => { showAnnotationVersionDialog(version) }" style="margin: 0;"
                         type="danger" size="small" text>
                         <el-icon size="small">
                             <Delete />
                         </el-icon>
-                    </el-button> -->
+                    </el-button>
                 </div>
             </div>
         </el-option>

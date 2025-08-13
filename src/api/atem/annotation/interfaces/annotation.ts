@@ -135,4 +135,5 @@ export interface CreateAnnotationVersionRequest {
     projectVersionId: number;
     name: string;
     description: string;
+    sourceVersionId?: number;
 }

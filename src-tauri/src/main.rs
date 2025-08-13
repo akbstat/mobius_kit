@@ -103,6 +103,7 @@ fn main() {
             atem::annotation::list_annotation_version,
             atem::annotation::create_annotation_version,
             atem::annotation::modify_annotation_version,
+            atem::annotation::remove_annotation_version,
             atem::annotation::list_form_domain,
             atem::annotation::create_form_domain,
             atem::annotation::remove_form_domain,

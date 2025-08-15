@@ -34,7 +34,7 @@ const removeTaskConfirmDisplay = ref(false);
 const removeOutputConfirmDisplay = ref(false);
 const fusionProgressDisplay = ref(false);
 const config: Ref<{ id: string | null, name: string }> = ref({ id: null, name: "" });
-const { fusionConfig, previousTaskStartTime } = storeToRefs(useFusion());
+const { fusionConfig, previousTaskStartTime, isOncology } = storeToRefs(useFusion());
 const titleMissingTasks: Ref<{ name: string, files: string[] }[]> = ref([]);
 // -1 stands for all task prepare to fusion, other stands for task indexes in task list
 const prepareToFusion = ref(-1);
@@ -203,6 +203,7 @@ async function configSubmit(cfg: GeneralConfig, configRecord: ConfigRecord | nul
     fusionConfig.value.top = top;
     configDrawerDisplay.value = false;
     rtfs.value = await listRtfsWithTitle(source, top);
+    updateTitles();
 }
 
 async function saveConfigSumit(saveAs: boolean, name: string) {
@@ -228,6 +229,32 @@ async function titleMissingListClose(submit: boolean) {
     }
 }
 
+function oncologySwitch() {
+    isOncology.value = !isOncology.value;
+    updateTitles();
+}
+
+function updateTitles() {
+    const lang = fusionConfig.value.tasks[activeTaskIndex.value].language;
+    if (lang === "EN") {
+        return;
+    }
+    fusionConfig.value.tasks.forEach(task => {
+        task.files.forEach(file => {
+            if (file.title.length === 0) {
+                return;
+            }
+            if (isOncology.value) {
+                file.title = file.title.replace(/^表格\s/, "表 ");
+                file.title = file.title.replace(/^图表\s/, "图 ");
+            } else {
+                file.title = file.title.replace(/^表\s/, "表格 ");
+                file.title = file.title.replace(/^图\s/, "图表 ");
+            }
+        });
+    });
+}
+
 onMounted(async () => {
     let { source, top } = fusionConfig.value;
     if (source.length > 0 && top.length > 0) {
@@ -242,10 +269,12 @@ onMounted(async () => {
     <el-container>
         <el-header style="padding: 5px 0 5px 5px; height: auto;">
             <el-tag size="large" style="width: 557px; margin-right: 2px;">{{ fusionConfig.tasks.length > 0
-                ? `Task: ${fusionConfig.tasks[activeTaskIndex].name}` : "No Task" }}
+                ? `Task: ${fusionConfig.tasks[activeTaskIndex].name}
+                (${fusionConfig.tasks[activeTaskIndex].files.length} Outputs)` :
+                "No Task" }}
             </el-tag>
-            <el-tag size="large" style="width: 100px; margin-right: 5px;">
-                Output: {{ fusionConfig.tasks.length > 0 ? fusionConfig.tasks[activeTaskIndex].files.length : 0 }}
+            <el-tag @click="oncologySwitch" size="large" style="width: 100px; margin-right: 5px;">
+                {{ isOncology ? "Oncology" : "Not Oncology" }}
             </el-tag>
             <div style="float: right; margin-right: 5px;">
                 <el-tooltip content="Quick Creation">
@@ -440,6 +469,7 @@ onMounted(async () => {
             @submit="(outputs) => {
                 outputs.forEach(output => fusionConfig.tasks[activeTaskIndex].files.push(output));
                 appendOutputDisplay = false;
+                updateTitles();
             }" @close="() => { appendOutputDisplay = false; }" />
     </el-dialog>
     <el-dialog draggable destroy-on-close width="60%" v-model="updateTaskConfigDisplay"

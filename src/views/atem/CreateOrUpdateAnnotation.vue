@@ -5,12 +5,14 @@ import { createOrUpdateAnnotation } from '../../api/atem/annotation/apis/annotat
 import { listSdtmDomains, listSdtmVariables } from '../../api/atem/metadata/apis/sdtm';
 import { Annotation, AnnotationKind } from '../../api/atem/annotation/interfaces/annotation';
 import { AnnotationLocation } from '../../api/atem/annotation/interfaces/annotation';
+import { getItemById } from '../../api/atem/rawdata/apis/rawdata';
 
 const { activeFormDomains, activeAnnoationVersionId, activeFormId, sdtmVersionId, logSpread } = useAtem();
 const notSubmitDisplay = "[NOT SUBMITTED]";
 const { annotation, location, formLevel } = defineProps<{ annotation?: Annotation, kind: AnnotationKind, location: AnnotationLocation, formLevel?: boolean }>();
 const emit = defineEmits<{ (e: "submit"): void; (e: "cancel"): void }>();
 const variables: Ref<string[]> = ref([]);
+const sourceItemName = ref("");
 
 const whenVariable = ref("");
 const whenValue = ref("");
@@ -41,6 +43,12 @@ const isAssign = ref(false);
 const supp = ref(false);
 const display = ref("");
 
+function supplementalChange() {
+    if (supp.value) {
+        selectedVariable.value = sourceItemName.value;
+    }
+    clearDisplayAndChange();
+}
 
 function clearDisplayAndChange() {
     display.value = "";
@@ -118,6 +126,10 @@ onMounted(async () => {
     } else if (activeFormDomains.length > 0) {
         selectedDomainId.value = activeFormDomains[0].id;
     }
+    if (location.kind == AnnotationKind.Item) {
+        const item = await getItemById(location.sourceId);
+        sourceItemName.value = item ? item.name : "";
+    }
     if (annotation) {
         const { variable, assign, annotationDisplay } = annotation;
         if (annotationDisplay.trim() === notSubmitDisplay) {
@@ -151,7 +163,7 @@ watch(() => selectedDomainId.value, async () => {
             <el-switch v-model="notSubmit" @change="clearDisplayAndChange" />
         </el-form-item>
         <el-form-item v-if="!notSubmit" label="Supplemental">
-            <el-switch @change="clearDisplayAndChange" :disabled="notSubmit" v-model="supp" />
+            <el-switch @change="supplementalChange" :disabled="notSubmit" v-model="supp" />
         </el-form-item>
         <el-form-item v-if="!notSubmit" label="Domain">
             <el-select @change="changeDomain" :disabled="notSubmit" v-model="selectedDomainId">

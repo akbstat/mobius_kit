@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api";
 import { AnnotationCollection, AnnotationKind, AnnotationVersion, CreateAnnotationRequest, CreateAnnotationVersionRequest, CreateOrUpdateAnnotationRequest, UpdateAnnotationRequest } from "../interfaces/annotation";
 import { useAtem } from "../../../../store/atem";
-import { Item, ItemOption, ItemUnit } from "../../rawdata/apis/rawdata";
+import { getItemById, getOptionById, getUnitById } from "../../rawdata/apis/rawdata";
 
 export async function listAnnotationVersion(projectVersionId: number): Promise<AnnotationVersion[]> {
     const versions = await invoke<AnnotationVersion[]>("list_annotation_version", { request: { projectVersionId } });
@@ -107,17 +107,7 @@ async function buildTraceKey(sourceId: number, kind: AnnotationKind): Promise<st
     return "";
 }
 
-async function getItemById(sourceId: number): Promise<Item | undefined> {
-    return await invoke<Item | undefined>("get_item_by_id", { id: sourceId });
-}
 
-async function getOptionById(sourceId: number): Promise<ItemOption | undefined> {
-    return await invoke<ItemOption | undefined>("get_option_by_id", { id: sourceId });
-}
-
-async function getUnitById(sourceId: number): Promise<ItemUnit | undefined> {
-    return await invoke<ItemUnit | undefined>("get_unit_by_id", { id: sourceId });
-}
 
 function annotationKindConvert(kind: string): AnnotationKind {
     switch (kind) {

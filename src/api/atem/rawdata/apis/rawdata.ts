@@ -15,6 +15,18 @@ export async function getFormById(id: number): Promise<FormInfo | null> {
     return result.data;
 }
 
+export async function getItemById(sourceId: number): Promise<Item | undefined> {
+    return await invoke<Item | undefined>("get_item_by_id", { id: sourceId });
+}
+
+export async function getOptionById(sourceId: number): Promise<ItemOption | undefined> {
+    return await invoke<ItemOption | undefined>("get_option_by_id", { id: sourceId });
+}
+
+export async function getUnitById(sourceId: number): Promise<ItemUnit | undefined> {
+    return await invoke<ItemUnit | undefined>("get_unit_by_id", { id: sourceId });
+}
+
 export async function listItems(formId: number): Promise<Item[]> {
     const itemReply: ListItemReply = await invoke("list_items", { request: { formId } });
     const data = itemReply.data.sort((a, b) => a.itemOrder - b.itemOrder);

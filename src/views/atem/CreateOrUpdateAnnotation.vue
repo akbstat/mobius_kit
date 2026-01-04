@@ -6,8 +6,10 @@ import { listSdtmDomains, listSdtmVariables } from '../../api/atem/metadata/apis
 import { Annotation, AnnotationKind } from '../../api/atem/annotation/interfaces/annotation';
 import { AnnotationLocation } from '../../api/atem/annotation/interfaces/annotation';
 import { getItemById } from '../../api/atem/rawdata/apis/rawdata';
+import { defaultTarget, Target } from './utils/interfaces';
+import { annotationDisplayAnalyse } from './utils/helper';
 
-const { activeFormDomains, activeAnnoationVersionId, activeFormId, sdtmVersionId, logSpread } = useAtem();
+const { activeFormDomains, activeAnnoationVersionId, activeFormId, sdtmVersionId } = useAtem();
 const notSubmitDisplay = "[NOT SUBMITTED]";
 const { annotation, location, formLevel } = defineProps<{ annotation?: Annotation, kind: AnnotationKind, location: AnnotationLocation, formLevel?: boolean }>();
 const emit = defineEmits<{ (e: "submit"): void; (e: "cancel"): void }>();
@@ -15,8 +17,6 @@ const variables: Ref<string[]> = ref([]);
 const sourceItemName = ref("");
 
 const whenVariable = ref("");
-const whenValue = ref("");
-const assignValue = ref("");
 const selectedDomainId: Ref<number | undefined> = ref(undefined);
 const selectedDomainName = computed(() => {
     if (selectedDomainId.value) {
@@ -29,7 +29,7 @@ const selectedDomainName = computed(() => {
 });
 const selectedVariable = ref("");
 const imcomingVariable = computed(() => {
-    if (selectedVariable.value !== annotation?.variable?.name || supp.value != annotation?.variable?.supp) {
+    if (selectedDomainId.value !== annotation?.variable?.domainId || selectedVariable.value !== annotation?.variable?.name || supp.value != annotation?.variable?.supp) {
         return {
             domainId: selectedDomainId.value as number,
             variableName: selectedVariable.value,
@@ -41,7 +41,8 @@ const imcomingVariable = computed(() => {
 const notSubmit = ref(false);
 const isAssign = ref(false);
 const supp = ref(false);
-const display = ref("");
+// const display = ref("");
+const target: Ref<Target> = ref({ ...defaultTarget });
 
 function supplementalChange() {
     if (supp.value) {
@@ -51,10 +52,10 @@ function supplementalChange() {
 }
 
 function clearDisplayAndChange() {
-    display.value = "";
+    target.value.annotationDisplay = "";
     whenVariable.value = "";
-    whenValue.value = "";
-    assignValue.value = "";
+    target.value.whenValue = "";
+    target.value.assignValue = "";
     displayChange();
 }
 
@@ -67,6 +68,8 @@ function changeDomain() {
     clearDisplayAndChange();
 }
 
+
+
 async function submit() {
     if (activeAnnoationVersionId && activeFormId) {
         await createOrUpdateAnnotation({
@@ -75,10 +78,10 @@ async function submit() {
             id: annotation?.id,
             location,
             assign: isAssign.value,
-            annotationDisplay: notSubmit.value ? notSubmitDisplay : display.value,
+            annotationDisplay: target.value.annotationDisplay,
             newVariable: notSubmit.value ? undefined : imcomingVariable.value,
             notSubmit: notSubmit.value,
-            logSpread: logSpread,
+            logSpread: false,
         });
         emit("submit")
     }
@@ -88,7 +91,7 @@ function notSubmitted() {
     isAssign.value = true;
     selectedDomainId.value = undefined;
     selectedVariable.value = "";
-    display.value = notSubmitDisplay;
+    target.value.annotationDisplay = notSubmitDisplay;
 }
 
 function displayChange(_?: any) {
@@ -99,16 +102,16 @@ function displayChange(_?: any) {
     let displayContent = "";
     if (selectedVariable.value.length > 0) {
         displayContent = selectedVariable.value;
-        if (assignValue.value.length > 0) {
-            displayContent += ` = ${assignValue.value}`;
+        if (target.value.assignValue.length > 0) {
+            displayContent += ` = ${target.value.assignValue}`;
         }
         if (supp.value) {
             displayContent += ` in SUPP${selectedDomainName.value}`;
-        } else if (whenVariable.value.length > 0 && whenValue.value.length > 0) {
-            displayContent += ` when ${whenVariable.value} = ${whenValue.value}`;
+        } else if (whenVariable.value.length > 0 && target.value.whenValue.length > 0) {
+            displayContent += ` when ${whenVariable.value} = ${target.value.whenValue}`;
         }
     }
-    display.value = displayContent;
+    target.value.annotationDisplay = displayContent;
 }
 
 function queryVariable(queryString: string, cb: (arg: any) => void) {
@@ -140,7 +143,11 @@ onMounted(async () => {
         supp.value = variable ? variable.supp : false;
         selectedVariable.value = variable ? variable.name : "";
         isAssign.value = assign;
-        display.value = annotationDisplay;
+        target.value.annotationDisplay = annotationDisplay;
+        const { value: val, whenValue: wval, whenVariable: wvar } = annotationDisplayAnalyse(annotationDisplay);
+        target.value.assignValue = val;
+        target.value.whenValue = wval;
+        whenVariable.value = wvar;
     } else {
         isAssign.value = formLevel ? true : false;
     }
@@ -181,7 +188,32 @@ watch(() => selectedDomainId.value, async () => {
             <el-switch :disabled="notSubmit" v-model="isAssign" />
         </el-form-item>
         <el-form-item label="Display">
-            <el-input :disabled="notSubmit" clearable v-model="display" />
+            <el-table :data="[target]" max-height="250px" show-overflow-tooltip>
+                <el-table-column v-if="!notSubmit" label="Value" width="150px">
+                    <template #default>
+                        <el-input size="small" clearable v-model="target.assignValue"
+                            @change="displayChange"></el-input>
+                    </template>
+                </el-table-column>
+                <el-table-column v-if="!supp && !notSubmit" width="280px">
+                    <template #header>
+                        <el-autocomplete size="small" clearable @clear="displayChange" @select="displayChange"
+                            @change="displayChange" :fetch-suggestions="queryVariable" v-model="whenVariable">
+                            <template #prepend>When</template>
+                        </el-autocomplete>
+                    </template>
+                    <template #default>
+                        <el-input size="small" clearable v-model="target.whenValue" @change="displayChange"></el-input>
+                    </template>
+                </el-table-column>
+                <el-table-column label="Display">
+                    <template #default>
+                        <el-input :disabled="notSubmit" size="small" clearable
+                            v-model="target.annotationDisplay"></el-input>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <!-- <el-input :disabled="notSubmit" clearable v-model="display" />
             <div class="condition">
                 <el-input v-if="!notSubmit" :disabled="notSubmit" @change="displayChange" v-model="assignValue"
                     clearable>
@@ -198,7 +230,7 @@ watch(() => selectedDomainId.value, async () => {
                 </el-autocomplete>
                 <el-input v-if="!notSubmit && !supp" clearable :disabled="notSubmit" @change="displayChange"
                     v-model="whenValue"><template #prepend>=</template></el-input>
-            </div>
+            </div> -->
         </el-form-item>
         <el-form-item>
             <el-button @click="submit" type="primary" size="small" plain>

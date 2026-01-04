@@ -1,10 +1,14 @@
 use crate::atem::usecase::ATEM_USECASE;
 use atem::{
-    dto::annotation::{
-        AnnotationVersion, CreateAnnotationRequest, CreateAnnotationVersionRequest,
-        CreateFormDomainRequest, FormDomain, ListAnnotationByFormRequest,
-        ListAnnotationVersionRequest, ListFormDomainRequest, ModifyAnnotationVersionRequest,
-        UpdateAnnootationRequest,
+    dto::{
+        annotation::{
+            AnnotateByFormRequest, AnnotationVersion, CreateAnnotationRequest,
+            CreateAnnotationVersionRequest, CreateFormDomainRequest, FormDomain,
+            ListAnnotationByFormRequest, ListAnnotationVersionRequest, ListFormDomainRequest,
+            MigrationRequest, ModifyAnnotationVersionRequest, SearchInAnnotationRequest,
+            UpdateAnnootationRequest,
+        },
+        rawdata::SearchResult,
     },
     entity::annotation::AnnotationCollection,
 };
@@ -112,4 +116,33 @@ pub async fn remove_form_domain(id: i32) -> Result<(), String> {
         .remove_form_domain(id)
         .await
         .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn search_in_annotation(
+    request: SearchInAnnotationRequest,
+) -> Result<Vec<SearchResult>, String> {
+    let results = ATEM_USECASE
+        .search_in_annotation(request)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(results)
+}
+
+#[tauri::command]
+pub async fn generate_annotations(request: AnnotateByFormRequest) -> Result<(), String> {
+    ATEM_USECASE
+        .generate_annotations(request)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn migrate_annotations(request: MigrationRequest) -> Result<(), String> {
+    ATEM_USECASE
+        .migrate_annotations(request)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }

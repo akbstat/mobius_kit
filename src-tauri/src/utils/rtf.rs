@@ -13,6 +13,7 @@ enum Kind {
     Figure,
     Listing,
     Table,
+    Unknown,
 }
 
 impl Kind {
@@ -26,7 +27,7 @@ impl Kind {
                 84u8 => return Some(Kind::Table),
                 102u8 => return Some(Kind::Figure),
                 70u8 => return Some(Kind::Figure),
-                _ => return None,
+                _ => return Some(Kind::Unknown),
             }
         }
         None

@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api"
-import { CreateEDCVersionRequest, Language, SdtmDomain, SdtmVariable, SdtmVersion } from "../interfaces/sdtm"
+import { Language, SdtmDomain, SdtmVariable, SdtmVersion } from "../interfaces/sdtm"
 
 export async function listSdtmDomains(versionId?: number): Promise<SdtmDomain[]> {
     if (!versionId) {
@@ -27,6 +27,3 @@ export async function listSdtmVersion(langId: number): Promise<SdtmVersion[]> {
     return versions.sort((x, y) => x.id - y.id);
 }
 
-export async function createProjectVersion(request: CreateEDCVersionRequest): Promise<void> {
-    await invoke("create_project_version", { request });
-}

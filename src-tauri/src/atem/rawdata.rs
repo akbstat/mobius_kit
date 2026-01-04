@@ -1,17 +1,39 @@
 use crate::atem::usecase::ATEM_USECASE;
-use atem::dto::rawdata::{
-    CreateEDCVersionRequest, GetFormByIdReply, Item, ItemOption, ItemUnit, ListFormsReply,
-    ListFormsRequest, ListItemsReply, ListItemsRequest, ListProjectVersionReply,
-    ListProjectVersionRequest, ModifyProjectVersionRequest,
+use atem::dto::{
+    annotation::CreateAnnotationVersionRequest,
+    rawdata::{
+        CreateEDCVersionRequest, GetFormByIdReply, Item, ItemOption, ItemUnit, ListFormsReply,
+        ListFormsRequest, ListItemsReply, ListItemsRequest, ListProjectVersionReply,
+        ListProjectVersionRequest, ModifyProjectVersionRequest, SearchInFormRequest, SearchResult,
+    },
 };
+use serde::Serialize;
 
 #[tauri::command]
-pub async fn create_project_version(request: CreateEDCVersionRequest) -> Result<(), String> {
-    ATEM_USECASE
+/// Create project version, after create successfully, then create an annotation version in the same time
+pub async fn create_project_version(
+    request: CreateEDCVersionRequest,
+) -> Result<CreateVersionReply, String> {
+    let Some(project_version) = ATEM_USECASE
         .create_project_version(&request)
         .await
+        .map_err(|e| e.to_string())?
+    else {
+        return Ok(CreateVersionReply::default());
+    };
+    let annotation_version = ATEM_USECASE
+        .create_annotation_version(&CreateAnnotationVersionRequest {
+            project_version_id: project_version.id,
+            name: project_version.name.to_string(),
+            description: "".to_string(),
+            source_version_id: None,
+        })
+        .await
         .map_err(|e| e.to_string())?;
-    Ok(())
+    Ok(CreateVersionReply {
+        project_version_id: Some(project_version.id),
+        annotation_version_id: Some(annotation_version.id),
+    })
 }
 
 #[tauri::command]
@@ -89,4 +111,20 @@ pub async fn list_items(request: ListItemsRequest) -> Result<ListItemsReply, Str
         .await
         .map_err(|e| e.to_string())?;
     Ok(items.into())
+}
+
+#[tauri::command]
+pub async fn search_in_form(request: SearchInFormRequest) -> Result<Vec<SearchResult>, String> {
+    let results = ATEM_USECASE
+        .search_in_form(request)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(results)
+}
+
+#[derive(Debug, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateVersionReply {
+    project_version_id: Option<i32>,
+    annotation_version_id: Option<i32>,
 }

@@ -22,6 +22,9 @@ const formAnnotations: Ref<Annotation[]> = ref([]);
 const key = ref(0);
 const scrollbarRef = ref<ScrollbarInstance>();
 const scrollTopValue = ref(0);
+defineExpose({
+    getFormDetail
+});
 
 function scroll({ scrollTop }: { scrollLeft: number, scrollTop: number }) {
     scrollTopValue.value = scrollTop;
@@ -96,7 +99,7 @@ watch(() => activeAnnoationVersionId.value, async () => {
 </script>
 
 <template>
-    <el-scrollbar ref="scrollbarRef" :key="key" max-height="600" @scroll="scroll">
+    <el-scrollbar ref="scrollbarRef" :key="key" max-height="615" @scroll="scroll">
         <div class="item-area">
             <FormCard @change="getFormDetail" v-if="form" :form="form" :form-annotations="formAnnotations" />
             <ItemCard @change="getFormDetail" v-for="item in items" :item="item" />

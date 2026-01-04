@@ -137,3 +137,13 @@ export interface CreateAnnotationVersionRequest {
     description: string;
     sourceVersionId?: number;
 }
+
+export interface MigrationObject {
+    projectVersionId: number;
+    annotationVersionId: number;
+}
+
+export interface MigrationRequest {
+    target: MigrationObject;
+    source: MigrationObject;
+}

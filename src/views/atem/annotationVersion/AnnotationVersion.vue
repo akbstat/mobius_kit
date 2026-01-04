@@ -1,19 +1,20 @@
 <script lang="ts" setup>
 import { onMounted, Ref, ref, watch } from 'vue';
-import { storeToRefs } from 'pinia';
 import CreateAnnotationVersion from './CreateAnnotationVersion.vue';
 import RemoveAnnotationVersion from './RemoveAnnotationVersion.vue';
 import ModifyAnnotationVersion from './ModifyAnnotationVersion.vue';
-import { useAtem } from '../../../store/atem';
 import { AnnotationVersion } from '../../../api/atem/annotation/interfaces/annotation';
 import { listAnnotationVersion } from '../../../api/atem/annotation/apis/annotation';
 
-const { activeProjectVersionId, activeAnnoationVersionId } = storeToRefs(useAtem());
+const props = defineProps<{ projectVersionId: number | undefined, annotationVersionId: number | undefined }>();
+const selectedAnnoationVersionId: Ref<number | undefined> = ref();
+const selectedProjectVersionId: Ref<number | undefined> = ref();
 const annotationVersions: Ref<AnnotationVersion[]> = ref([]);
 const createAnnotationVersionDialogDisplay = ref(false);
 const modifyAnnotationVersionDialogDisplay = ref(false);
 const removeAnnotationVersionDialogDisplay = ref(false);
 const selectedAnnotationVersion: Ref<AnnotationVersion | undefined> = ref(undefined);
+const emit = defineEmits<{ (e: "change", version: number | undefined): void }>();
 
 function annotationVersionLabel(version: AnnotationVersion): string {
     if (version.description.length > 0) {
@@ -26,8 +27,12 @@ function showCreateAnnotationVersionDialog() {
     createAnnotationVersionDialogDisplay.value = true;
 }
 
+function changeAnnotationVersion() {
+    emit("change", selectedAnnoationVersionId.value);
+}
+
 async function hideCreateAnnotationVersionDialog() {
-    const projectVersionId = activeProjectVersionId.value;
+    const projectVersionId = selectedProjectVersionId.value;
     if (projectVersionId) {
         annotationVersions.value = await listAnnotationVersion(projectVersionId);
     }
@@ -41,7 +46,7 @@ function showAnnotationVersionDialog(version: AnnotationVersion) {
 
 async function hideAnnotationVersionDialog(change: boolean) {
     if (change) {
-        await updateAnnotationVersions(activeProjectVersionId.value);
+        await updateAnnotationVersions(selectedProjectVersionId.value);
     }
     removeAnnotationVersionDialogDisplay.value = false;
 }
@@ -53,7 +58,7 @@ async function showModifyAnnotationVersionDialog(version: AnnotationVersion) {
 
 async function hideModifyAnnotationVersionDialog(change: boolean) {
     if (change) {
-        await updateAnnotationVersions(activeProjectVersionId.value);
+        await updateAnnotationVersions(selectedProjectVersionId.value);
     }
     modifyAnnotationVersionDialogDisplay.value = false;
 }
@@ -64,36 +69,42 @@ async function hideModifyAnnotationVersionDialog(change: boolean) {
  */
 async function updateAnnotationVersions(projectVersionId: number | undefined) {
     if (!projectVersionId) {
-        activeAnnoationVersionId.value = undefined;
+        selectedAnnoationVersionId.value = undefined;
+        annotationVersions.value = [];
         return;
     }
     const annotationVersionList = await listAnnotationVersion(projectVersionId);
     annotationVersions.value = annotationVersionList;
 
-    if (activeAnnoationVersionId.value && annotationVersionList.map(v => v.id).includes(activeAnnoationVersionId.value)) {
+    if (selectedAnnoationVersionId.value && annotationVersionList.map(v => v.id).includes(selectedAnnoationVersionId.value)) {
         return;
     }
-    activeAnnoationVersionId.value = annotationVersionList.length > 0 ? annotationVersionList[annotationVersionList.length - 1].id : undefined;
+    selectedAnnoationVersionId.value = annotationVersionList.length > 0 ? annotationVersionList[annotationVersionList.length - 1].id : undefined;
 
 }
 
-watch(() => activeProjectVersionId.value, async () => {
-    await updateAnnotationVersions(activeProjectVersionId.value);
-})
-
 onMounted(async () => {
-    await updateAnnotationVersions(activeProjectVersionId.value);
+    selectedAnnoationVersionId.value = props.annotationVersionId;
+    selectedProjectVersionId.value = props.projectVersionId;
+    if (props.projectVersionId) {
+        await updateAnnotationVersions(props.projectVersionId);
+    }
+});
+
+watch(() => props.projectVersionId, async () => {
+    if (props.projectVersionId) {
+        await updateAnnotationVersions(props.projectVersionId);
+    }
+    emit("change", selectedAnnoationVersionId.value);
 });
 </script>
 
 <template>
-    <el-select class="annotation-version" size="small" v-model="activeAnnoationVersionId" clearable>
-        <template #prefix>
-            <div style="width: 120px;">Annotation Version</div>
-        </template>
+    <el-select @change="changeAnnotationVersion" class="annotation-version" size="small"
+        v-model="selectedAnnoationVersionId" clearable>
         <template #footer>
-            <el-button :disabled="activeProjectVersionId ? false : true" @click="showCreateAnnotationVersionDialog"
-                style="width: 240px;" text type="primary">
+            <el-button :disabled="selectedProjectVersionId ? false : true" @click="showCreateAnnotationVersionDialog"
+                style="width: 100%;" text type="primary">
                 <el-icon>
                     <Plus />
                 </el-icon>
@@ -121,7 +132,7 @@ onMounted(async () => {
         </el-option>
     </el-select>
     <el-dialog destroy-on-close title="Create New Annotation Version" v-model="createAnnotationVersionDialogDisplay">
-        <CreateAnnotationVersion :project-version-id="activeProjectVersionId"
+        <CreateAnnotationVersion :project-version-id="selectedProjectVersionId"
             @close="hideCreateAnnotationVersionDialog" />
     </el-dialog>
     <el-dialog destroy-on-close title="Remove Annotation Version" v-model="removeAnnotationVersionDialogDisplay">
@@ -133,7 +144,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.annotation-version {
+/* .annotation-version {
     width: 260px;
-}
+} */
 </style>

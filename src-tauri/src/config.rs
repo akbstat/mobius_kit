@@ -24,6 +24,12 @@ const ACRF_OUTLINTE_BIN: &str = "MK_ACRF_OUTLINTE_BIN";
 pub const REFLECTOR: &str = "MK_REFLECTOR";
 const VALIDATOR: &str = "MK_VALIDATOR";
 pub const COMPASS_BASE_URL: &str = "MK_COMPASS_BASE_URL";
+const LLM_BASE_URL: &str = "MK_LLM_BASE_URL";
+const LLM_API_KEY: &str = "MK_LLM_API_KEY";
+const LLM_MODEL_CHAT: &str = "MK_LLM_MODEL_CHAT";
+const LLM_MODEL_EMBEDDING: &str = "MK_LLM_MODEL_EMBEDDING";
+const ATEM_FORM_PROMPT: &str = "MK_ATEM_FORM_PROMPT";
+const ATEM_ITEM_PROMPT: &str = "MK_ITEM_FORM_PROMPT";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -38,6 +44,27 @@ pub struct Config {
     pub acrf_outline_bin: String,
     pub validator: String,
     pub compass_base_url: String,
+    pub llm: LlmConfig,
+    pub prompts: PromptTemplateConfig,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LlmConfig {
+    base_url: String,
+    api_key: String,
+    model: Model,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PromptTemplateConfig {
+    atem_form: String,
+    atem_item: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Model {
+    chat: String,
+    embedding: String,
 }
 
 #[cfg(feature = "test")]
@@ -119,6 +146,17 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
         config.word_worker = 5;
     }
     env::set_var(WORD_WORKER, config.word_worker.to_string());
+
+    let llm_config = config.llm;
+    env::set_var(LLM_BASE_URL, llm_config.base_url.to_string());
+    env::set_var(LLM_API_KEY, llm_config.api_key.to_string());
+    env::set_var(LLM_MODEL_CHAT, llm_config.model.chat.to_string());
+    env::set_var(LLM_MODEL_EMBEDDING, llm_config.model.embedding.to_string());
+
+    let prompt_config = config.prompts;
+    env::set_var(ATEM_FORM_PROMPT, prompt_config.atem_form.to_string());
+    env::set_var(ATEM_ITEM_PROMPT, prompt_config.atem_item.to_string());
+
     Ok(())
 }
 

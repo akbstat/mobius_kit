@@ -1,29 +1,30 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia';
-import { onMounted, ref, Ref, watch } from 'vue';
+import { onMounted, ref, Ref } from 'vue';
 import CreateEDCVersion from './CreateEDCVersion.vue';
 import RemoveEDCVersion from './RemoveEDCVersion.vue';
 import ModifyEDCVersion from './ModifyEDCVersion.vue';
-import { useAtem } from '../../../store/atem';
 import { useProjectContext } from '../../../store/context';
 import { listProjectVersions, ProjectVersion } from '../../../api/atem/rawdata/apis/rawdata';
 
-const { activeProjectVersionId } = storeToRefs(useAtem());
+const activeProjectVersionId: Ref<number | undefined> = ref();
 const { project } = storeToRefs(useProjectContext());
 const projectVersions: Ref<ProjectVersion[]> = ref([]);
 const createEDCVersionDialogDisplay = ref(false);
 const removeEDCVersionDialogDisplay = ref(false);
 const modifyEDCVersionDialogDisplay = ref(false);
 const selectedVersion: Ref<ProjectVersion | undefined> = ref(undefined);
+const emit = defineEmits<{ (e: "change", version: number): void }>();
+const prop = defineProps<{ projectVersionId: number | undefined }>();
 
 function showCreateEDCVersionDialog() {
     createEDCVersionDialogDisplay.value = true;
 }
 
-function showRemoveEdcVersionDialog(version: ProjectVersion) {
-    selectedVersion.value = version;
-    removeEDCVersionDialogDisplay.value = true;
-}
+// function showRemoveEdcVersionDialog(version: ProjectVersion) {
+//     selectedVersion.value = version;
+//     removeEDCVersionDialogDisplay.value = true;
+// }
 
 function showModifyEDCVersionDialog(version: ProjectVersion) {
     selectedVersion.value = version;
@@ -31,13 +32,18 @@ function showModifyEDCVersionDialog(version: ProjectVersion) {
 }
 
 async function changeProjectVersion(versionId: number) {
-    activeProjectVersionId.value = versionId;
+    // activeProjectVersionId.value = versionId;
+    emit("change", versionId);
 }
 
-async function hideCreateEDCVersionDialog() {
+async function afterCreateEDCVersion() {
     if (project.value) {
         const { product, trial } = project.value;
-        projectVersions.value = (await listProjectVersions({ product, trial })).data;
+        const versions = (await listProjectVersions({ product, trial })).data;
+        selectedVersion.value = versions[versions.length - 1];
+        activeProjectVersionId.value = selectedVersion.value.id;
+        projectVersions.value = versions;
+        emit("change", activeProjectVersionId.value);
     }
     createEDCVersionDialogDisplay.value = false;
 }
@@ -76,22 +82,17 @@ async function updateProjectVersions(project: { product: string, trial: string }
 }
 
 onMounted(async () => {
+    activeProjectVersionId.value = prop.projectVersionId;
     await updateProjectVersions(project.value);
 });
 
-watch(() => project.value, async () => {
-    await updateProjectVersions(project.value);
-});
 </script>
 
 <template>
     <el-select @change="changeProjectVersion" class="version-select" v-model="activeProjectVersionId"
         placeholder="Select" size="small">
-        <template #prefix>
-            <div style="width: 80px;">EDC Version</div>
-        </template>
         <template #footer>
-            <el-button @click="showCreateEDCVersionDialog" style="width: 150px;" size="small" text type="primary">
+            <el-button @click="showCreateEDCVersionDialog" style="width: 100%;" size="small" text type="primary">
                 <el-icon>
                     <Plus />
                 </el-icon>
@@ -119,7 +120,7 @@ watch(() => project.value, async () => {
         </el-option>
     </el-select>
     <el-dialog destroy-on-close title="Create New EDC Version" v-model="createEDCVersionDialogDisplay">
-        <CreateEDCVersion @close="hideCreateEDCVersionDialog" />
+        <CreateEDCVersion @close="afterCreateEDCVersion" />
     </el-dialog>
     <el-dialog destroy-on-close title="Remove EDC Version" v-model="removeEDCVersionDialogDisplay">
         <RemoveEDCVersion @close="hideRemoveEdcVersionDialog" :version="selectedVersion" />
@@ -128,10 +129,3 @@ watch(() => project.value, async () => {
         <ModifyEDCVersion @close="hideModifyEdcVersionDialog" :version="selectedVersion" />
     </el-dialog>
 </template>
-
-<style scoped>
-.version-select {
-    width: 160px;
-    float: left;
-}
-</style>

@@ -4,13 +4,16 @@ import { storeToRefs } from 'pinia';
 import { FormInfo, listForms } from '../../api/atem/rawdata/apis/rawdata';
 import { useAtem } from '../../store/atem';
 
-const { activeFormId, activeProjectVersionId } = storeToRefs(useAtem())
+const { activeFormId, activeProjectVersionId, multiSelector, multiOperation } = storeToRefs(useAtem());
+
 const props = defineProps<{ collapse: boolean }>()
 const forms: Ref<FormInfo[]> = ref([]);
 const emit = defineEmits<{ (e: "switchForm", form: FormInfo): void }>();
 const menuStyle = computed(() => { return { width: props.collapse ? '105px' : '210px' } });
 function switchForm(form: FormInfo) {
     activeFormId.value = form.id;
+    multiOperation.value = false;
+    multiSelector.value.reset();
     emit("switchForm", form);
 }
 
@@ -34,7 +37,8 @@ watch(() => activeProjectVersionId.value, getForms);
 </script>
 
 <template>
-    <el-scrollbar height="600px">
+    <el-scrollbar height="615px">
+        <!-- <el-input :style="menuStyle" clearable></el-input> -->
         <el-menu :style="menuStyle" :collapse="collapse" default-active="1">
             <el-menu-item @click="() => { switchForm(form) }" class="menu-item" v-for="form in forms"
                 :index="`${form.id}`">

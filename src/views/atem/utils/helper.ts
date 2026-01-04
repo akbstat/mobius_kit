@@ -3,9 +3,31 @@ import { EpPropMergeType } from "element-plus/es/utils/index.mjs";
 import { useAtem } from "../../../store/atem";
 import { Annotation, AnnotationCollection } from "../../../api/atem/annotation/interfaces/annotation";
 import { ItemAnnotation, ItemOptionAnnotation, ItemUnitAnnotation } from "./interfaces";
-import { FormInfo, Item } from "../../../api/atem/rawdata/apis/rawdata";
+import { FormInfo, Item, listProjectVersions } from "../../../api/atem/rawdata/apis/rawdata";
 import { listLanguages, listSdtmVersion } from "../../../api/atem/metadata/apis/sdtm";
-import _ from "lodash";
+import { listAnnotationVersion } from "../../../api/atem/annotation/apis/annotation";
+
+
+
+
+export async function fetchDefaultProjectVersionId(project: { product: string, trial: string } | undefined): Promise<number | undefined> {
+    if (!project) {
+        return undefined;
+    }
+    const { product, trial } = project;
+    const versions = (await listProjectVersions({ product, trial })).data;
+    if (versions.length === 0) { return undefined; }
+    versions.sort((x, y) => x.id - y.id > 0 ? -1 : 1);
+    return versions[0].id;
+}
+
+export async function fetchDefaultAnnotationVersionId(proejctVersionId: number): Promise<number | undefined> {
+    const versions = (await listAnnotationVersion(proejctVersionId))
+    if (versions.length === 0) { return undefined; }
+    versions.sort((x, y) => x.id - y.id > 0 ? -1 : 1);
+    return versions[0].id;
+}
+
 
 export function tagStyle(order: number): EpPropMergeType<StringConstructor, "success" | "warning" | "info" | "primary" | "danger", unknown> | undefined {
     switch (order) {
@@ -189,4 +211,19 @@ export function loglineTracing(annotations: ItemAnnotation[]): Map<string, numbe
         });
     });
     return mapper;
+}
+
+const ANNOTATION_DISPLAY_REGEX = /^([A-Z]{2,8})(\s=\s(?<value>.+?))?(\s(when\s(?<whenVariable>[A-Z]{2,8})\s=\s(?<whenValue>(.+))|in\sSUPP[A-Z]{2})|$)/;
+
+export function annotationDisplayAnalyse(content: string): { value: string, whenVariable: string, whenValue: string } {
+    const match = content.match(ANNOTATION_DISPLAY_REGEX);
+    if (match && match.groups) {
+        const { value, whenVariable, whenValue } = match.groups;
+        return {
+            value: value || "",
+            whenVariable: whenVariable || "",
+            whenValue: whenValue || "",
+        }
+    }
+    return { value: "", whenVariable: "", whenValue: "" };
 }

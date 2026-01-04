@@ -13,26 +13,26 @@ const incommingDomain: Ref<Domain> = ref({ name: "", description: "" });
 const domainList: Ref<Domain[]> = ref([]);
 
 
-/**
- * update domain name and description according selection of domain
- * @param value 
- */
-function changeDomainEvent(value: number) {
-    const domain = domainList.value[value];
-    if (domain) {
-        const { name, description } = domainList.value[value];
-        incommingDomain.value = { name, description };
-        return;
-    }
-    incommingDomain.value.description = "";
-}
-
 function close(submit: boolean) {
     emit("close", submit);
 }
 
 function changeDomainDisable(): boolean {
     return existedDomain ? true : false;
+}
+
+function queryDomain(queryString: string, _cb: (arg: any) => void) {
+    return domainList.value.map(v => { return { value: v.name } }).filter(v => v.value.toLowerCase().includes(queryString.toLowerCase()))
+}
+
+function changeDomain(value: string) {
+    incommingDomain.value.name = value.toUpperCase();
+    if (value.length > 0) {
+        const { name, description } = domainList.value.filter((d: Domain) => d.name === value.toUpperCase())[0] || { name: value.toUpperCase(), description: "" };
+        incommingDomain.value = { name, description };
+        return;
+    }
+    incommingDomain.value.description = "";
 }
 
 async function submit() {
@@ -75,11 +75,13 @@ onMounted(async () => {
 </script>
 
 <template>
-    <el-select :disabled="changeDomainDisable()" filterable clearable allow-create @change="changeDomainEvent"
-        v-model="incommingDomain.name" class="domain-select">
-        <el-option v-for="(domain, index) in domainList" :key="index" :value="index" :label="domain.name"></el-option>
-    </el-select>
-    <el-input v-model="incommingDomain.description" clearable class="domain-description" />
+
+    <el-autocomplete style="width: 25%;margin-right: 5px;" clearable :disabled="changeDomainDisable()"
+        @change="changeDomain" :fetch-suggestions="queryDomain" v-model="incommingDomain.name"
+        placeholder="Domain Name">
+    </el-autocomplete>
+
+    <el-input v-model="incommingDomain.description" clearable class="domain-description" placeholder="Domain Label" />
     <div class="button-area">
         <el-button type="primary" @click="submit" size="small" plain>
             <el-icon>
@@ -95,11 +97,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.domain-select {
-    width: 25%;
-    margin-right: 5px;
-}
-
 .domain-description {
     width: 70%;
     ;

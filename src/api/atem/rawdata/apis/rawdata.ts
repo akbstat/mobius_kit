@@ -37,12 +37,22 @@ export async function listItems(formId: number): Promise<Item[]> {
     return data;
 }
 
+export async function createProjectVersion(request: CreateEDCVersionRequest): Promise<CreateProjectVersionReply> {
+    return await invoke("create_project_version", { request });
+}
+
+
 export async function removeProjectVersion(id: number) {
     console.log(`Removeing project version: ${id}`);
 }
 
 export async function modifyProjectVersion(version: ProjectVersion) {
     await invoke("modify_project_version", { id: version.id, request: { name: version.name } });
+}
+
+export async function searchFormItem(request: { projectVersionId: number, search: string }): Promise<SearchResult[]> {
+    const result: SearchResult[] = await invoke("search_in_form", { request: { versionId: request.projectVersionId, query: request.search } });
+    return result.sort((x, y) => x.form.formOrder - y.form.formOrder);
 }
 
 export interface FormInfo {
@@ -102,4 +112,30 @@ export interface ItemUnit {
 export interface ItemType {
     id: number,
     name: string,
+}
+
+export interface SearchResult {
+    form: Form;
+    content: string;
+    kind: string;
+}
+
+export interface Form {
+    id: number;
+    name: string;
+    description: string;
+    formOrder: number;
+}
+
+export interface CreateEDCVersionRequest {
+    product: string;
+    trial: string;
+    versionName: string;
+    edcFilepath: string;
+    edcKind: number;
+}
+
+export interface CreateProjectVersionReply {
+    projectVersionId: number | null,
+    annotationVersionId: number | null,
 }

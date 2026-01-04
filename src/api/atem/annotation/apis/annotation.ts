@@ -1,10 +1,11 @@
 import { invoke } from "@tauri-apps/api";
-import { AnnotationCollection, AnnotationKind, AnnotationVersion, CreateAnnotationRequest, CreateAnnotationVersionRequest, CreateOrUpdateAnnotationRequest, UpdateAnnotationRequest } from "../interfaces/annotation";
+import { AnnotationCollection, AnnotationKind, AnnotationVersion, CreateAnnotationRequest, CreateAnnotationVersionRequest, CreateOrUpdateAnnotationRequest, MigrationRequest, UpdateAnnotationRequest } from "../interfaces/annotation";
 import { useAtem } from "../../../../store/atem";
-import { getItemById, getOptionById, getUnitById } from "../../rawdata/apis/rawdata";
+import { getItemById, getOptionById, getUnitById, SearchResult } from "../../rawdata/apis/rawdata";
 
 export async function listAnnotationVersion(projectVersionId: number): Promise<AnnotationVersion[]> {
     const versions = await invoke<AnnotationVersion[]>("list_annotation_version", { request: { projectVersionId } });
+    versions.sort((a, b) => a.id - b.id);
     return versions;
 }
 
@@ -21,7 +22,7 @@ export async function listAnnotationByForm(request: { formId: number, annotation
 export async function createOrUpdateAnnotation(request: CreateOrUpdateAnnotationRequest): Promise<void> {
     const { id, annotationVersionId, formId, location, assign, annotationDisplay, newVariable, notSubmit, logSpread } = request;
     const { sourceId, kind } = location;
-
+    console.log(request);
     // update annotation
     if (id) {
         await updateAnnotation(id, {
@@ -66,6 +67,11 @@ export async function removeAnnotationVersion(id: number) {
     await invoke("remove_annotation_version", { id });
 }
 
+
+export async function generateAnnotationByllm({ annotationVersionId, formId }: { annotationVersionId: number, formId: number }): Promise<void> {
+    await invoke("generate_annotations", { request: { annotationVersionId, formId } });
+}
+
 async function createAnnotation(request: CreateAnnotationRequest): Promise<void> {
     await invoke("create_annotation", { request });
 }
@@ -107,7 +113,10 @@ async function buildTraceKey(sourceId: number, kind: AnnotationKind): Promise<st
     return "";
 }
 
-
+export async function printAcrf(_request: { projectVersionId: number, annotationVersionId: number, filepath: string }): Promise<void> {
+    console.warn("Warning: Function [printAcrf] not implemented yet");
+    return new Promise(resolve => setTimeout(resolve, 5000));
+}
 
 function annotationKindConvert(kind: string): AnnotationKind {
     switch (kind) {
@@ -126,6 +135,22 @@ function annotationKindConvert(kind: string): AnnotationKind {
     }
 }
 
-function annotationKindToString(kind: AnnotationKind): string {
+export async function searchAnnotation(request: { projectVersionId: number, annotationVersionId: number, search: string }): Promise<SearchResult[]> {
+    const result = await invoke("search_in_annotation", {
+        request: {
+            projectVersionId: request.projectVersionId,
+            annotationVersionId: request.annotationVersionId, query: request.search
+        }
+    }) as SearchResult[];
+    result.sort((x, y) => x.form.formOrder - y.form.formOrder);
+    return result;
+}
+
+export async function migrateAnnotations(request: MigrationRequest) {
+    await invoke("migrate_annotations", { request });
+}
+
+
+export function annotationKindToString(kind: AnnotationKind): string {
     return ["Form", "Item", "Value", "Unit", "Option"][kind];
 }

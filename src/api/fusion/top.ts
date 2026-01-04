@@ -38,7 +38,6 @@ export async function listRtfsWithTitle(output: string, top: string): Promise<Rt
         outputOrder.set(top.filename, index);
     });
     const outputs = await listRtfs(output);
-
     const result = outputs.map(output => {
         let { kind, modified_at, name, size } = output;
         return {

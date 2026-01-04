@@ -88,7 +88,7 @@ function cancelUpdate() {
             </div>
         </div>
     </el-dialog>
-    <el-dialog destroy-on-close v-model="updateDialogDisplay">
+    <el-dialog destroy-on-close v-model="updateDialogDisplay" width="1200px">
         <template #header>
             <div style="text-align: left;">
                 {{ titie(kind) }}

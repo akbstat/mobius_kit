@@ -53,10 +53,3 @@ export interface ListSdtmVariableReply {
     data: SdtmVariable[];
 }
 
-export interface CreateEDCVersionRequest {
-    product: string;
-    trial: string;
-    versionName: string;
-    edcFilepath: string;
-    edcKind: number;
-}

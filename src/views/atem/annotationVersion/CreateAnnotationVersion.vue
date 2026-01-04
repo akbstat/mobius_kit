@@ -56,13 +56,13 @@ onMounted(async () => {
 
 <template>
     <el-form ref="ruleFormRef" :rules="rules" :model="formData" label-width="auto">
-        <el-form-item label="Version Name" prop="versionName">
+        <el-form-item class="item" label="Version Name" prop="versionName">
             <el-input v-model="formData.versionName" clearable />
         </el-form-item>
-        <el-form-item label="Description">
+        <el-form-item class="item" label="Description">
             <el-input v-model="formData.description" clearable />
         </el-form-item>
-        <el-form-item label="Source Version">
+        <el-form-item class="item" label="Source Version">
             <el-select v-model="formData.sourceVersionId" clearable>
                 <el-option v-for="version in historicalVersions" :key="version.id" :label="version.display"
                     :value="version.id" />
@@ -85,4 +85,8 @@ onMounted(async () => {
     </el-form>
 </template>
 
-<style scoped></style>
+<style scoped>
+.item {
+    margin-bottom: 20px;
+}
+</style>

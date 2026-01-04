@@ -8,7 +8,7 @@ import { ItemAnnotation } from './utils/interfaces';
 import { AnnotationKind } from '../../api/atem/annotation/interfaces/annotation';
 import { useAtem } from '../../store/atem';
 
-const { activeAnnoationVersionId } = storeToRefs(useAtem());
+const { activeAnnoationVersionId, multiOperation, multiSelector } = storeToRefs(useAtem());
 const { item } = defineProps<{ item: ItemAnnotation }>();
 const emit = defineEmits<{
     (e: "change"): void;
@@ -75,16 +75,58 @@ function hideCreateAnnotationDialog() {
     createUnitAnnotationDialogDisplay.value = false;
 }
 
+function addItemToMultiSelector(itemId: number) {
+    multiSelector.value.itemId.add(itemId);
+}
+
+function removeItemToMultiSelector(itemId: number) {
+    multiSelector.value.itemId.delete(itemId);
+}
+
+function addOptionToMultiSelector(optionId: number) {
+    multiSelector.value.optionId.add(optionId);
+}
+
+function removeOptionToMultiSelector(optionId: number) {
+    multiSelector.value.optionId.delete(optionId);
+}
+
+function addUnitToMultiSelector(unitId: number) {
+    multiSelector.value.unitId.add(unitId);
+}
+
+function removeUnitToMultiSelector(unitId: number) {
+    multiSelector.value.unitId.delete(unitId);
+}
+
+function addItemValueToMultiSelector(unitId: number) {
+    multiSelector.value.itemValueId.add(unitId);
+}
+
+function removeItemValueToMultiSelector(unitId: number) {
+    multiSelector.value.itemValueId.delete(unitId);
+}
+
 </script>
 
 <template>
     <el-card>
         <div class="item-detail">
             <div class="item-left">
-                <el-button :disabled="disableCreateAnnotation" class="left-button"
+                <el-button v-if="!multiOperation" :disabled="disableCreateAnnotation" class="left-button"
                     @click="() => { showCreateItemAnnotationDialog(item.id) }" size="small" type="primary" text>
                     <el-icon>
                         <Plus />
+                    </el-icon>
+                </el-button>
+                <el-button v-else :disabled="disableCreateAnnotation" class="left-button"
+                    @click="() => { multiSelector.itemId.has(item.id) ? removeItemToMultiSelector(item.id) : addItemToMultiSelector(item.id) }"
+                    size="small" type="primary" text>
+                    <el-icon v-if="multiSelector.itemId.has(item.id)">
+                        <CircleCheckFilled />
+                    </el-icon>
+                    <el-icon v-else>
+                        <Remove />
                     </el-icon>
                 </el-button>
                 <el-tag type="info" v-if="isLabel(item)" class="item-name" size="small">{{ item.name }}</el-tag>
@@ -93,11 +135,21 @@ function hideCreateAnnotationDialog() {
                     :order="getDomainOrderNumber(annotation.variable?.domainId)" :kind="AnnotationKind.Item" />
                 <div v-if="item.itemOption">
                     <div v-for="option in item.itemOption">
-                        <el-button :disabled="disableCreateAnnotation" class="left-button"
+                        <el-button v-if="!multiOperation" :disabled="disableCreateAnnotation" class="left-button"
                             @click="() => { showCreateOptionAnnotationDialog(option.id) }" size="small" type="warning"
                             text>
                             <el-icon>
                                 <CirclePlusFilled />
+                            </el-icon>
+                        </el-button>
+                        <el-button v-else :disabled="disableCreateAnnotation" class="left-button"
+                            @click="() => { multiSelector.optionId.has(option.id) ? removeOptionToMultiSelector(option.id) : addOptionToMultiSelector(option.id) }"
+                            size="small" type="warning" text>
+                            <el-icon v-if="multiSelector.optionId.has(option.id)">
+                                <CircleCheckFilled />
+                            </el-icon>
+                            <el-icon v-else>
+                                <Remove />
                             </el-icon>
                         </el-button>
                         <el-text class="item-label">{{ option.optionDisplay }}</el-text>
@@ -113,11 +165,21 @@ function hideCreateAnnotationDialog() {
                         <el-text type="info" class="item-label">
                             {{ item.itemDefualtValue.value }}
                         </el-text>
-                        <el-button :disabled="disableCreateAnnotation" class="right-button"
+                        <el-button v-if="!multiOperation" :disabled="disableCreateAnnotation" class="right-button"
                             @click="() => { showCreateItemValueAnnotationDialog(item.id) }" size="small" type="warning"
                             text>
                             <el-icon>
                                 <CirclePlusFilled />
+                            </el-icon>
+                        </el-button>
+                        <el-button v-else :disabled="disableCreateAnnotation" class="right-button"
+                            @click="() => { multiSelector.itemValueId.has(item.id) ? removeItemValueToMultiSelector(item.id) : addItemValueToMultiSelector(item.id) }"
+                            size="small" type="warning" text>
+                            <el-icon v-if="multiSelector.itemValueId.has(item.id)">
+                                <CircleCheckFilled />
+                            </el-icon>
+                            <el-icon v-else>
+                                <Remove />
                             </el-icon>
                         </el-button>
                     </div>
@@ -132,10 +194,20 @@ function hideCreateAnnotationDialog() {
                         <el-text v-for="unit in item.itemUnit" type="info" class="item-label">
                             {{ unit.name }}
                         </el-text>
-                        <el-button :disabled="disableCreateAnnotation" class="right-button"
+                        <el-button v-if="!multiOperation" :disabled="disableCreateAnnotation" class="right-button"
                             @click="() => { showCreateUnitAnnotationDialog(unit.id) }" size="small" type="warning" text>
                             <el-icon>
                                 <CirclePlusFilled />
+                            </el-icon>
+                        </el-button>
+                        <el-button v-else :disabled="disableCreateAnnotation" class="right-button"
+                            @click="() => { multiSelector.unitId.has(unit.id) ? removeUnitToMultiSelector(unit.id) : addUnitToMultiSelector(unit.id) }"
+                            size="small" type="warning" text>
+                            <el-icon v-if="multiSelector.unitId.has(unit.id)">
+                                <CircleCheckFilled />
+                            </el-icon>
+                            <el-icon v-else>
+                                <Remove />
                             </el-icon>
                         </el-button>
                         <div>
@@ -150,20 +222,23 @@ function hideCreateAnnotationDialog() {
             </div>
         </div>
     </el-card>
-    <el-dialog destroy-on-close v-model="createItemAnnotationDialogDisplay" title="Create New Annotation for Item">
+    <el-dialog destroy-on-close v-model="createItemAnnotationDialogDisplay" title="Create New Annotation for Item"
+        width="1200px">
         <CreateOrUpdateAnnotation @submit="createAnnotation" @cancel="hideCreateAnnotationDialog"
             :annotation="undefined" :kind="AnnotationKind.Item" :location="createAnnotationLocation" />
     </el-dialog>
-    <el-dialog destroy-on-close v-model="createOptionAnnotationDialogDisplay" title="Create New Annotation for Option">
+    <el-dialog destroy-on-close v-model="createOptionAnnotationDialogDisplay" title="Create New Annotation for Option"
+        width="1200px">
         <CreateOrUpdateAnnotation @submit="createAnnotation" @cancel="hideCreateAnnotationDialog"
             :annotation="undefined" :kind="AnnotationKind.Option" :location="createAnnotationLocation" />
     </el-dialog>
     <el-dialog destroy-on-close v-model="createItemValueAnnotationDialogDisplay"
-        title="Create New Annotation for Item Value">
+        title="Create New Annotation for Item Value" width="1200px">
         <CreateOrUpdateAnnotation @submit="createAnnotation" @cancel="hideCreateAnnotationDialog"
             :annotation="undefined" :kind="AnnotationKind.ItemValue" :location="createAnnotationLocation" />
     </el-dialog>
-    <el-dialog destroy-on-close v-model="createUnitAnnotationDialogDisplay" title="Create New Annotation for Unit">
+    <el-dialog destroy-on-close v-model="createUnitAnnotationDialogDisplay" title="Create New Annotation for Unit"
+        width="1200px">
         <CreateOrUpdateAnnotation @submit="createAnnotation" @cancel="hideCreateAnnotationDialog"
             :annotation="undefined" :kind="AnnotationKind.Unit" :location="createAnnotationLocation" />
     </el-dialog>

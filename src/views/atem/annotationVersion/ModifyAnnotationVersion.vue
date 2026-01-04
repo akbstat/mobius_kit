@@ -59,10 +59,10 @@ onMounted(() => {
 
 <template>
     <el-form ref="ruleFormRef" :rules="rules" :model="formData" label-width="auto">
-        <el-form-item label="Version Name" prop="versionName">
+        <el-form-item class="item" label="Version Name" prop="versionName">
             <el-input v-model="formData.versionName" class="version-name" clearable />
         </el-form-item>
-        <el-form-item label="Description">
+        <el-form-item class="item" label="Description">
             <el-input v-model="formData.description" class="version-name" clearable />
         </el-form-item>
         <el-form-item>
@@ -83,4 +83,8 @@ onMounted(() => {
     <span></span>
 </template>
 
-<style scoped></style>
+<style scoped>
+.item {
+    margin-bottom: 20px;
+}
+</style>

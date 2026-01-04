@@ -1,4 +1,4 @@
-import { Annotation } from "../../../api/atem/annotation/interfaces/annotation";
+import { Annotation, AnnotationKind } from "../../../api/atem/annotation/interfaces/annotation";
 import { Domain } from "../../../api/atem/annotation/interfaces/domain";
 import { ItemType } from "../../../api/atem/rawdata/apis/rawdata";
 
@@ -46,6 +46,8 @@ export interface ItemValueAnnotation {
 export interface Config {
     selectedVersionId: number;
     selectedLangId: number;
+    projectVersionId?: number;
+    annotationVersionId?: number;
     logSpread: boolean;
 }
 
@@ -54,3 +56,21 @@ export interface FormDetail {
     annotation: Annotation[],
     item: ItemAnnotation[]
 }
+
+export interface Target {
+    id: number;
+    kind: AnnotationKind;
+    display: string;
+    assignValue: string;
+    whenValue: string;
+    annotationDisplay: string
+}
+
+export const defaultTarget: Target = {
+    id: 0,
+    kind: AnnotationKind.Item,
+    display: "",
+    assignValue: "",
+    whenValue: "",
+    annotationDisplay: ""
+};

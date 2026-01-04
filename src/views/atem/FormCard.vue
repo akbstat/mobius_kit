@@ -10,9 +10,10 @@ import { getDomainOrderNumber } from './utils/helper';
 import { FormInfo } from '../../api/atem/rawdata/apis/rawdata';
 import { Annotation, AnnotationKind } from '../../api/atem/annotation/interfaces/annotation';
 import { useAtem } from '../../store/atem';
+import MultiCreateAnnotation from './MultiCreateAnnotation.vue';
 
 const store = useAtem();
-const { activeFormDomains, activeAnnoationVersionId } = storeToRefs(store);
+const { activeFormDomains, activeAnnoationVersionId, multiOperation, multiSelector } = storeToRefs(store);
 const props = defineProps<{
     form: FormInfo, formAnnotations: Annotation[]
 }>();
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 }>();
 const createDomainDialogDisplay = ref(false);
 const createNewAnnotationDialogDisplay = ref(false);
+const createMultiAnnotationDialogDisplay = ref(false);
 const disableCreateAnnotation = computed(() => {
     return activeAnnoationVersionId.value ? false : true;
 });
@@ -35,6 +37,19 @@ function showCreateAnnotationDialog() {
 
 function hideCreateAnnotationDialog() {
     createNewAnnotationDialogDisplay.value = false;
+}
+
+function showMultiCreateAnnotationDialog() {
+    createMultiAnnotationDialogDisplay.value = true;
+}
+
+function submitMultiCreateAnnotation() {
+    hideMultiCreateAnnotationDialog();
+    change();
+}
+
+function hideMultiCreateAnnotationDialog() {
+    createMultiAnnotationDialogDisplay.value = false;
 }
 
 function change() {
@@ -52,6 +67,14 @@ async function hideCreateDomainDialogDisplay(submit: boolean) {
     }
     createDomainDialogDisplay.value = false;
 }
+
+function switchMultiOperation() {
+    if (!multiOperation.value) {
+        multiSelector.value.reset();
+    }
+    multiOperation.value = !multiOperation.value;
+}
+
 </script>
 
 <template>
@@ -63,7 +86,8 @@ async function hideCreateDomainDialogDisplay(submit: boolean) {
                     <MapLocation />
                 </el-icon>
             </el-button>
-            <el-tag effect="plain" type="info" style="" size="small" class="form-name header-tag">
+            <el-tag @click="switchMultiOperation" effect="plain" :type="multiOperation ? 'danger' : 'info'" style=""
+                size="small" class="form-name header-tag">
                 {{ props.form.name }}
             </el-tag>
             <el-text class="form-text" type="primary" size="large">{{ props.form?.description }}</el-text>
@@ -71,8 +95,9 @@ async function hideCreateDomainDialogDisplay(submit: boolean) {
                 :form-id="form.id" :order="getDomainOrderNumber(domain.id)" />
         </div>
         <div style="margin-top: 10px;">
-            <el-button :disabled="disableCreateAnnotation" class="left-button" @click="showCreateAnnotationDialog"
-                size="small" type="primary" text>
+            <el-button :disabled="disableCreateAnnotation" class="left-button"
+                @click="() => { multiOperation ? showMultiCreateAnnotationDialog() : showCreateAnnotationDialog() }"
+                size="small" :type="multiOperation ? 'danger' : 'primary'" text>
                 <el-icon>
                     <Plus />
                 </el-icon>
@@ -86,10 +111,15 @@ async function hideCreateDomainDialogDisplay(submit: boolean) {
         <CreateOrUpdateDomain @close="hideCreateDomainDialogDisplay" :existedDomain="undefined"
             :form-id="props.form.id" />
     </el-dialog>
-    <el-dialog destroy-on-close v-model="createNewAnnotationDialogDisplay" title="Create New Annotation For Form">
+    <el-dialog destroy-on-close v-model="createNewAnnotationDialogDisplay" title="Create New Annotation For Form"
+        width="1200px">
         <CreateOrUpdateAnnotation @submit="updateAnnotation" @cancel="hideCreateAnnotationDialog"
             :annotation="undefined" :kind="AnnotationKind.Form"
             :location="{ sourceId: props.form.id, kind: AnnotationKind.Form }" :form-level="true" />
+    </el-dialog>
+    <el-dialog destroy-on-close v-model="createMultiAnnotationDialogDisplay" title="Create Multiple Annotations"
+        width="1200px">
+        <MultiCreateAnnotation @submit="submitMultiCreateAnnotation" @cancel="hideMultiCreateAnnotationDialog" />
     </el-dialog>
 </template>
 
@@ -98,7 +128,7 @@ async function hideCreateDomainDialogDisplay(submit: boolean) {
     position: sticky;
     height: 100px;
     top: 0;
-    z-index: 1;
+    z-index: 2;
 }
 
 .form-name {
@@ -110,6 +140,7 @@ async function hideCreateDomainDialogDisplay(submit: boolean) {
     width: 80px;
     font-weight: 1000;
     margin: 3px 5px 0 0;
+    cursor: pointer;
 }
 
 .form-text {

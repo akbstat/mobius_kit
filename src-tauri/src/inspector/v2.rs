@@ -2,9 +2,10 @@ use crate::{config, utils::open_file};
 use inspector::v2::{
     self,
     inspect::result::{LogResult, QcResult},
-    AuditResult, Group, Investigator, InvestigatorParam,
+    AuditResult, FileType, Group, Investigator, InvestigatorParam, Kind,
 };
 use lazy_static::lazy_static;
+use penelope::extractor::{read_adam_sheet, read_sdtm_sheet, read_tfl_top, TrackerItem};
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -71,6 +72,47 @@ pub fn config_illation(param: ConfigRootRequest) -> Result<String, String> {
                 v2::Kind::TFLs => "top",
             };
             if filename.contains(kind) {
+                let meta = entry.metadata().map_err(|e| e.to_string())?;
+                let filepath = entry.path();
+                let modified = meta.modified().map_err(|e| e.to_string())?;
+                files.push((filepath, modified));
+            }
+        }
+        files.sort_by(|a, b| b.1.cmp(&a.1));
+        match files.last() {
+            Some((file, _)) => Ok(file.to_string_lossy().to_string()),
+            None => Ok("".to_string()),
+        }
+    }
+}
+
+#[tauri::command]
+pub fn tracker_illation(param: ConfigRootRequest) -> Result<String, String> {
+    let dir = config_root(ConfigRootRequest {
+        kind: Kind::TFLs,
+        product: param.product.clone(),
+        trial: param.trial.clone(),
+        purpose: param.purpose.clone(),
+    })?;
+    let dir = Path::new(&dir);
+    if !dir.exists() {
+        Ok("".to_string())
+    } else {
+        let mut files = vec![];
+        for entry in dir.read_dir().map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            if entry.file_type().map_err(|e| e.to_string())?.is_dir() {
+                continue;
+            }
+            let filename = entry.file_name().to_string_lossy().to_lowercase();
+            if !filename.ends_with(".xlsx") {
+                continue;
+            }
+            let kind = match param.kind {
+                v2::Kind::SDTM | v2::Kind::ADaM => "tracker",
+                v2::Kind::TFLs => "top",
+            };
+            if filename.to_lowercase().contains(kind) {
                 let meta = entry.metadata().map_err(|e| e.to_string())?;
                 let filepath = entry.path();
                 let modified = meta.modified().map_err(|e| e.to_string())?;
@@ -205,6 +247,45 @@ pub fn open_qc_file(param: OpenQcFileParam) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn open_project_file(param: OpenProjectFileParam) -> Result<(), String> {
+    let OpenProjectFileParam {
+        product,
+        trial,
+        purpose,
+        file,
+        kind,
+        group,
+        file_type,
+    } = param;
+    let mut subpaths = vec![product, trial, "stats".to_string(), purpose];
+    subpaths.push(match group {
+        Group::Production => "product".into(),
+        Group::Validation => "validation".into(),
+    });
+    match file_type {
+        FileType::Code | FileType::Log => subpaths.push("program".into()),
+        FileType::Data | FileType::Xpt => subpaths.push("dataset".into()),
+        FileType::Output => subpaths.push("output".into()),
+        FileType::Qc => subpaths.push("qc-result".into()),
+    }
+    match kind {
+        Kind::SDTM => subpaths.push("sdtm".into()),
+        Kind::ADaM => subpaths.push("adam".into()),
+        Kind::TFLs => {
+            if FileType::Output.ne(&file_type) {
+                subpaths.push("tfl".into())
+            }
+        }
+    }
+    subpaths.push(file);
+    let filepath = PROJECT_ROOT.join(subpaths.join(r"\"));
+    if filepath.exists() {
+        open_file(filepath.to_str().unwrap_or_default())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub fn sequence_detail(param: InspectDetailParam) -> Result<Vec<AuditResult>, String> {
     let InspectDetailParam {
         product,
@@ -260,6 +341,16 @@ pub fn create_history(param: CreatHistoryRequest) -> Result<(), String> {
         .send()
         .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_tracker_information(filepath: String, kind: Kind) -> Result<Vec<TrackerItem>, String> {
+    let filepath = Path::new(&filepath);
+    match kind {
+        Kind::SDTM => read_sdtm_sheet(filepath).map_err(|e| e.to_string()),
+        Kind::ADaM => read_adam_sheet(filepath).map_err(|e| e.to_string()),
+        Kind::TFLs => read_tfl_top(filepath).map_err(|e| e.to_string()),
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -339,4 +430,16 @@ pub struct CreatHistoryRequest {
     trial: String,
     kind: String,
     user: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenProjectFileParam {
+    product: String,
+    trial: String,
+    purpose: String,
+    file: String,
+    kind: v2::Kind,
+    file_type: v2::FileType,
+    group: Group,
 }

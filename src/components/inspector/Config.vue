@@ -7,10 +7,12 @@ const props = defineProps<{
     project: Project;
     kind: ProjectKind;
     configFile: string;
+    tracker: string,
     qcIgnore: string[],
 }>();
-const emit = defineEmits<{ (e: "update", config: string, qcIgnore: string[]): void; (e: "close"): void }>();
+const emit = defineEmits<{ (e: "update", config: string, tracker: string, qcIgnore: string[]): void; (e: "close"): void }>();
 const configFile = ref(props.configFile);
+const tracker = ref(props.tracker);
 const qcIgnore = ref(props.qcIgnore);
 
 async function selectConfig() {
@@ -31,7 +33,7 @@ function close() {
 }
 
 function submit() {
-    emit("update", configFile.value, qcIgnore.value);
+    emit("update", configFile.value, tracker.value, qcIgnore.value);
 }
 
 
@@ -41,6 +43,17 @@ function submit() {
     <el-form label-width="auto">
         <el-form-item label="Configuration">
             <el-input v-model="configFile" clearable>
+                <template #prepend>
+                    <el-button @click="selectConfig">
+                        <el-icon>
+                            <FolderOpened />
+                        </el-icon>
+                    </el-button>
+                </template>
+            </el-input>
+        </el-form-item>
+        <el-form-item label="Tracker">
+            <el-input v-model="tracker" clearable>
                 <template #prepend>
                     <el-button @click="selectConfig">
                         <el-icon>

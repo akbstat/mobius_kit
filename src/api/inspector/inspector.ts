@@ -181,7 +181,11 @@ export async function qcDetailSupp(param: QcDetailRequest): Promise<QcDetail> {
 }
 
 export async function openQcFile(param: OpenQcDetailParam) {
-    await invoke("open_qc_file", { param })
+    await invoke("open_qc_file", { param });
+}
+
+export async function openProjectFile(param: OpenProjectFileParam) {
+    await invoke("open_project_file", { param })
 }
 
 async function qcDetail(param: QcDetailRequest): Promise<QcDetail[]> {
@@ -329,6 +333,12 @@ export enum ProjectKind {
     UNKNOWN = ""
 }
 
+export enum GroupOption {
+    Production,
+    Validation,
+    Both,
+}
+
 export enum StatusKind {
     Pass = "Pass",
     Failed = "Failed",
@@ -421,6 +431,29 @@ export interface SequenceResult {
     status: ItemStatus,
     group: Group,
     modifiedAt: string,
+}
+
+export type FilterOption = {
+    sourcers: string[],
+    groupOption: GroupOption,
+    onlyFailedLog: boolean,
+    onlyFailedQc: boolean,
+    onlyFailedSequence: boolean,
+    itemDisplay: boolean,
+    groupisplay: boolean,
+    logDisplay: boolean,
+    qcResultDisplay: boolean,
+    sequenceDisplay: boolean,
+}
+
+export type OpenProjectFileParam = {
+    product: string;
+    trial: string;
+    purpose: string;
+    file: string;
+    kind: ProjectKind;
+    fileType: string;
+    group: Group;
 }
 
 function status(source: ItemStatus): Status {

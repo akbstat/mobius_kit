@@ -1,8 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, Ref, ref } from 'vue';
-import { Group, SequenceDetail, SequenceDetailRequest, sequenceStatus, StatusKind, Timeline } from '../../api/inspector/inspector';
+import { Group, openProjectFile, SequenceDetail, SequenceDetailRequest, SequenceGroup, sequenceStatus, StatusKind, Timeline } from '../../api/inspector/inspector';
 import { timelineNodeColor, groupTagType, statusColor, statusContent } from "./display";
+import { useInspector } from '../../store/inspectorV2';
+import { useProjectContext } from '../../store/context';
+import { ElMessage } from 'element-plus';
 
+const { project } = useProjectContext();
+const { selectedKind } = useInspector();
 const props = defineProps<{ param: SequenceDetailRequest, group: Group }>();
 const { product, trial, purpose, kind, item, supp } = props.param;
 const showProduction = ref(true);
@@ -40,7 +45,6 @@ const timelineDisplay = computed(() => {
     });
     return display;
 });
-
 const totalStatus = computed(() => {
     let status = true;
     detailDisplay.value.forEach((d) => {
@@ -50,6 +54,21 @@ const totalStatus = computed(() => {
     });
     return status;
 });
+
+async function openFile({ fileType, groupInfo }: { fileType: string, groupInfo: SequenceGroup }) {
+    if (groupInfo.status.kind === StatusKind.Missing) {
+        return;
+    }
+    if (project) {
+        const { product, trial, purpose } = project;
+        const { item, group } = groupInfo;
+        try {
+            await openProjectFile({ product, trial, purpose, kind: selectedKind, file: item, fileType, group });
+        } catch (error) {
+            ElMessage.error(`Failed to open file ${item}, because: ${error}`)
+        }
+    }
+}
 
 onMounted(async () => {
     const data = await sequenceStatus({ product, trial, purpose, kind, item, supp });
@@ -75,7 +94,7 @@ onMounted(async () => {
             </div>
             <div>
                 <el-tag :type="totalStatus ? 'success' : 'danger'" class="status">{{ totalStatus ? 'Pass' : 'Failed'
-                    }}</el-tag>
+                }}</el-tag>
                 <div class="group">
                     <el-checkbox v-model="showProduction" label="Production" size="large" />
                     <el-checkbox v-model="showValidation" label="Validation" size="large" />
@@ -94,7 +113,7 @@ onMounted(async () => {
                                 </div>
                                 <div>
                                     <el-tag :type="groupTagType(line.group)" class="file-type-timeline">{{ line.kind
-                                        }}</el-tag>
+                                    }}</el-tag>
                                 </div>
                             </div>
                         </el-timeline-item>
@@ -112,7 +131,9 @@ onMounted(async () => {
                         <template #default="scope">
                             <div style="padding-top: 7px;">
                                 <div v-for="group in scope.row.group">
-                                    <el-text truncated>{{ group.item }}</el-text>
+                                    <el-text style="cursor: pointer;" @click="() => {
+                                        openFile({ fileType: scope.row.kind, groupInfo: group });
+                                    }" truncated>{{ group.item }}</el-text>
                                 </div>
                             </div>
                         </template>

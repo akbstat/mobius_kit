@@ -1,10 +1,12 @@
 import { defineStore } from "pinia";
-import { ProjectKind } from "../api/inspector/inspector";
+import { FilterOption, ProjectKind } from "../api/inspector/inspector";
 
 export const useInspector = defineStore("inspectorV2", {
     state: () => ({
         configFile: "",
+        trackerFile: "",
         selectedKind: ProjectKind.SDTM,
         qcIgnore: [] as string[],
+        filterConfigMap: new Map<string, FilterOption>(),
     }),
 });

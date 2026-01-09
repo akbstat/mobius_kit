@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, Ref, watch } from 'vue';
-import { Search } from '@element-plus/icons-vue';
+import { Filter, Search } from '@element-plus/icons-vue';
 import { groupColor, statusColor, statusContent, qcStatusTagStyle } from "./display";
-import { configIllation, Group, Item, projectKind, ProjectKind, projectStatus } from '../../api/inspector/inspector';
+import { configIllation, FilterOption, Group, GroupOption, Item, ItemGroup, projectKind, ProjectKind, projectStatus, StatusKind } from '../../api/inspector/inspector';
 import Sequence from './Sequence.vue';
 import Graph from './Graph.vue';
 import Log from './Log.vue';
@@ -13,21 +13,36 @@ import { debounce } from 'lodash';
 import { useInspector } from '../../store/inspectorV2';
 import { storeToRefs } from 'pinia';
 import { useProjectContext } from '../../store/context';
+import FilterConfig from './FilterConfig.vue';
+import { getTrackerInformation, trackerIllation, TrackerItem } from '../../api/inspector/tracker';
 
 const store = useInspector();
 const contextStore = useProjectContext();
-const { selectedKind, configFile, qcIgnore } = storeToRefs(store);
+const { selectedKind, configFile, trackerFile, qcIgnore, filterConfigMap } = storeToRefs(store);
 const { project } = storeToRefs(contextStore);
 const projectKinds: Ref<ProjectKind[]> = ref([]);
-// const selectedKind: Ref<ProjectKind> = ref(ProjectKind.SDTM);
 const selectedGroup: Ref<Group> = ref(Group.Production);
 const selectedItem = ref("");
 // if true, when display qc result detail will display supplymental domain
 const selectedQcSupp = ref(false);
 const projectItems: Ref<Item[]> = ref([]);
+const trackerItems = ref(new Map<string, string>());
+const sourcers = ref<string[]>([]);
 const itemSearch = ref("");
 const loading = ref(false);
-// const activeItem: Ref<Item | null> = ref(null);
+const defaultFilterOption = {
+    sourcers: [],
+    groupOption: GroupOption.Both,
+    onlyFailedLog: false,
+    onlyFailedQc: false,
+    onlyFailedSequence: false,
+    itemDisplay: true,
+    groupisplay: true,
+    logDisplay: true,
+    qcResultDisplay: true,
+    sequenceDisplay: true,
+};
+const filterConfig = ref<FilterOption>(defaultFilterOption);
 
 // dialog or drawer display control
 const sequenceDisplay = ref(false);
@@ -35,10 +50,82 @@ const logDisplay = ref(false);
 const graphDisplay = ref(false);
 const configDisplay = ref(false);
 const qcDisplay = ref(false);
+const filterDisplay = ref(false);
 
 const projectItemDisplay = computed(() => {
-    return projectItems.value.filter((item) => item.name.toLowerCase().includes(itemSearch.value.toLowerCase()));
+    const { groupOption, onlyFailedLog, onlyFailedQc, onlyFailedSequence, sourcers } = filterConfig.value;
+    const copyItem: Item[] = JSON.parse(JSON.stringify(projectItems.value));
+    const display: Item[] = [];
+    // applying filter config
+    copyItem.forEach(item => {
+        const hasQcFailed = item.qcResult.filter(qc => [StatusKind.Failed, StatusKind.Missing].includes(qc.kind)).length > 0;
+        const groups: ItemGroup[] = [];
+        item.group.forEach(g => {
+            let including = true;
+            const hasLogFailed = !(g.log.kind === StatusKind.Pass);
+            const hasSequenceFailed = !(g.sequence.kind === StatusKind.Pass);
+            if (sourcers.length > 0) {
+                const sourcer = findSourcer({ name: item.name, group: g.group });
+                if (sourcer) {
+                    including = sourcers.includes(sourcer);
+                } else {
+                    including = false;
+                }
+            }
+            if (groupOption === GroupOption.Production && g.group === Group.Validation) including = false;
+            if (groupOption === GroupOption.Validation && g.group === Group.Production) including = false;
+            if (!onlyFailedLog && !onlyFailedQc && !onlyFailedSequence) {
+                if (including) {
+                    groups.push(g);
+                }
+                return;
+            }
+            including = including && ((onlyFailedLog && hasLogFailed) || (onlyFailedSequence && hasSequenceFailed) || (onlyFailedQc && hasQcFailed));
+            if (including) {
+                groups.push(g);
+            }
+        });
+        if (groups.length > 0) {
+            item.group = groups;
+            display.push(item);
+        }
+    });
+    return display.filter((item) => item.name.toLowerCase().includes(itemSearch.value.toLowerCase()));
 });
+
+function findSourcer({ name, group }: { name: string, group: Group }): string | undefined {
+    const key = `${name}-${group === Group.Production ? "dev" : "qc"}`;
+    const sourcer = trackerItems.value.get(key);
+    return sourcer;
+}
+
+function sourceDisplay({ name, group }: { name: string, group: Group }): string {
+    const sourcer = findSourcer({ name, group });
+    return sourcer ? `: ${sourcer}` : ": NA";
+}
+
+function getSources(items: TrackerItem[]): string[] {
+    const memberSet = new Set<string>();
+    items.forEach(item => {
+        memberSet.add(item.dever);
+        memberSet.add(item.qcer);
+    });
+    return Array.from(memberSet);
+}
+
+function buildTrackerItemMap(items: TrackerItem[]): Map<string, string> {
+    const mapper = new Map();
+    items.forEach(i => {
+        const { dever, qcer, item } = i;
+        mapper.set(`${item}-dev`, dever);
+        mapper.set(`${item}-qc`, qcer);
+    });
+    return mapper;
+}
+
+function showFilter() {
+    filterDisplay.value = true;
+}
 
 function showSequence() {
     sequenceDisplay.value = true;
@@ -65,9 +152,38 @@ function closeConfig() {
     configDisplay.value = false;
 }
 
-function updateConfig(config: string, ignore: string[]) {
+function closeFilterConfig(option: FilterOption | undefined) {
+    if (option) {
+        filterConfig.value = option;
+        if (project.value) {
+            const { product, trial, purpose } = project.value;
+            const key = `${product}-${trial}-${purpose}-${selectedKind.value}`;
+            filterConfigMap.value.set(key, filterConfig.value);
+        }
+        filterConfig.value = option;
+    }
+    filterDisplay.value = false;
+}
+
+async function updateFilterOptions() {
+    if (project.value) {
+        const { product, trial, purpose } = project.value;
+        trackerFile.value = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
+        const key = `${product}-${trial}-${purpose}-${selectedKind.value}`;
+        const config = filterConfigMap.value.get(key);
+        if (config) {
+            filterConfig.value = config;
+        } else {
+            filterConfig.value = defaultFilterOption;
+            filterConfigMap.value.set(key, filterConfig.value);
+        }
+    }
+}
+
+function updateConfig(config: string, tracker: string, ignore: string[]) {
     qcIgnore.value = ignore;
     configFile.value = config;
+    trackerFile.value = tracker;
     closeConfig();
     updateProjectStatus()
 }
@@ -79,6 +195,7 @@ async function updateProjectKind() {
     const { product, trial, purpose } = project.value;
     configFile.value = await configIllation({ product, trial, purpose, kind: selectedKind.value });
     await updateProjectStatus();
+    updateFilterOptions();
 }
 
 async function updateProjectStatus() {
@@ -89,6 +206,7 @@ async function updateProjectStatus() {
     if (configFile.value.length === 0) {
         configFile.value = await configIllation({ product, trial, purpose, kind: selectedKind.value });
     }
+    trackerFile.value = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
     if (!(product && trial && purpose && configFile.value && configFile.value)) {
         return;
     }
@@ -97,6 +215,9 @@ async function updateProjectStatus() {
         projectItems.value = await projectStatus({
             product, trial, purpose, kind: selectedKind.value, config: configFile.value, qcIgnore: qcIgnore.value
         });
+        const trackerItemList = await getTrackerInformation({ filepath: trackerFile.value, kind: selectedKind.value });
+        sourcers.value = getSources(trackerItemList);
+        trackerItems.value = buildTrackerItemMap(trackerItemList);
     } catch (e) {
         ElMessage.error(`Failed to update project status: ${e}`);
     }
@@ -104,13 +225,15 @@ async function updateProjectStatus() {
 }
 
 onMounted(async () => {
+    updateFilterOptions();
     projectKinds.value = await projectKind();
     await updateProjectStatus();
 });
 
 watch(() => project.value, debounce(() => {
     configFile.value = "";
-    updateProjectStatus()
+    updateProjectStatus();
+    updateFilterOptions();
 }, 500));
 
 </script>
@@ -119,17 +242,6 @@ watch(() => project.value, debounce(() => {
     <el-container>
         <el-header class="header">
             <div v-if="project">
-                <!-- <el-breadcrumb style="margin-top: 7px;float: left;" :separator-icon="ArrowRight">
-                    <el-breadcrumb-item>
-                        <span class="breadcrumb-span">{{ project.product }}</span>
-                    </el-breadcrumb-item>
-                    <el-breadcrumb-item>
-                        <span class="breadcrumb-span">{{ project.trial }}</span>
-                    </el-breadcrumb-item>
-                    <el-breadcrumb-item>
-                        <span class="breadcrumb-span">{{ project.purpose }}</span>
-                    </el-breadcrumb-item>
-                </el-breadcrumb> -->
                 <el-select @change="updateProjectKind" v-model="selectedKind" size="small" class="kind">
                     <el-option v-for="kind in projectKinds" :value="kind" :label="kind" />
                 </el-select>
@@ -150,33 +262,50 @@ watch(() => project.value, debounce(() => {
                             <Histogram />
                         </el-icon>
                     </el-button>
+                    <el-button @click="showFilter" size="small" class="config-button" plain type="primary">
+                        <el-icon>
+                            <Filter />
+                        </el-icon>
+                    </el-button>
                 </div>
             </div>
         </el-header>
 
         <el-main class="main">
             <el-table v-loading="loading" :data="projectItemDisplay" height="625px">
-                <el-table-column show-overflow-tooltip prop="name" label="Item" />
-                <el-table-column label="Group" width="110">
+                <el-table-column v-if="filterConfig.itemDisplay" show-overflow-tooltip prop="name" label="Item" />
+                <el-table-column v-if="filterConfig.groupisplay" label="Group" width="220">
                     <template #default="scope">
                         <div>
-                            <el-tag class="group-tag" style="margin-bottom: 10px;"
+                            <el-tag class="group-tag" style="margin-bottom: 10px; width: 100%;"
                                 :type="groupColor(scope.row.group[0])">
-                                {{ scope.row.group[0].group }}
+                                <span>{{ scope.row.group[0].group }}</span>
+                                <span>
+                                    {{ sourceDisplay({
+                                        name: scope.row.name, group:
+                                            scope.row.group[0].group
+                                    }) }}
+                                </span>
                             </el-tag>
                         </div>
                         <div v-if="scope.row.group.length === 2">
-                            <el-tag class="group-tag" :type="groupColor(scope.row.group[1])">
-                                {{ scope.row.group[1].group }}
+                            <el-tag class="group-tag" :type="groupColor(scope.row.group[1])" style="width: 100%" ;>
+                                <span>{{ scope.row.group[1].group }}</span>
+                                <span>
+                                    {{ sourceDisplay({
+                                        name: scope.row.name, group:
+                                            scope.row.group[1].group
+                                    }) }}
+                                </span>
                             </el-tag>
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="Log">
+                <el-table-column v-if="filterConfig.logDisplay" label="Log">
                     <template #default="scope">
                         <div>
                             <el-tag @click="() => {
-                                selectedGroup = Group.Production;
+                                selectedGroup = scope.row.group[0].group;
                                 selectedItem = scope.row.name;
                                 showLog();
                             }" class="status-tag" style="margin-bottom: 10px;"
@@ -186,7 +315,7 @@ watch(() => project.value, debounce(() => {
                         </div>
                         <div v-if="scope.row.group.length === 2">
                             <el-tag @click="() => {
-                                selectedGroup = Group.Validation;
+                                selectedGroup = scope.row.group[1].group;
                                 selectedItem = scope.row.name;
                                 showLog();
                             }" class="status-tag" :type="statusColor(scope.row.group[1].log)">
@@ -195,7 +324,7 @@ watch(() => project.value, debounce(() => {
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column label="Qc Result">
+                <el-table-column v-if="filterConfig.qcResultDisplay" label="Qc Result">
                     <template #default="scope">
                         <el-tag @click="() => { selectedItem = scope.row.name; showQc(false); }"
                             :class="qcStatusTagStyle(scope.row.qcResult)" style="margin-bottom: 10px;"
@@ -209,11 +338,11 @@ watch(() => project.value, debounce(() => {
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column label="Sequence">
+                <el-table-column v-if="filterConfig.sequenceDisplay" label="Sequence">
                     <template #default="scope">
                         <div>
                             <el-tag @click="() => {
-                                selectedGroup = Group.Production;
+                                selectedGroup = scope.row.group[0].group;
                                 selectedItem = scope.row.name;
                                 selectedQcSupp = scope.row.qcResult.length > 1;
                                 showSequence();
@@ -224,7 +353,7 @@ watch(() => project.value, debounce(() => {
                         </div>
                         <div v-if="scope.row.group.length === 2">
                             <el-tag @click="() => {
-                                selectedGroup = Group.Validation;
+                                selectedGroup = scope.row.group[1].group;
                                 selectedItem = scope.row.name;
                                 selectedQcSupp = scope.row.qcResult.length > 1;
                                 showSequence();
@@ -268,8 +397,8 @@ watch(() => project.value, debounce(() => {
         }" />
     </el-dialog>
     <el-drawer v-if="project" title="Configuration" v-model="configDisplay" size="50%" destroy-on-close>
-        <Config :project="project" :kind="selectedKind" :config-file="configFile" :qc-ignore="qcIgnore"
-            @update="updateConfig" @close="closeConfig" />
+        <Config :project="project" :kind="selectedKind" :config-file="configFile" :qc-ignore="qcIgnore" ,
+            :tracker="trackerFile" @update="updateConfig" @close="closeConfig" />
     </el-drawer>
     <el-dialog :title="`Qc Result of ${selectedQcSupp ? 'SUPP' : ''}${selectedItem}`" v-model="qcDisplay"
         destroy-on-close draggable>
@@ -282,6 +411,9 @@ watch(() => project.value, debounce(() => {
             ignore: qcIgnore,
         }" :supp="selectedQcSupp" />
     </el-dialog>
+    <el-drawer size="40%" v-model="filterDisplay" title="Filter Configuration" destroy-on-close>
+        <FilterConfig @close="closeFilterConfig" :option="{ ...filterConfig }" :sourcers="sourcers" />
+    </el-drawer>
 </template>
 
 <style scoped>

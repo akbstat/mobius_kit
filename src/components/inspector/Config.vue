@@ -9,11 +9,22 @@ const props = defineProps<{
     configFile: string;
     tracker: string,
     qcIgnore: string[],
+    externalLogPatterns: {
+        issue: string[],
+        whiteList: string[],
+    }
 }>();
-const emit = defineEmits<{ (e: "update", config: string, tracker: string, qcIgnore: string[]): void; (e: "close"): void }>();
+const emit = defineEmits<{
+    (e: "update", config: string, tracker: string, qcIgnore: string[], logExternal: {
+        issue: string[],
+        whiteList: string[],
+    }): void; (e: "close"): void
+}>();
 const configFile = ref(props.configFile);
 const tracker = ref(props.tracker);
 const qcIgnore = ref(props.qcIgnore);
+const logWhiteListPatterns = ref(props.externalLogPatterns.whiteList ?? []);
+const logIssuePatterns = ref(props.externalLogPatterns.issue ?? []);
 
 async function selectConfig() {
     const { product, trial, purpose } = props.project;
@@ -28,12 +39,26 @@ async function selectConfig() {
     })) as string;
 }
 
+async function selectTracker() {
+    const { product, trial, purpose } = props.project;
+    const kind = props.kind;
+    const defaultPath = await configRootDir({ product, trial, purpose, kind });
+    tracker.value = (await open({
+        defaultPath,
+        filters: [{
+            extensions: ['xlsx'],
+            name: ''
+        }]
+    })) as string;
+}
+
+
 function close() {
     emit("close");
 }
 
 function submit() {
-    emit("update", configFile.value, tracker.value, qcIgnore.value);
+    emit("update", configFile.value, tracker.value, qcIgnore.value, { whiteList: logWhiteListPatterns.value, issue: logIssuePatterns.value });
 }
 
 
@@ -55,7 +80,7 @@ function submit() {
         <el-form-item label="Tracker">
             <el-input v-model="tracker" clearable>
                 <template #prepend>
-                    <el-button @click="selectConfig">
+                    <el-button @click="selectTracker">
                         <el-icon>
                             <FolderOpened />
                         </el-icon>
@@ -68,6 +93,15 @@ function submit() {
                 <el-checkbox label="Attribute Difference" value="Attribute Difference" />
                 <el-checkbox label="Not Excatly Equal" value="Not Excatly Equal" />
             </el-checkbox-group>
+        </el-form-item>
+        <el-form-item>
+            <el-divider content-position="center">Log Check Additional Patterns</el-divider>
+        </el-form-item>
+        <el-form-item label="Issue">
+            <el-input-tag v-model="logIssuePatterns" placeholder="Please input a match pattern" />
+        </el-form-item>
+        <el-form-item label="White List">
+            <el-input-tag v-model="logWhiteListPatterns" placeholder="Please input a match pattern" />
         </el-form-item>
         <el-form-item>
             <el-button @click="submit" type="primary" plain>

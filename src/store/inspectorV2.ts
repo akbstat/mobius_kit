@@ -8,5 +8,9 @@ export const useInspector = defineStore("inspectorV2", {
         selectedKind: ProjectKind.SDTM,
         qcIgnore: [] as string[],
         filterConfigMap: new Map<string, FilterOption>(),
+        externalLogPatterns: {
+            issue: [] as string[],
+            whiteList: [] as string[],
+        }
     }),
 });

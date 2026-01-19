@@ -18,7 +18,7 @@ import { getTrackerInformation, trackerIllation, TrackerItem } from '../../api/i
 
 const store = useInspector();
 const contextStore = useProjectContext();
-const { selectedKind, configFile, trackerFile, qcIgnore, filterConfigMap } = storeToRefs(store);
+const { selectedKind, configFile, trackerFile, qcIgnore, filterConfigMap, externalLogPatterns } = storeToRefs(store);
 const { project } = storeToRefs(contextStore);
 const projectKinds: Ref<ProjectKind[]> = ref([]);
 const selectedGroup: Ref<Group> = ref(Group.Production);
@@ -58,34 +58,30 @@ const projectItemDisplay = computed(() => {
     const display: Item[] = [];
     // applying filter config
     copyItem.forEach(item => {
+        let includeItem = true;
+        let includeSourcer = false;
+        let hasLogFailed = false;
+        let hasSequenceFailed = false;
         const hasQcFailed = item.qcResult.filter(qc => [StatusKind.Failed, StatusKind.Missing].includes(qc.kind)).length > 0;
-        const groups: ItemGroup[] = [];
-        item.group.forEach(g => {
-            let including = true;
-            const hasLogFailed = !(g.log.kind === StatusKind.Pass);
-            const hasSequenceFailed = !(g.sequence.kind === StatusKind.Pass);
+        const groups: ItemGroup[] = item.group.filter(g => groupOption === GroupOption.Both || groupOption === GroupOption.Production && g.group === Group.Production || groupOption === GroupOption.Validation && g.group === Group.Validation);
+        groups.forEach(g => {
+            hasLogFailed = hasLogFailed || g.log.kind !== StatusKind.Pass;
+            hasSequenceFailed = hasSequenceFailed || g.sequence.kind !== StatusKind.Pass;
             if (sourcers.length > 0) {
                 const sourcer = findSourcer({ name: item.name, group: g.group });
                 if (sourcer) {
-                    including = sourcers.includes(sourcer);
+                    includeSourcer = includeSourcer || sourcers.includes(sourcer);
                 } else {
-                    including = false;
+                    includeItem = includeSourcer || false;
                 }
-            }
-            if (groupOption === GroupOption.Production && g.group === Group.Validation) including = false;
-            if (groupOption === GroupOption.Validation && g.group === Group.Production) including = false;
-            if (!onlyFailedLog && !onlyFailedQc && !onlyFailedSequence) {
-                if (including) {
-                    groups.push(g);
-                }
-                return;
-            }
-            including = including && ((onlyFailedLog && hasLogFailed) || (onlyFailedSequence && hasSequenceFailed) || (onlyFailedQc && hasQcFailed));
-            if (including) {
-                groups.push(g);
+            } else {
+                includeSourcer = true;
             }
         });
-        if (groups.length > 0) {
+        includeItem = (!onlyFailedLog && !onlyFailedSequence && !onlyFailedQc) ?
+            true :
+            includeItem && ((onlyFailedLog && hasLogFailed) || (onlyFailedSequence && hasSequenceFailed) || (onlyFailedQc && hasQcFailed));
+        if (includeItem && includeSourcer && groups.length > 0) {
             item.group = groups;
             display.push(item);
         }
@@ -180,10 +176,11 @@ async function updateFilterOptions() {
     }
 }
 
-function updateConfig(config: string, tracker: string, ignore: string[]) {
+function updateConfig(config: string, tracker: string, ignore: string[], logExternal: { whiteList: string[], issue: string[] }) {
     qcIgnore.value = ignore;
     configFile.value = config;
     trackerFile.value = tracker;
+    externalLogPatterns.value = logExternal;
     closeConfig();
     updateProjectStatus()
 }
@@ -206,14 +203,16 @@ async function updateProjectStatus() {
     if (configFile.value.length === 0) {
         configFile.value = await configIllation({ product, trial, purpose, kind: selectedKind.value });
     }
-    trackerFile.value = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
+    if (trackerFile.value.length === 0) {
+        trackerFile.value = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
+    }
     if (!(product && trial && purpose && configFile.value && configFile.value)) {
         return;
     }
     loading.value = true;
     try {
         projectItems.value = await projectStatus({
-            product, trial, purpose, kind: selectedKind.value, config: configFile.value, qcIgnore: qcIgnore.value
+            product, trial, purpose, kind: selectedKind.value, config: configFile.value, qcIgnore: qcIgnore.value, externalLogPatterns: externalLogPatterns.value
         });
         const trackerItemList = await getTrackerInformation({ filepath: trackerFile.value, kind: selectedKind.value });
         sourcers.value = getSources(trackerItemList);
@@ -384,6 +383,7 @@ watch(() => project.value, debounce(() => {
             kind: selectedKind,
             item: selectedItem,
             group: selectedGroup,
+            externalLogPatterns: externalLogPatterns,
         }" />
     </el-drawer>
     <el-dialog v-if="project" v-model="graphDisplay" destroy-on-close draggable width="80%">
@@ -394,11 +394,13 @@ watch(() => project.value, debounce(() => {
             kind: selectedKind,
             config: configFile,
             qcIgnore: qcIgnore,
+            externalLogPatterns: externalLogPatterns
         }" />
     </el-dialog>
     <el-drawer v-if="project" title="Configuration" v-model="configDisplay" size="50%" destroy-on-close>
         <Config :project="project" :kind="selectedKind" :config-file="configFile" :qc-ignore="qcIgnore" ,
-            :tracker="trackerFile" @update="updateConfig" @close="closeConfig" />
+            :tracker="trackerFile" :external-log-patterns="externalLogPatterns" @update="updateConfig"
+            @close="closeConfig" />
     </el-drawer>
     <el-dialog :title="`Qc Result of ${selectedQcSupp ? 'SUPP' : ''}${selectedItem}`" v-model="qcDisplay"
         destroy-on-close draggable>

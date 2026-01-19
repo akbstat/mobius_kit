@@ -12,10 +12,14 @@ const props = defineProps<{
         kind: ProjectKind,
         config: string,
         qcIgnore: string[],
+        externalLogPatterns: {
+            issue: string[],
+            whiteList: string[],
+        },
     }
 }>();
 
-const { product, trial, purpose, kind, config, qcIgnore } = props.param;
+const { product, trial, purpose, kind, config, qcIgnore, externalLogPatterns } = props.param;
 const loading = ref(false);
 
 function initSummary(data: GraphData) {
@@ -165,7 +169,7 @@ function initQc(value: number) {
 
 onMounted(async () => {
     loading.value = true;
-    const data = await graphData({ product, trial, purpose, kind, config, qcIgnore });
+    const data = await graphData({ product, trial, purpose, kind, config, qcIgnore, externalLogPatterns });
     initSummary(data);
     initLog(data.logPassPercentage);
     initQc(data.qcPassPercentage);

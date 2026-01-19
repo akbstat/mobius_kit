@@ -5,7 +5,7 @@ import { statusColor } from './display';
 
 
 const props = defineProps<{ param: LogDetailRequest }>();
-const { product, trial, purpose, kind, item, group } = props.param;
+const { product, trial, purpose, kind, item, group, externalLogPatterns } = props.param;
 const log: Ref<LogDetail | null> = ref(null);
 const failedOnly = ref(false);
 const logRow = computed(() => {
@@ -29,7 +29,7 @@ function rowStyle({ row }: { row: LogRow }) {
 }
 
 onMounted(async () => {
-    log.value = await logDetail({ product, trial, purpose, kind, item, group });
+    log.value = await logDetail({ product, trial, purpose, kind, item, group, externalLogPatterns });
 });
 </script>
 

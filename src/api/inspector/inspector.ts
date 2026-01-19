@@ -59,6 +59,7 @@ export async function projectStatus(param: {
     kind: ProjectKind,
     config: string,
     qcIgnore: string[],
+    externalLogPatterns: { whiteList: string[], issue: string[] }
 }): Promise<Item[]> {
     const result: InspectionResult[] = await invoke("inspect_summary", { param });
     return result.map((r: InspectionResult) => {
@@ -87,7 +88,6 @@ export async function projectStatus(param: {
 
 export async function sequenceStatus(param: SequenceDetailRequest): Promise<SequenceStatus> {
     const sequenceResult: AuditSequenceResult[] = await invoke("sequence_detail", { param });
-    console.log(sequenceResult);
     return {
         timeline: buildTimeline(sequenceResult),
         detail: buildSequenceDetail(sequenceResult),
@@ -204,7 +204,8 @@ export async function graphData(param: {
     purpose: string,
     kind: ProjectKind,
     config: string,
-    qcIgnore: string[]
+    qcIgnore: string[],
+    externalLogPatterns: { whiteList: string[], issue: string[] }
 }): Promise<GraphData> {
     const items = await projectStatus(param);
     let logPass = 0;
@@ -391,6 +392,7 @@ export interface LogDetailRequest {
     kind: ProjectKind,
     item: string,
     group: Group,
+    externalLogPatterns: { whiteList: string[], issue: string[] }
 }
 
 export interface QcDetailRequest {

@@ -71,7 +71,7 @@ pub fn config_illation(param: ConfigRootRequest) -> Result<String, String> {
                 v2::Kind::ADaM => "adam",
                 v2::Kind::TFLs => "top",
             };
-            if filename.contains(kind) {
+            if filename.contains(kind) && !filename.starts_with("~") {
                 let meta = entry.metadata().map_err(|e| e.to_string())?;
                 let filepath = entry.path();
                 let modified = meta.modified().map_err(|e| e.to_string())?;
@@ -147,6 +147,7 @@ pub fn inspect_summary(param: InspectSunmmaryRequest) -> Result<Vec<v2::Inspecti
         config,
         kind,
         qc_ignore,
+        external_log_patterns,
     } = param;
     let result = v2::inspect(
         &v2::InvestigatorParam {
@@ -158,6 +159,7 @@ pub fn inspect_summary(param: InspectSunmmaryRequest) -> Result<Vec<v2::Inspecti
         &config,
         &kind,
         &qc_ignore,
+        external_log_patterns,
     )
     .map_err(|err| err.to_string())?;
     Ok(result)
@@ -172,6 +174,7 @@ pub fn log_detail(param: LogDetailRequest) -> Result<LogResult, String> {
         kind,
         item,
         group,
+        external_log_patterns,
     } = param;
     let result = v2::log_detail(
         &v2::InvestigatorParam {
@@ -183,6 +186,7 @@ pub fn log_detail(param: LogDetailRequest) -> Result<LogResult, String> {
         &item,
         &kind,
         &group,
+        external_log_patterns,
     )
     .map_err(|e| e.to_string())?;
     Ok(result)
@@ -362,17 +366,19 @@ pub struct ConfigRootRequest {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InspectSunmmaryRequest {
     product: String,
     trial: String,
     purpose: String,
     config: PathBuf,
     kind: v2::Kind,
-    #[serde(rename = "qcIgnore")]
     qc_ignore: Vec<String>,
+    external_log_patterns: Option<v2::ExternalLogPattern>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LogDetailRequest {
     product: String,
     trial: String,
@@ -380,6 +386,7 @@ pub struct LogDetailRequest {
     kind: v2::Kind,
     item: String,
     group: Group,
+    external_log_patterns: Option<v2::ExternalLogPattern>,
 }
 
 #[derive(Debug, Deserialize)]

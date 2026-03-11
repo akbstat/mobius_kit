@@ -174,9 +174,11 @@ async function list_rtfs() {
     }
     let result: File[] = [];
     try {
+        const tflKinds = ["Table", "Listing", "Figure"];
         let data: Rtf[] = await listRtfs(directory.value);
         data.forEach((item: any) => {
-            result.push({ name: item.name, type: item.kind, size: bytesToMegaBytes(item.size), path: `${directory.value}\\${item.name}`, modifiedAt: timestampDisplay(item.modified_at) });
+            if (tflKinds.includes(item.kind))
+                result.push({ name: item.name, type: item.kind, size: bytesToMegaBytes(item.size), path: `${directory.value}\\${item.name}`, modifiedAt: timestampDisplay(item.modified_at) });
         });
     } catch (e) {
         ElNotification({

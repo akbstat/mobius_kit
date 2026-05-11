@@ -5,6 +5,7 @@ export const useInspector = defineStore("inspectorV2", {
     state: () => ({
         configFile: "",
         trackerFile: "",
+        tflTrackerFile: "",
         selectedKind: ProjectKind.SDTM,
         qcIgnore: [] as string[],
         filterConfigMap: new Map<string, FilterOption>(),

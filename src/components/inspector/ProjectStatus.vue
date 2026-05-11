@@ -18,7 +18,7 @@ import { getTrackerInformation, trackerIllation, TrackerItem } from '../../api/i
 
 const store = useInspector();
 const contextStore = useProjectContext();
-const { selectedKind, configFile, trackerFile, qcIgnore, filterConfigMap, externalLogPatterns } = storeToRefs(store);
+const { selectedKind, configFile, trackerFile, tflTrackerFile, qcIgnore, filterConfigMap, externalLogPatterns } = storeToRefs(store);
 const { project } = storeToRefs(contextStore);
 const projectKinds: Ref<ProjectKind[]> = ref([]);
 const selectedGroup: Ref<Group> = ref(Group.Production);
@@ -164,7 +164,12 @@ function closeFilterConfig(option: FilterOption | undefined) {
 async function updateFilterOptions() {
     if (project.value) {
         const { product, trial, purpose } = project.value;
-        trackerFile.value = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
+        const updatedTracker = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
+        if (selectedKind.value === ProjectKind.TFLs) {
+            tflTrackerFile.value = updatedTracker;
+        } else {
+            trackerFile.value = updatedTracker;
+        }
         const key = `${product}-${trial}-${purpose}-${selectedKind.value}`;
         const config = filterConfigMap.value.get(key);
         if (config) {
@@ -179,7 +184,11 @@ async function updateFilterOptions() {
 function updateConfig(config: string, tracker: string, ignore: string[], logExternal: { whiteList: string[], issue: string[] }) {
     qcIgnore.value = ignore;
     configFile.value = config;
-    trackerFile.value = tracker;
+    if (selectedKind.value === ProjectKind.TFLs) {
+        tflTrackerFile.value = tracker;
+    } else {
+        trackerFile.value = tracker;
+    }
     externalLogPatterns.value = logExternal;
     closeConfig();
     updateProjectStatus()
@@ -203,9 +212,18 @@ async function updateProjectStatus() {
     if (configFile.value.length === 0) {
         configFile.value = await configIllation({ product, trial, purpose, kind: selectedKind.value });
     }
-    if (trackerFile.value.length === 0) {
-        trackerFile.value = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
+
+    if (selectedKind.value === ProjectKind.TFLs) {
+        if (tflTrackerFile.value.length === 0) {
+            tflTrackerFile.value = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
+        }
+    } else {
+        if (trackerFile.value.length === 0) {
+            trackerFile.value = await trackerIllation({ product, trial, purpose, kind: selectedKind.value });
+        }
     }
+
+
     if (!(product && trial && purpose && configFile.value && configFile.value)) {
         return;
     }
@@ -214,7 +232,7 @@ async function updateProjectStatus() {
         projectItems.value = await projectStatus({
             product, trial, purpose, kind: selectedKind.value, config: configFile.value, qcIgnore: qcIgnore.value, externalLogPatterns: externalLogPatterns.value
         });
-        const trackerItemList = await getTrackerInformation({ filepath: trackerFile.value, kind: selectedKind.value });
+        const trackerItemList = await getTrackerInformation({ filepath: selectedKind.value === ProjectKind.TFLs ? tflTrackerFile.value : trackerFile.value, kind: selectedKind.value });
         sourcers.value = getSources(trackerItemList);
         trackerItems.value = buildTrackerItemMap(trackerItemList);
     } catch (e) {
@@ -399,8 +417,8 @@ watch(() => project.value, debounce(() => {
     </el-dialog>
     <el-drawer v-if="project" title="Configuration" v-model="configDisplay" size="50%" destroy-on-close>
         <Config :project="project" :kind="selectedKind" :config-file="configFile" :qc-ignore="qcIgnore" ,
-            :tracker="trackerFile" :external-log-patterns="externalLogPatterns" @update="updateConfig"
-            @close="closeConfig" />
+            :tracker="selectedKind === ProjectKind.TFLs ? tflTrackerFile : trackerFile"
+            :external-log-patterns="externalLogPatterns" @update="updateConfig" @close="closeConfig" />
     </el-drawer>
     <el-dialog :title="`Qc Result of ${selectedQcSupp ? 'SUPP' : ''}${selectedItem}`" v-model="qcDisplay"
         destroy-on-close draggable>

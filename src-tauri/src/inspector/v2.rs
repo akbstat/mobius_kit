@@ -105,7 +105,7 @@ pub fn tracker_illation(param: ConfigRootRequest) -> Result<String, String> {
                 continue;
             }
             let filename = entry.file_name().to_string_lossy().to_lowercase();
-            if !filename.ends_with(".xlsx") {
+            if !filename.ends_with(".xlsx") || filename.starts_with("~$") {
                 continue;
             }
             let kind = match param.kind {

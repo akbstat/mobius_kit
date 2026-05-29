@@ -420,8 +420,8 @@ watch(() => project.value, debounce(() => {
             :tracker="selectedKind === ProjectKind.TFLs ? tflTrackerFile : trackerFile"
             :external-log-patterns="externalLogPatterns" @update="updateConfig" @close="closeConfig" />
     </el-drawer>
-    <el-dialog :title="`Qc Result of ${selectedQcSupp ? 'SUPP' : ''}${selectedItem}`" v-model="qcDisplay"
-        destroy-on-close draggable>
+    <el-dialog top="1vh" width="90%" :title="`Qc Result of ${selectedQcSupp ? 'SUPP' : ''}${selectedItem}`"
+        v-model="qcDisplay" destroy-on-close draggable>
         <QcResult v-if="project" :param="{
             product: project.product,
             trial: project.trial,

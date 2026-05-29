@@ -11,6 +11,8 @@ use std::{
     env,
     path::{Path, PathBuf},
 };
+use validator::qc::html_report::QcResult as QcResultHtml;
+use validator::qc::html_report::QcResultHtmlParser;
 
 lazy_static! {
     static ref PROJECT_ROOT: PathBuf = Path::new(
@@ -251,6 +253,45 @@ pub fn open_qc_file(param: OpenQcFileParam) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn html_qc_result(param: OpenQcFileParam) -> Result<Option<QcResultHtml>, String> {
+    let OpenQcFileParam {
+        product,
+        trial,
+        purpose,
+        kind,
+        item,
+        supp,
+    } = param;
+    let invest = Investigator::new(&InvestigatorParam {
+        product,
+        trial,
+        purpose,
+        root: PROJECT_ROOT.as_path(),
+    });
+    let file = match kind {
+        v2::Kind::SDTM => {
+            if supp {
+                invest.sdtm_qc_supp(&item)
+            } else {
+                invest.sdtm_qc_main(&item)
+            }
+        }
+        v2::Kind::ADaM => invest.adam_qc_result(&item),
+        v2::Kind::TFLs => invest.tfl_qc_result(&item),
+    };
+    if let Some(file) = file {
+        if file.filepath.to_string_lossy().ends_with(".html") {
+            let qc_result = QcResultHtmlParser::new().parse(&file.filepath);
+            Ok(Some(qc_result))
+        } else {
+            Ok(None)
+        }
+    } else {
+        Ok(None)
+    }
+}
+
+#[tauri::command]
 pub fn open_project_file(param: OpenProjectFileParam) -> Result<(), String> {
     let OpenProjectFileParam {
         product,
@@ -270,7 +311,7 @@ pub fn open_project_file(param: OpenProjectFileParam) -> Result<(), String> {
         FileType::Code | FileType::Log => subpaths.push("program".into()),
         FileType::Data | FileType::Xpt => subpaths.push("dataset".into()),
         FileType::Output => subpaths.push("output".into()),
-        FileType::Qc => subpaths.push("qc-result".into()),
+        FileType::Qc | FileType::QcLegacy => subpaths.push("qc-result".into()),
     }
     match kind {
         Kind::SDTM => subpaths.push("sdtm".into()),

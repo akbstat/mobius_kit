@@ -94,7 +94,7 @@ onMounted(async () => {
             </div>
             <div>
                 <el-tag :type="totalStatus ? 'success' : 'danger'" class="status">{{ totalStatus ? 'Pass' : 'Failed'
-                }}</el-tag>
+                    }}</el-tag>
                 <div class="group">
                     <el-checkbox v-model="showProduction" label="Production" size="large" />
                     <el-checkbox v-model="showValidation" label="Validation" size="large" />
@@ -113,7 +113,7 @@ onMounted(async () => {
                                 </div>
                                 <div>
                                     <el-tag :type="groupTagType(line.group)" class="file-type-timeline">{{ line.kind
-                                    }}</el-tag>
+                                        }}</el-tag>
                                 </div>
                             </div>
                         </el-timeline-item>

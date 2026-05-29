@@ -67,6 +67,7 @@ onMounted(async () => { user.value = await currentUser(); isDark.value = true })
 
 .layout-container .el-menu {
   border-right: none;
+  background: var(--el-color-primary-light-8);
 }
 
 

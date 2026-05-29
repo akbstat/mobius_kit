@@ -91,7 +91,12 @@ function submit() {
         <el-form-item label="Qc Ignore Option">
             <el-checkbox-group v-model="qcIgnore">
                 <el-checkbox label="Attribute Difference" value="Attribute Difference" />
-                <el-checkbox label="Not Excatly Equal" value="Not Excatly Equal" />
+                <br />
+                <el-checkbox label="NVar Difference" value="NVar Difference" />
+                <br />
+                <el-checkbox label="NObs Difference" value="NObs Difference" />
+                <br />
+                <el-checkbox label="Not Exactly Equal" value="Not Exactly Equal" />
             </el-checkbox-group>
         </el-form-item>
         <el-form-item>

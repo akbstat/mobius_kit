@@ -89,6 +89,7 @@ fn main() {
             inspector::v2::get_tracker_information,
             inspector::v2::tracker_illation,
             inspector::v2::open_project_file,
+            inspector::v2::html_qc_result,
             vestige::client::list_histories,
             vestige::client::save_history,
             vestige::client::remove_histories,

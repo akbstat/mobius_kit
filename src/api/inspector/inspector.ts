@@ -133,11 +133,11 @@ function buildSequenceDetail(sequenceResult: AuditSequenceResult[]): SequenceDet
     };
     const mainQc: SequenceDetail = {
         kind: "Qc",
-        group: convert(validation.filter(s => s.kind === "Qc" && !s.name.includes("supp"))),
+        group: convert(validation.filter(s => (s.kind === "Qc" || s.kind === "QcLegacy") && !s.name.includes("supp"))),
     };
     const suppQc: SequenceDetail = {
         kind: "Qc",
-        group: convert(validation.filter(s => s.kind === "Qc" && s.name.includes("supp"))),
+        group: convert(validation.filter(s => (s.kind === "Qc" || s.kind === "QcLegacy") && s.name.includes("supp"))),
     };
     const output: SequenceDetail = {
         kind: "Output",
@@ -155,7 +155,7 @@ function buildTimeline(auditResult: AuditSequenceResult[]): Timeline[] {
         return {
             timestamp: s.modifiedAt ? s.modifiedAt.slice(0, 22) : s.modifiedAt,
             item: s.name,
-            kind: s.kind,
+            kind: s.kind === "QcLegacy" ? "Qc" : s.kind,
             group: s.group,
             pass: s.status === "Pass",
         }
@@ -182,6 +182,11 @@ export async function qcDetailSupp(param: QcDetailRequest): Promise<QcDetail> {
 
 export async function openQcFile(param: OpenQcDetailParam) {
     await invoke("open_qc_file", { param });
+}
+
+export async function htmlQcResult(param: OpenQcDetailParam): Promise<QcResultHtml | null> {
+    const result = await invoke<QcResultHtml | null>("html_qc_result", { param });
+    return result;
 }
 
 export async function openProjectFile(param: OpenProjectFileParam) {
@@ -467,4 +472,92 @@ function status(source: ItemStatus): Status {
         return { kind: StatusKind.Failed, message: source.Failed };
     }
 }
+export interface Dataset {
+    dataset: string;
+    created: string;
+    modified: string;
+    nvar: string;
+    nobs: string;
+}
 
+export interface DatasetSummary {
+    base?: Dataset;
+    compare?: Dataset;
+}
+
+export interface VariablesSummary {
+    numberOfVariablesInCommon?: string;
+    numberOfVariablesWithDifferingAttributes?: string;
+}
+
+export interface VariableAttribute {
+    dataset: string;
+    variableType: string;
+    variableLength: string;
+    label: string;
+}
+
+export interface VariableAttributeGroup {
+    base?: VariableAttribute;
+    compare?: VariableAttribute;
+}
+
+export interface VariableDifferAttributes {
+    variable: string;
+    attribute: VariableAttributeGroup;
+}
+
+export interface VariableDifferAttributesList {
+    variables: VariableDifferAttributes[];
+}
+
+export interface ObservationSummaryList {
+    observation: string;
+    base: string;
+    compare: string;
+}
+
+export interface ObservationSummary {
+    summaryList: ObservationSummaryList[];
+    summaryLogs: string[];
+}
+
+export interface ValuesComparisonSummary {
+    numberOfVariablesComparedWithAllObservationsEqual?: string;
+    numberOfVariablesComparedWithSomeObservationsUnequal?: string;
+    totalNumberOfValuesWithCompareUnequal?: string;
+    totalNumberOfValuesNotExactlyEqual?: string;
+    maximumDifferenceCriterionValue?: string;
+}
+
+export interface VariableWithUnequalValues {
+    variable: string;
+    variableType: string;
+    len1: string;
+    len2: string;
+    label: string;
+    ndif: string;
+    maxdif: string;
+}
+
+export interface ValueComparisonResultsForVariablesRow {
+    obs: string;
+    base: string;
+    compare: string;
+}
+
+export interface ValueComparisonResultsForVariables {
+    variable: string;
+    records: ValueComparisonResultsForVariablesRow[];
+}
+
+export interface QcResultHtml {
+    datasetSummary?: DatasetSummary;
+    variablesSummary?: VariablesSummary;
+    listOfCommonVariablesWithDifferingAttributes?: VariableDifferAttributesList;
+    comparsionResultsForObservations?: string[];
+    observationSummary?: ObservationSummary;
+    valuesComparsionSummary?: ValuesComparisonSummary;
+    variableWithUnequalValues?: VariableWithUnequalValues[];
+    valuesComparsionResultsForVariables?: ValueComparisonResultsForVariables[];
+}

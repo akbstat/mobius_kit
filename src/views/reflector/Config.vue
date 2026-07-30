@@ -17,7 +17,7 @@ const removeConfigDisplay = ref(false);
 const configSelectionRef = ref();
 const removeConfigId = ref("");
 const removeConfigName = computed(() => historyConfig.value.find(c => c.id === removeConfigId.value)?.name as string);
-const edcOptions = ["ECollect", "Rave"];
+const edcOptions = ["ECollectV6", "ECollect", "Rave"];
 
 async function selectFolder() {
     config.value.destination = await selectDirectory();

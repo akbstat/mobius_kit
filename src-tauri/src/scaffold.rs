@@ -5,6 +5,7 @@ use std::{
     thread,
 };
 
+use project_scaffold::{project_scaffolding, Context, ProjectScaffoldConfig, RawContext};
 use scaffold::{
     list_projects, new_reader, read_assignment_from_top, Assignment, ConfigItem, DocumentSkeleton,
     FileResult, Generator, Group, Kind, Param, StatSkeleton, STAT,
@@ -31,6 +32,28 @@ pub fn get_projects() -> Result<String, String> {
         },
         Err(e) => Err(e.to_string()),
     }
+}
+
+#[tauri::command]
+pub fn save_new_project(project: SaveNewProjectParam) -> Result<(), String> {
+    let config_path = PathBuf::from(env::var(config::PROJECT_CONFIG).map_err(|e| e.to_string())?);
+    let SaveNewProjectParam {
+        product,
+        trial,
+        purpose,
+    } = project;
+    let root_path = project_root()?;
+    let context = Context::build(RawContext {
+        product,
+        trial,
+        purpose,
+        root_path,
+        config_path,
+        ..Default::default()
+    })
+    .map_err(|e| e.to_string())?;
+    let config = ProjectScaffoldConfig::build(&context).map_err(|e| e.to_string())?;
+    project_scaffolding(config).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -168,6 +191,11 @@ pub fn read_trace() -> Result<Vec<String>, String> {
     }
 }
 
+fn project_root() -> Result<PathBuf, String> {
+    let project_root = env::var(config::PROJECT_ROOT).map_err(|e| e.to_string())?;
+    Ok(Path::new(&project_root).to_path_buf())
+}
+
 fn kind_match(k: &str) -> Kind {
     if k.eq("SDTM") {
         return Kind::SDTM;
@@ -220,4 +248,11 @@ struct GenerateSkeletonParam {
     pub product: String,
     pub trial: String,
     pub purpose: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SaveNewProjectParam {
+    pub product: String,
+    pub trial: String,
+    pub purpose: Option<String>,
 }

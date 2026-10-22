@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { CascaderOption, CascaderPanelInstance, CascaderProps } from 'element-plus';
+import { CascaderOption, CascaderPanelInstance, CascaderProps, ElMessage } from 'element-plus';
 import { onMounted, Ref, ref } from 'vue';
 import { listAllProjects } from '../api/inspector/inspector';
-import { History, listHistories, removeHistories, saveHistory } from "../api/project-context/context";
+import { History, listHistories, removeHistories, saveHistory, saveNewProject } from "../api/project-context/context";
 import { useProjectContext } from '../store/context';
 import { storeToRefs } from 'pinia';
 
@@ -13,6 +13,12 @@ const cascaderSelected: Ref<string[]> = ref([]);
 const cascaderRef = ref<CascaderPanelInstance>();
 const historyProject: Ref<History[]> = ref([]);
 const cascaderDisplay = ref(false);
+const createNewProjectDisplay = ref(false);
+const newProject = ref({
+    product: '',
+    trial: '',
+    purpose: ''
+});
 function click() {
     cascaderDisplay.value = true;
 }
@@ -22,6 +28,28 @@ const cascaderProps: CascaderProps = {
     expandTrigger: "hover",
     emitPath: true,
 };
+
+function closeNewProjectDialog() {
+    createNewProjectDisplay.value = false;
+    newProject.value = {
+        product: '',
+        trial: '',
+        purpose: ''
+    }
+}
+
+async function createNewProject() {
+    const { product, trial, purpose } = Object.assign({}, newProject.value);
+    const incomingProject = { product: product.trim().toLowerCase(), trial: trial.trim().toLowerCase(), purpose: purpose.trim().length > 0 ? purpose : undefined };
+    try {
+        await saveNewProject(incomingProject);
+        await rebuildOptions();
+    } catch (error) {
+        ElMessage.error("Failed to create new project: " + error);
+    }
+    closeNewProjectDialog();
+}
+
 
 async function cascaderChange(value: string[]) {
     if (value && value.length === 3) {
@@ -57,7 +85,8 @@ async function removeAllHistories() {
     historyProject.value = await removeHistories(props.user, ids);
 }
 
-onMounted(async () => {
+
+async function rebuildOptions() {
     const projects = await listAllProjects();
     const opts: CascaderOption[] = [];
     for (const product of projects) {
@@ -89,6 +118,10 @@ onMounted(async () => {
         project.value = { product, trial, purpose }
     }
     options.value = opts;
+}
+
+onMounted(async () => {
+    await rebuildOptions();
 });
 </script>
 
@@ -125,10 +158,15 @@ onMounted(async () => {
                         </el-scrollbar>
                     </div>
                     <div style="margin-top: 5px; display: flex; justify-content: right;">
-                        <el-button @click="removeAllHistories" style="width: 220px;margin-right: 15px;" size="small"
-                            type="danger" plain>
+                        <el-button @click="removeAllHistories" style="width: 120px;" size="small" type="danger" plain>
                             <el-icon>
                                 <Delete />
+                            </el-icon>
+                        </el-button>
+                        <el-button @click="createNewProjectDisplay = true" style="width: 120px;margin-right: 15px;"
+                            size="small" type="primary" plain>
+                            <el-icon>
+                                <DocumentAdd />
                             </el-icon>
                         </el-button>
                     </div>
@@ -148,6 +186,31 @@ onMounted(async () => {
                 <span class="breadcrumb-span">{{ project.purpose }}</span>
             </el-breadcrumb-item>
         </el-breadcrumb>
+        <el-dialog v-model="createNewProjectDisplay" title="Create New Project">
+            <el-form label-width="auto">
+                <el-form-item required label="Product">
+                    <el-input v-model="newProject.product" />
+                </el-form-item>
+                <el-form-item required label="Trial">
+                    <el-input v-model="newProject.trial" />
+                </el-form-item>
+                <el-form-item label="Purpose">
+                    <el-input v-model="newProject.purpose" />
+                </el-form-item>
+                <el-form-item>
+                    <el-button @click="createNewProject" type="primary" plain>
+                        <el-icon>
+                            <Check />
+                        </el-icon>
+                    </el-button>
+                    <el-button @click="closeNewProjectDialog" type="danger" plain>
+                        <el-icon>
+                            <Close />
+                        </el-icon>
+                    </el-button>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
     </div>
 </template>
 

@@ -18,6 +18,11 @@ export async function removeHistories(user: string, ids: number[]): Promise<Hist
     return history;
 }
 
+export async function saveNewProject(project: { product: string, trial: string, purpose?: string }): Promise<void> {
+    console.log("saveNewProject", project);
+    await invoke("save_new_project", { project });
+}
+
 export interface History {
     id?: number; // optional, since Option<i32> becomes id?: number
     product: string;

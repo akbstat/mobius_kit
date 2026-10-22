@@ -45,6 +45,7 @@ fn main() {
             scaffold::list_task_items,
             scaffold::save_trace,
             scaffold::read_trace,
+            scaffold::save_new_project,
             void_probe::probe,
             void_probe::task_progress,
             void_probe::get_probe_result,

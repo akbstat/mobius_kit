@@ -15,6 +15,7 @@ pub const PRIVATE_TEMPLATE: &str = "MK_PRIVATE_TEMPLATE";
 pub const PROJECT_ROOT: &str = "MK_PROJECT_ROOT";
 pub const SKELETON_DOCUMENT: &str = "MK_SKELETON_DOCUMENT";
 pub const SKELETON_STAT: &str = "MK_SKELETON_STAT";
+pub const PROJECT_CONFIG: &str = "MK_PROJECT_CONFIG";
 pub const TRACE: &str = "MK_TRACE";
 const TEMP_SCRIPT: &str = "MK_TEMP_SCRIPT";
 const WORD_WORKER: &str = "MK_WORD_WORKER";
@@ -34,6 +35,7 @@ pub struct Config {
     pub skeleton_document: String,
     pub skeleton_stat: String,
     pub project_root: String,
+    pub project_config: String,
     pub combine_bin: String,
     pub acrf_outline_bin: String,
     pub validator: String,
@@ -76,6 +78,7 @@ pub fn config_to_env(path: &Path) -> Result<(), Box<dyn Error>> {
     env::set_var(ACRF_OUTLINTE_BIN, config.acrf_outline_bin);
     env::set_var(VALIDATOR, config.validator);
     env::set_var(COMPASS_BASE_URL, config.compass_base_url);
+    env::set_var(PROJECT_CONFIG, config.project_config);
 
     let user_temp_path = build_temp_script_path(&config.user_temp, &user_id);
     if !user_temp_path.exists() {
